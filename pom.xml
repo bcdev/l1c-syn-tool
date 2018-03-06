@@ -110,6 +110,8 @@
                     <licenseName>GPL 3</licenseName>
                     <licenseFile>LICENSE.txt</licenseFile>
                     <requiresRestart>true</requiresRestart>
+                    <cluster>s3tbx</cluster>
+                    <brandingToken>s3tbx</brandingToken>
                 </configuration>
             </plugin>
             <plugin>
