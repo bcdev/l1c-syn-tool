@@ -18,13 +18,11 @@
 
     <folder name="Menu">
         <folder name="Optical">
-            <folder name="L1C-SYN Tool">
-                <file name="org-esa-s3tbx-l1c-syn-OpAction.shadow">
-                    <attr name="originalFile"
-                          stringvalue="Actions/Operators/org-esa-s3tbx-l1c-syn-OpAction.instance"/>
-                    <attr name="position" intvalue="4"/>
-                </file>
-            </folder>
+            <file name="org-esa-s3tbx-l1c-syn-OpAction.shadow">
+                <attr name="originalFile"
+                      stringvalue="Actions/Operators/org-esa-s3tbx-l1c-syn-OpAction.instance"/>
+                <attr name="position" intvalue="4"/>
+            </file>
         </folder>
     </folder>
 
