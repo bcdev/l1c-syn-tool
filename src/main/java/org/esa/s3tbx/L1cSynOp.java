@@ -32,11 +32,11 @@ public class L1cSynOp extends Operator {
     @TargetProduct(label = "L1C SYN Product", description = "L1C SYNERGY output product")
     private Product reprojectedTarget;
 
-    @Parameter(label="allowed difference between aquisition time of OLCI and SLSTR products",defaultValue = "10",description = "")
+    @Parameter(label="allowed difference between time of OLCI and SLSTR products",defaultValue = "10",description = "allowed time difference between SLSTR and OLCI products")
     private long hoursCutoff;
 
     @Parameter(description = "The list of bands in the target product.", alias = "sourceBands", itemAlias = "band", rasterDataNodeType = Band.class)
-    String[] targetBandNames;
+    private String[] targetBandNames;
 
     @Override
     public void initialize() throws OperatorException {
@@ -44,16 +44,19 @@ public class L1cSynOp extends Operator {
         if (! isValidOlciProduct(olciSource)){
             throw new OperatorException("OLCI product is not valid");
         }
+
         if (! isValidSlstrProduct(slstrSource)) {
             throw new OperatorException("SLSTR product is not valid");
-
         }
 
-        Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource), slstrSource);
-
+        if (targetBandNames == null) {
+            throw new OperatorException("Zero bands for target product are chosen");
+        }
 
         checkDate(slstrSource,olciSource);
 
+
+        Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource), slstrSource);
         HashMap<String, Product> sourceProductMap = new HashMap<>();
         sourceProductMap.put("masterProduct", olciSource);
         sourceProductMap.put("slaveProduct", slstrInput);
@@ -63,11 +66,8 @@ public class L1cSynOp extends Operator {
             if (!Arrays.asList(targetBandNames).contains(band))
             {collocatedTarget.removeBand(collocatedTarget.getBand(band));}
         }
-
         reprojectedTarget = GPF.createProduct("Reproject",getReprojectParams(),collocatedTarget);
     }
-
-
 
     private Map<String, Object> getReprojectParams() {
         HashMap<String, Object> params = new HashMap<>();
@@ -111,16 +111,15 @@ public class L1cSynOp extends Operator {
         }
     }
 
-    public static boolean isValidOlciProduct(Product product) {
+    private boolean isValidOlciProduct(Product product) {
         return product.getProductType().contains("OL_1");
     }
 
-    public static boolean isValidSlstrProduct(Product product) {
+    private boolean isValidSlstrProduct(Product product) {
         return product.getProductType().contains("SL_1");
     }
 
     public static class Spi extends OperatorSpi {
-
         public Spi() {
             super(L1cSynOp.class);
         }
