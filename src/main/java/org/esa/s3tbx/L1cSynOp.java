@@ -35,13 +35,15 @@ public class L1cSynOp extends Operator {
     @Parameter(label="allowed difference between time of OLCI and SLSTR products",defaultValue = "10",description = "allowed time difference between SLSTR and OLCI products")
     private long hoursCutoff;
 
-    @Parameter(description = "The list of bands in the target product.", alias = "sourceBands", itemAlias = "band", rasterDataNodeType = Band.class)
+    /*@Parameter(description = "The list of bands in the target product.", alias = "sourceBands", itemAlias = "band", rasterDataNodeType = Band.class)
     private String[] targetBandNames;
+    The interface for band selection and default selection will be enabled for version-2 */
+
 
     @Override
     public void initialize() throws OperatorException {
 
-        if (! isValidOlciProduct(olciSource)){
+        if (! isValidOlciProduct(olciSource)) {
             throw new OperatorException("OLCI product is not valid");
         }
 
@@ -49,12 +51,12 @@ public class L1cSynOp extends Operator {
             throw new OperatorException("SLSTR product is not valid");
         }
 
+        /* Will be enabled/reworked along with the band selection in version-2
         if (targetBandNames == null) {
             throw new OperatorException("Zero bands for target product are chosen");
-        }
+        }*/
 
         checkDate(slstrSource,olciSource);
-
 
         Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource), slstrSource);
         HashMap<String, Product> sourceProductMap = new HashMap<>();
@@ -62,14 +64,10 @@ public class L1cSynOp extends Operator {
         sourceProductMap.put("slaveProduct", slstrInput);
         Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
 
-        for (String band : collocatedTarget.getBandNames()) {
-            if (!Arrays.asList(targetBandNames).contains(band))
-            {collocatedTarget.removeBand(collocatedTarget.getBand(band));}
-        }
         reprojectedTarget = GPF.createProduct("Reproject",getReprojectParams(),collocatedTarget);
     }
 
-    private Map<String, Object> getReprojectParams() {
+    static Map<String, Object> getReprojectParams() {
         HashMap<String, Object> params = new HashMap<>();
         params.put("resampling","Nearest");
         params.put("orthorectify", false);
@@ -80,7 +78,7 @@ public class L1cSynOp extends Operator {
         return params;
     }
 
-    private Map<String, Object> getCollocateParams() {
+    static Map<String, Object> getCollocateParams() {
         HashMap<String, Object> params = new HashMap<>();
         params.put("targetProductType", "S3_L1C_SYN");
         params.put("renameMasterComponents", false);
@@ -105,8 +103,7 @@ public class L1cSynOp extends Operator {
         long olciTime = olciSource.getEndTime().getAsDate().getTime();
         long diff = slstrTime - olciTime;
         long diffInHours =  (diff) / (1000 * 60 * 60 );
-        if (diffInHours>hoursCutoff)
-        {
+        if (diffInHours>hoursCutoff) {
             throw new OperatorException("The SLSTR and OLCI products differ more than allowed. Please check your input times");
         }
     }
