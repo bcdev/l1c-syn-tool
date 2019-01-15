@@ -2,15 +2,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>s3tbx-l1c-syn</artifactId>
+        <groupId>org.esa.s3tbx</groupId>
+        <version>0.1-SNAPSHOT</version>
+    </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.esa.s3tbx</groupId>
-    <artifactId>s3tbx-l1c-syn</artifactId>
-    <packaging>pom</packaging>
+    <artifactId>l1c-coreg-lib</artifactId>
     <version>0.1-SNAPSHOT</version>
-    <modules>
-        <module>l1c-coreg-lib</module>
-        <module>s3tbx-l1c-syn-op</module>
-    </modules>
 
 </project>
