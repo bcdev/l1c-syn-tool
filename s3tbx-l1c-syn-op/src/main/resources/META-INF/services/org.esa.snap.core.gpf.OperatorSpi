@@ -1,1 +1,3 @@
 org.esa.s3tbx.L1cSynOp$Spi
+org.esa.snap.collocation.CollocateOp$Spi
+org.esa.snap.core.gpf.common.reproject.ReprojectionOp$Spi

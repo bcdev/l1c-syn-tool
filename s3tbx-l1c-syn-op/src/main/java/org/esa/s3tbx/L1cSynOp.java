@@ -63,7 +63,6 @@ public class L1cSynOp extends Operator {
         sourceProductMap.put("masterProduct", olciSource);
         sourceProductMap.put("slaveProduct", slstrInput);
         Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
-
         reprojectedTarget = GPF.createProduct("Reproject",getReprojectParams(),collocatedTarget);
     }
 
@@ -87,7 +86,7 @@ public class L1cSynOp extends Operator {
         return params;
     }
 
-    private HashMap<String, Object> getSlstrResampleParams(Product toResample) {
+    protected static HashMap<String, Object> getSlstrResampleParams(Product toResample) {
         HashMap<String, Object> params = new HashMap<>();
         params.put("targetWidth", toResample.getSceneRasterWidth());
         params.put("targetHeight", toResample.getSceneRasterHeight());
@@ -104,16 +103,16 @@ public class L1cSynOp extends Operator {
         long diff = slstrTime - olciTime;
         long diffInHours =  (diff) / (1000 * 60 * 60 );
         if (diffInHours>hoursCutoff) {
-            throw new OperatorException("The SLSTR and OLCI products differ more than allowed. Please check your input times");
+            throw new OperatorException("The SLSTR and OLCI products differ more than"+String.format("%d",diffInHours)+". Please check your input times");
         }
     }
 
     private boolean isValidOlciProduct(Product product) {
-        return product.getProductType().contains("OL_1");
+        return product.getProductType().contains("OL_1") || product.getName().contains("OLCI");
     }
 
     private boolean isValidSlstrProduct(Product product) {
-        return product.getProductType().contains("SL_1");
+        return product.getProductType().contains("SL_1") || product.getName().contains("SLSTR");
     }
 
     public static class Spi extends OperatorSpi {
