@@ -32,7 +32,7 @@ public class L1cSynOp extends Operator {
     @TargetProduct(label = "L1C SYN Product", description = "L1C SYNERGY output product")
     private Product reprojectedTarget;
 
-    @Parameter(label="allowed difference between time of OLCI and SLSTR products",defaultValue = "10",description = "allowed time difference between SLSTR and OLCI products")
+    @Parameter(label="maximum difference between OLCI and SLSTR products (in hours)",defaultValue = "10",description = "allowed time difference between SLSTR and OLCI products")
     private long hoursCutoff;
 
     /*@Parameter(description = "The list of bands in the target product.", alias = "sourceBands", itemAlias = "band", rasterDataNodeType = Band.class)
