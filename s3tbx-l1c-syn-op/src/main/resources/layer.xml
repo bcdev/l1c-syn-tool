@@ -10,7 +10,7 @@
                 <attr name="operatorName" stringvalue="L1C-SYN"/>
                 <attr name="displayName" stringvalue="L1C SYN Tool"/>
                 <attr name="dialogTitle" stringvalue="L1C SYN Tool Processor"/>
-                <attr name="targetProductNameSuffix" stringvalue="_stc"/>
+                <attr name="targetProductNameSuffix" stringvalue="_syn"/>
                 <attr name="helpId" stringvalue="l1cSynTool"/>
             </file>
         </folder>
