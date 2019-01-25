@@ -7,7 +7,7 @@
     <groupId>org.esa.s3tbx</groupId>
     <artifactId>s3tbx-l1c-syn</artifactId>
     <packaging>pom</packaging>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.3-SNAPSHOT</version>
     <modules>
         <module>l1c-coreg-lib</module>
         <module>s3tbx-l1c-syn-op</module>
