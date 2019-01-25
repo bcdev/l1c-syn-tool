@@ -1,6 +1,5 @@
 package org.esa.s3tbx;
 
-import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.Operator;
@@ -11,11 +10,10 @@ import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
 
-import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 @OperatorMetadata(alias = "L1CSYN",
         label = "L1C SYN Tool",
         authors = "Marco Peters, Roman Shevchuk",
@@ -30,10 +28,11 @@ public class L1cSynOp extends Operator {
     private Product slstrSource;
 
     @TargetProduct(label = "L1C SYN Product", description = "L1C SYNERGY output product")
-    private Product reprojectedTarget;
+    private Product l1cTarget;
 
-    @Parameter(label="Diff. between OLCI and SLSTR (in hours)", defaultValue = "10", description = "Allowed time difference between SLSTR and OLCI products")
-    private long hoursCutoff;
+    @Parameter(label = "Allowed time difference", defaultValue = "10", unit = "h",
+            description = "Allowed time difference between SLSTR and OLCI products")
+    private long allowedTimeDiff;
 
     /*@Parameter(description = "The list of bands in the target product.", alias = "sourceBands", itemAlias = "band", rasterDataNodeType = Band.class)
     private String[] targetBandNames;
@@ -43,11 +42,11 @@ public class L1cSynOp extends Operator {
     @Override
     public void initialize() throws OperatorException {
 
-        if (! isValidOlciProduct(olciSource)) {
+        if (!isValidOlciProduct(olciSource)) {
             throw new OperatorException("OLCI product is not valid");
         }
 
-        if (! isValidSlstrProduct(slstrSource)) {
+        if (!isValidSlstrProduct(slstrSource)) {
             throw new OperatorException("SLSTR product is not valid");
         }
 
@@ -56,24 +55,24 @@ public class L1cSynOp extends Operator {
             throw new OperatorException("Zero bands for target product are chosen");
         }*/
 
-        checkDate(slstrSource,olciSource);
+        checkDate(slstrSource, olciSource);
 
         Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource), slstrSource);
         HashMap<String, Product> sourceProductMap = new HashMap<>();
         sourceProductMap.put("masterProduct", olciSource);
         sourceProductMap.put("slaveProduct", slstrInput);
         Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
-        reprojectedTarget = GPF.createProduct("Reproject",getReprojectParams(),collocatedTarget);
+        l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
     }
 
     static Map<String, Object> getReprojectParams() {
         HashMap<String, Object> params = new HashMap<>();
-        params.put("resampling","Nearest");
+        params.put("resampling", "Nearest");
         params.put("orthorectify", false);
         params.put("noDataValue", "NaN");
-        params.put("includeTiePointGrids",true);
-        params.put("addDeltaBands",false);
-        params.put("crs","EPSG:4326");
+        params.put("includeTiePointGrids", true);
+        params.put("addDeltaBands", false);
+        params.put("crs", "EPSG:4326");
         return params;
     }
 
@@ -97,13 +96,13 @@ public class L1cSynOp extends Operator {
         return params;
     }
 
-    private void checkDate(Product slstrSource,Product olciSource) throws OperatorException {
+    private void checkDate(Product slstrSource, Product olciSource) throws OperatorException {
         long slstrTime = slstrSource.getStartTime().getAsDate().getTime();
         long olciTime = olciSource.getEndTime().getAsDate().getTime();
         long diff = slstrTime - olciTime;
-        long diffInHours =  (diff) / (1000 * 60 * 60 );
-        if (diffInHours>hoursCutoff) {
-            throw new OperatorException("The SLSTR and OLCI products differ more than"+String.format("%d",diffInHours)+". Please check your input times");
+        long diffInHours = (diff) / (1000 * 60 * 60);
+        if (diffInHours > allowedTimeDiff) {
+            throw new OperatorException("The SLSTR and OLCI products differ more than" + String.format("%d", diffInHours) + ". Please check your input times");
         }
     }
 
