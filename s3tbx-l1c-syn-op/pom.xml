@@ -20,7 +20,7 @@
     <parent>
         <artifactId>s3tbx-l1c-syn</artifactId>
         <groupId>org.esa.s3tbx</groupId>
-        <version>0.1-SNAPSHOT</version>
+        <version>0.2-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -32,8 +32,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <snap.version>6.0.0</snap.version>
-        <s3tbx.version>6.0.0</s3tbx.version>
+        <snap.version>6.0.6</snap.version>
+        <s3tbx.version>6.0.5</s3tbx.version>
         <javahelp.version>2.0.05</javahelp.version>
     </properties>
 
@@ -67,31 +67,22 @@
 
         <dependency>
             <groupId>org.esa.snap</groupId>
-            <artifactId>snap-rcp</artifactId>
-            <version>${snap.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.esa.snap</groupId>
-            <artifactId>snap-gpf-ui</artifactId>
-            <version>${snap.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.esa.snap</groupId>
             <artifactId>snap-gpf</artifactId>
             <version>${snap.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.esa.snap</groupId>
-            <artifactId>snap-ui</artifactId>
-            <version>${snap.version}</version>
-        </dependency>
+
         <dependency>
             <groupId>org.esa.snap</groupId>
             <artifactId>snap-collocation</artifactId>
             <version>${snap.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.esa.snap</groupId>
+            <artifactId>snap-netcdf</artifactId>
+            <version>${snap.version}</version>
+        </dependency>
+        
         <dependency>
             <groupId>org.esa.s3tbx</groupId>
             <artifactId>s3tbx-sentinel3-reader</artifactId>
