@@ -1,7 +1,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SNAP Help - Sentinel-3 OLCI/SLSTR L1C-SYN Tool</title>
+    <title>SNAP Help - Sentinel-3 OLCI/SLSTR L1C SYN Tool</title>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
     <link rel="stylesheet" href="../style.css">
 </head>
@@ -11,7 +11,7 @@
 <table class="header">
     <tr class="header">
         <td class="header">&nbsp;
-            Sentinel-3 L1C-SYN Tool
+            Sentinel-3 L1C SYN Tool
         </td>
         <td class="header" align="right"><a
                 href="nbdocs://org.esa.snap.snap.help/org/esa/snap/snap/help/docs/general/overview/SnapOverview.html">
@@ -19,6 +19,88 @@
         </td>
     </tr>
 </table>
+
+<h2>Sentinel-3 L1C Synergy Tool</h2>
+
+<h3>Introduction</h3>
+<p>The current Sentinel 3 ground segment includes a synergy branch where Level 1b data from two instruments onboard
+    Sentinel 3, namely OLCI and SLSTR, are commonly processed to a Level 2 product, containing aerosol and surface
+    reflectance data.</p>
+<p>User demand showed that there is an additional need to obtain a product where the two Level 1b data streams
+    (TOA radiances or reflectances) are merged and collocated, and which allows them an individual Level 2 processing.
+    This product shall be called Level 1C SYN.</p>
+
+
+<h3>Usage within SNAP Desktop</h3>
+
+<h4>I/O Parameters</h4>
+<p align="center"><img src="../images/IOParameters.png"></p>
+<h5>OLCI Product</h5>
+Select an OLCI product on which the SLSTR product will be collocated.
+<h5>SLSTR Product</h5>
+Select a SLSTR product which will be collocated with the OLCI product.
+<h5>Target Product</h5>
+<b>Name:</b> to specify the name of the target product.<br>
+<b>Save as:</b> checkbox to specify whether the target product should be saved to the file system. The combo box
+presents a list of available file formats. The text field or the button next to it allow to specify a target
+directory.<br>
+<b>Open in SNAP:</b> Used to specify whether the target product should be opened in the Sentinel Toolbox. When the
+target product is not saved, it is opened in the Sentinel Toolbox automatically.<br>
+<br>
+
+<p align="center"><img src="../images/ReaderSelection.png"></p>
+When opening first in SNAP and then selecting them in the I/O Parameters form, you should ensured to select the generic
+Sentinel-3 reader for the SLSTR product. If you are only interested in the 500m or 1km bands then you can select the
+respective reader types.
+
+
+<h3>Processing Parameters</h3>
+<p align="center"><img src="../images/ProcessingParameters.png"></p>
+<h5>Allowed time difference</h5>
+Specifies the allowed time difference between the sensing start time of OLCI and SLSTR. This will be removed in later
+versions when the maximum allowed time difference is known.
+
+
+<h3>Usage from the command line</h3>
+By invoking gpt with name "L1CSYN" of the tool (operator) and the option <b>-h</b> the specific help for this L1C SYN tool is shown.
+
+<pre>
+> gpt L1CSYN -h
+Usage:
+    gpt L1CSYN [options]
+
+Source Options:
+    -SolciProduct=&lt;file&gt;     OLCI source product
+                             This is a mandatory source.
+    -SslstrProduct=&lt;file&gt;    SLSTR source product
+                             This is a mandatory source.
+
+    Parameter Options:
+    -PallowedTimeDiff=&lt;long&gt;    Allowed time difference between SLSTR and OLCI products
+                                Default value is '10'.
+                                Parameter unit is 'h'.
+
+        Graph XML Format:
+        &lt;graph id="someGraphId"&gt;
+            &lt;version&gt;1.0&lt;/version&gt;
+            &lt;node id="someNodeId"&gt;
+                &lt;operator&gt;L1CSYN&lt;/operator&gt;
+                &lt;sources&gt;
+                    &lt;olciProduct&gt;${olciProduct}&lt;/olciProduct&gt;
+                    &lt;slstrProduct&gt;${slstrProduct}&lt;/slstrProduct&gt;
+                &lt;/sources&gt;
+                &lt;parameters&gt;
+                    &lt;allowedTimeDiff&gt;long&lt;/allowedTimeDiff&gt;
+                &lt;/parameters&gt;
+            &lt;/node&gt;
+        &lt;/graph&gt;
+</pre>
+
+A complete command line call (on windows) might look like the following:
+
+<pre>
+> gpt L1CSYN -PallowedTimeDiff=2 -t "c:\output\S3_L1C_SYN.nc" -SolciProduct="c:\input\S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.SEN3" -SslstrProduct="S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3"
+</pre>
 
 
 </body>
