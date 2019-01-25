@@ -16,11 +16,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-@OperatorMetadata(alias = "L1C-SYN",
-        label = "L1C-SYN Tool",
-        authors = "Marco Peters",
+@OperatorMetadata(alias = "L1CSYN",
+        label = "L1C SYN Tool",
+        authors = "Marco Peters, Roman Shevchuk",
         copyright = "Brockmann Consult GmbH",
-        version = "0.1")
+        version = "1.0")
 public class L1cSynOp extends Operator {
 
     @SourceProduct(alias = "olciProduct", label = "OLCI Product", description = "OLCI source product")
@@ -32,7 +32,7 @@ public class L1cSynOp extends Operator {
     @TargetProduct(label = "L1C SYN Product", description = "L1C SYNERGY output product")
     private Product reprojectedTarget;
 
-    @Parameter(label="maximum difference between OLCI and SLSTR products (in hours)",defaultValue = "10",description = "allowed time difference between SLSTR and OLCI products")
+    @Parameter(label="Diff. between OLCI and SLSTR (in hours)", defaultValue = "10", description = "Allowed time difference between SLSTR and OLCI products")
     private long hoursCutoff;
 
     /*@Parameter(description = "The list of bands in the target product.", alias = "sourceBands", itemAlias = "band", rasterDataNodeType = Band.class)

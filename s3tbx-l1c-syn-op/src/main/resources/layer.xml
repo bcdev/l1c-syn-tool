@@ -7,7 +7,7 @@
             <file name="org-esa-s3tbx-l1c-syn-OpAction.instance">
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>
-                <attr name="operatorName" stringvalue="L1C-SYN"/>
+                <attr name="operatorName" stringvalue="L1CSYN"/>
                 <attr name="displayName" stringvalue="L1C SYN Tool"/>
                 <attr name="dialogTitle" stringvalue="L1C SYN Tool Processor"/>
                 <attr name="targetProductNameSuffix" stringvalue="_syn"/>
