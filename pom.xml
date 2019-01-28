@@ -5,12 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.esa.s3tbx</groupId>
-    <artifactId>s3tbx-l1c-syn</artifactId>
+    <artifactId>s3tbx-l1csyn-tool</artifactId>
     <packaging>pom</packaging>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.5-SNAPSHOT</version>
     <modules>
-        <module>l1c-coreg-lib</module>
-        <module>s3tbx-l1c-syn-op</module>
+        <module>l1csyn-coreg-lib</module>
+        <module>s3tbx-l1csyn-op</module>
     </modules>
 
     <distributionManagement>
