@@ -18,7 +18,9 @@ import java.util.Map;
         label = "L1C SYN Tool",
         authors = "Marco Peters, Roman Shevchuk",
         copyright = "Brockmann Consult GmbH",
-        version = "1.0")
+        description = "Sentinel-3 OLCI/SLSTR L1C SYN Tool",
+        category = "Optical/Pre-Processing",
+        version= "1.0")
 public class L1cSynOp extends Operator {
 
     @SourceProduct(alias = "olciProduct", label = "OLCI Product", description = "OLCI source product")
