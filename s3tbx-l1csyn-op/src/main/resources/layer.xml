@@ -18,11 +18,13 @@
 
     <folder name="Menu">
         <folder name="Optical">
-            <file name="org-esa-s3tbx-l1csyn-OpAction.shadow">
-                <attr name="originalFile"
-                      stringvalue="Actions/Operators/org-esa-s3tbx-l1csyn-OpAction.instance"/>
-                <attr name="position" intvalue="4"/>
-            </file>
+            <folder name="Preprocessing">
+                <file name="org-esa-s3tbx-l1csyn-OpAction.shadow">
+                    <attr name="originalFile"
+                          stringvalue="Actions/Operators/org-esa-s3tbx-l1csyn-OpAction.instance"/>
+                    <attr name="position" intvalue="6"/>
+                </file>
+            </folder>
         </folder>
     </folder>
 
