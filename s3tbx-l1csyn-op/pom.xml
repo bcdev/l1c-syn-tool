@@ -92,8 +92,8 @@
 
         <dependency>
             <groupId>org.esa.s3tbx</groupId>
-            <artifactId>l1c-coreg-lib</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <artifactId>l1csyn-coreg-lib</artifactId>
+            <version>0.1</version>
         </dependency>
 
         <dependency>
