@@ -4,4 +4,15 @@ OpenIDE-Module-Display-Category: S3TBX
 AutoUpdate-Show-In-Client: true
 AutoUpdate-Essential-Module: false
 OpenIDE-Module-Layer: layer.xml
-OpenIDE-Module-Long-Description: Sentinel-3 OLCI/SLSTR L1C SYN Tool
+OpenIDE-Module-Long-Description: Sentinel-3 OLCI/SLSTR L1C SYN Tool<br>
+ <br>
+ <b>Copyright:</b> (C) 2019 by Brockmann Consult GmbH<br>
+ <b>Vendor:</b> Brockmann Consult GmbH<br>
+ <b>License:</b> http://www.gnu.org/licenses/gpl.html<br>
+ <h2>Disclaimer</h2>
+   The work performed in the frame of this contract is
+   carried out with funding by the European Union.
+   The views expressed herein can in no way be taken
+   to reflect the official opinion of either the European
+   Union or the European Space Agency.<br>
+   <b>EU, ESA, EUMETSAT</b>
