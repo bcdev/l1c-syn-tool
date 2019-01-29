@@ -9,7 +9,9 @@
 
     <tocitem text="Sentinel Toolbox Application">
         <tocitem text="Optical">
-            <tocitem text="L1C SYN Tool" target="l1cSynTool"/>
+            <tocitem text="Pre-Processing">
+                <tocitem text="L1C SYN Tool" target="l1cSynTool"/>
+            </tocitem>
         </tocitem>
     </tocitem>
 </toc>

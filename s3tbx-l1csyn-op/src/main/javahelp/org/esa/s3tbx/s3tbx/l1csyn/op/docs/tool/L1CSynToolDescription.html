@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="../style.css">
 </head>
 
-<body>
+<p>
 
 <table class="header">
     <tr class="header">
@@ -15,7 +15,7 @@
         </td>
         <td class="header" align="right"><a
                 href="nbdocs://org.esa.snap.snap.help/org/esa/snap/snap/help/docs/general/overview/SnapOverview.html">
-            <img src="../images/copernicus_header.png" border=0></a>
+            <img src="../images/S3MPC_header.png" border=0></a>
         </td>
     </tr>
 </table>
@@ -29,7 +29,12 @@
 <p>User demand showed that there is an additional need to obtain a product where the two Level 1b data streams
     (TOA radiances or reflectances) are merged and collocated, and which allows them an individual Level 2 processing.
     This product shall be called Level 1C SYN.</p>
-
+<table>
+    <tr>
+        <td><p align="centre"><img src="../images/Logo_S3-MPC.png" /></p></td>
+        <td><p align="centre"><img src="../images/S3MPC-Disclaimer.png" /></p></td>
+    </tr>
+</table>
 
 <h3>Usage within SNAP Desktop</h3>
 
@@ -38,20 +43,23 @@
 <h5>OLCI Product</h5>
 Select an OLCI product on which the SLSTR product will be collocated.
 <h5>SLSTR Product</h5>
-Select a SLSTR product which will be collocated with the OLCI product.
+Select a SLSTR product which will be collocated with the OLCI product.<br>
+<b>Opening SLSTR data in SNAP</b><br>
+<p align="center"><img src="../images/SlstrReaderSelection.png"></p>
+When opening the SLSTR product in SNAP before choosing it in the I/O Parameters form, you should ensured to select the
+generic Sentinel-3 reader for the SLSTR product. If you are only interested in the 500m or 1km bands then you can select
+the
+respective reader types.
+
 <h5>Target Product</h5>
+The target product is currently always provided on the WGS84 CRS.<br>
 <b>Name:</b> to specify the name of the target product.<br>
 <b>Save as:</b> checkbox to specify whether the target product should be saved to the file system. The combo box
 presents a list of available file formats. The text field or the button next to it allow to specify a target
 directory.<br>
 <b>Open in SNAP:</b> Used to specify whether the target product should be opened in the Sentinel Toolbox. When the
-target product is not saved, it is opened in the Sentinel Toolbox automatically.<br>
+target product is not saved, it is opened in the Sentinel Toolbox automatically.
 <br>
-
-<p align="center"><img src="../images/ReaderSelection.png"></p>
-When opening first in SNAP and then selecting them in the I/O Parameters form, you should ensured to select the generic
-Sentinel-3 reader for the SLSTR product. If you are only interested in the 500m or 1km bands then you can select the
-respective reader types.
 
 
 <h3>Processing Parameters</h3>
