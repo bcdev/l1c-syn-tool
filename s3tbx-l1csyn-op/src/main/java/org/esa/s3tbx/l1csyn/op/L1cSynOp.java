@@ -36,6 +36,13 @@ public class L1cSynOp extends Operator {
             description = "Allowed time difference between SLSTR and OLCI products")
     private long allowedTimeDiff;
 
+    @Parameter(alias = "upsampling",
+            label = "Resampling upsampling method",
+            description = "The method used for interpolation (upsampling to a finer resolution).",
+            valueSet = {"Nearest", "Bilinear", "Bicubic"},
+            defaultValue = "Nearest"
+    )
+    private  String upsamplingMethod;
     /*@Parameter(description = "The list of bands in the target product.", alias = "sourceBands", itemAlias = "band", rasterDataNodeType = Band.class)
     private String[] targetBandNames;
     The interface for band selection and default selection will be enabled for version-2 */
@@ -43,6 +50,7 @@ public class L1cSynOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
+        setParameterDefaultValues();
 
         if (!isValidOlciProduct(olciSource)) {
             throw new OperatorException("OLCI product is not valid");
@@ -59,7 +67,7 @@ public class L1cSynOp extends Operator {
 
         checkDate(slstrSource, olciSource);
 
-        Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource), slstrSource);
+        Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource,upsamplingMethod), slstrSource);
         HashMap<String, Product> sourceProductMap = new HashMap<>();
         sourceProductMap.put("masterProduct", olciSource);
         sourceProductMap.put("slaveProduct", slstrInput);
@@ -87,11 +95,11 @@ public class L1cSynOp extends Operator {
         return params;
     }
 
-    protected static HashMap<String, Object> getSlstrResampleParams(Product toResample) {
+    protected static HashMap<String, Object> getSlstrResampleParams(Product toResample, String upsamplingMethod) {
         HashMap<String, Object> params = new HashMap<>();
         params.put("targetWidth", toResample.getSceneRasterWidth());
         params.put("targetHeight", toResample.getSceneRasterHeight());
-        params.put("upsampling", "Nearest");
+        params.put("upsampling", upsamplingMethod);
         params.put("downsampling", "First");
         params.put("flagDownsampling", "First");
         params.put("resampleOnPyramidLevels", false);

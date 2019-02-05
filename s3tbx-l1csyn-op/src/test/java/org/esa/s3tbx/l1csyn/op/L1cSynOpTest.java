@@ -26,6 +26,7 @@ public class L1cSynOpTest {
         Operator l1cSynOp = new L1cSynOp();
         l1cSynOp.setSourceProduct("olciProduct", olciProduct);
         l1cSynOp.setSourceProduct("slstrProduct", slstrProduct);
+        l1cSynOp.setParameter("upsampling","Nearest");
         Product result = l1cSynOp.getTargetProduct();
         int numBands = result.getNumBands();
         String productType = result.getProductType();
@@ -69,8 +70,8 @@ public class L1cSynOpTest {
     public void testGetResampleParameters() throws IOException {
         String slstrFilePath = L1cSynOpTest.class.getResource("SLSTRSub100.nc").getFile();
         Product slstrProduct = ProductIO.readProduct(slstrFilePath);
-
-        Map<String, Object> map = L1cSynOp.getSlstrResampleParams(slstrProduct);
+        String upsamplingMethod = "Nearest";
+        Map<String, Object> map = L1cSynOp.getSlstrResampleParams(slstrProduct, upsamplingMethod);
         int width = (int) map.get("targetWidth");
         int height = (int) map.get("targetHeight");
         String upsampling = (String) map.get("upsampling");

@@ -1,0 +1,190 @@
+package org.esa.s3tbx.l1csyn.op.ui;
+
+import com.bc.ceres.swing.TableLayout;
+import org.esa.snap.core.datamodel.Product;
+import org.esa.snap.core.datamodel.ProductFilter;
+import org.esa.snap.core.gpf.GPF;
+import org.esa.snap.core.gpf.OperatorSpi;
+import org.esa.snap.core.gpf.annotations.SourceProduct;
+import org.esa.snap.core.gpf.ui.*;
+import org.esa.snap.ui.AppContext;
+
+import javax.swing.*;
+import java.lang.reflect.Field;
+import java.util.*;
+
+public class L1cSynDialog extends SingleTargetProductDialog {
+
+    private List<SourceProductSelector> sourceProductSelectorList;
+    private Map<Field, SourceProductSelector> sourceProductSelectorMap;
+
+    private String operatorName;
+    private Map<String, Object> parameterMap;
+    private L1cSynDefaultForm form;
+    private String targetProductNameSuffix;
+    private AppContext appContext;
+
+    private OperatorSpi operatorSpi;
+    private String helpID;
+
+    /*
+     * DefaultDialog constructor
+     */
+    public L1cSynDialog(String operatorName, AppContext appContext, String title, String helpID, String targetProductNameSuffix) {
+        super(appContext, title, helpID);
+        this.helpID = helpID;
+        this.operatorName = operatorName;
+        this.appContext = appContext;
+        this.targetProductNameSuffix = targetProductNameSuffix;
+        System.setProperty("gpfMode", "GUI");
+        initialize(operatorName);
+    }
+
+    @Override
+    protected Product createTargetProduct() throws Exception {
+        final HashMap<String, Product> sourceProducts = createSourceProductsMap();
+        return GPF.createProduct(operatorName, parameterMap, sourceProducts);
+    }
+
+    @Override
+    public int show() {
+        initSourceProductSelectors();
+        setContent(form);
+        return super.show();
+    }
+
+    @Override
+    public void hide() {
+        releaseSourceProductSelectors();
+        super.hide();
+    }
+
+
+    private void initComponents() {
+        // Fetch source products
+        setupSourceProductSelectorList(operatorSpi);
+        if (!sourceProductSelectorList.isEmpty()) {
+            setSourceProductSelectorToolTipTexts();
+        }
+
+        final TableLayout tableLayout = new TableLayout(1);
+        tableLayout.setTableAnchor(TableLayout.Anchor.WEST);
+        tableLayout.setTableWeightX(1.0);
+        tableLayout.setTableFill(TableLayout.Fill.HORIZONTAL);
+        tableLayout.setTablePadding(3, 3);
+
+        JPanel ioParametersPanel = new JPanel(tableLayout);
+        for (SourceProductSelector selector : sourceProductSelectorList) {
+            ioParametersPanel.add(selector.createDefaultPanel());
+        }
+        ioParametersPanel.add(getTargetProductSelector().createDefaultPanel());
+        ioParametersPanel.add(tableLayout.createVerticalSpacer());
+
+        final TargetProductSelectorModel targetProductSelectorModel = getTargetProductSelector().getModel();
+
+        SourceProductSelectionListener sourceProductSelectionListener =
+                new SourceProductSelectionListener(targetProductSelectorModel, targetProductNameSuffix);
+        sourceProductSelectorList.get(0).addSelectionChangeListener(sourceProductSelectionListener);
+
+        form.add("I/O Parameters", ioParametersPanel);
+
+
+        OperatorParameterSupport parameterSupport = new OperatorParameterSupport(operatorSpi.getOperatorDescriptor(),
+                null,
+                parameterMap,
+                null);
+        OperatorMenu menuSupport = new OperatorMenu(this.getJDialog(),
+                operatorSpi.getOperatorDescriptor(),
+                parameterSupport,
+                appContext,
+                helpID);
+        getJDialog().setJMenuBar(menuSupport.createDefaultMenu());
+    }
+
+    private void setupSourceProductSelectorList(OperatorSpi operatorSpi) {
+        sourceProductSelectorList = new ArrayList<>(3);
+        sourceProductSelectorMap = new HashMap<>(3);
+        final Field[] fields = operatorSpi.getOperatorClass().getDeclaredFields();
+        for (Field field : fields) {
+            final SourceProduct annot = field.getAnnotation(SourceProduct.class);
+            if (annot != null) {
+                final ProductFilter productFilter = new AnnotatedSourceProductFilter(annot);
+                SourceProductSelector sourceProductSelector = new SourceProductSelector(appContext);
+                sourceProductSelector.setProductFilter(productFilter);
+                sourceProductSelectorList.add(sourceProductSelector);
+                sourceProductSelectorMap.put(field, sourceProductSelector);
+            }
+        }
+    }
+
+    private HashMap<String, Product> createSourceProductsMap() {
+        final HashMap<String, Product> sourceProducts = new HashMap<>(8);
+        for (Field field : sourceProductSelectorMap.keySet()) {
+            final SourceProductSelector selector = sourceProductSelectorMap.get(field);
+            String key = field.getName();
+            final SourceProduct annot = field.getAnnotation(SourceProduct.class);
+            if (!annot.alias().isEmpty()) {
+                key = annot.alias();
+            }
+            sourceProducts.put(key, selector.getSelectedProduct());
+        }
+        return sourceProducts;
+    }
+
+    private static class AnnotatedSourceProductFilter implements ProductFilter {
+        private final SourceProduct annot;
+        private AnnotatedSourceProductFilter(SourceProduct annot) {
+            this.annot = annot;
+        }
+        @Override
+        public boolean accept(Product product) {
+            if (!annot.type().isEmpty() && !product.getProductType().matches(annot.type())) {
+                return false;
+            }
+            for (String bandName : annot.bands()) {
+                if (!product.containsBand(bandName)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    private void initialize(String operatorName) {
+        operatorSpi = GPF.getDefaultInstance().getOperatorSpiRegistry().getOperatorSpi(operatorName);
+        if (operatorSpi == null) {
+            throw new IllegalArgumentException("operatorName");
+        }
+        parameterMap = new LinkedHashMap<>(17);
+        form = new L1cSynDefaultForm(operatorSpi, parameterMap);
+        initComponents();
+        form.initialize();
+    }
+
+    private void setSourceProductSelectorToolTipTexts() {
+        for (Field field : sourceProductSelectorMap.keySet()) {
+            final SourceProductSelector selector = sourceProductSelectorMap.get(field);
+            final SourceProduct annot = field.getAnnotation(SourceProduct.class);
+            final String description = annot.description();
+            if (!description.isEmpty()) {
+                selector.getProductNameComboBox().setToolTipText(description);
+            }
+        }
+    }
+
+    private void initSourceProductSelectors() {
+        for (SourceProductSelector sourceProductSelector : sourceProductSelectorList) {
+            sourceProductSelector.initProducts();
+        }
+    }
+
+    private void releaseSourceProductSelectors() {
+        for (SourceProductSelector sourceProductSelector : sourceProductSelectorList) {
+            sourceProductSelector.releaseProducts();
+        }
+    }
+
+    public void setTargetProductNameSuffix(String suffix) {
+        targetProductNameSuffix = suffix;
+    }
+}
