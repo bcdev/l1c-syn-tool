@@ -11,7 +11,7 @@ OpenIDE-Module-Long-Description: Sentinel-3 OLCI/SLSTR L1C SYN Tool<br>
  <b>Contract:</b> S3-MPC<br>
  <b>License:</b> <a href="http://www.gnu.org/licenses/gpl.html">GPL 3</a><br>
  <h2>Disclaimer</h2>
-   The work performed in the frame of this contract is
+   The work performed in the frame of the S3MPC contract is
    carried out with funding by the European Union.
    The views expressed herein can in no way be taken
    to reflect the official opinion of either the European
