@@ -16,4 +16,3 @@ OpenIDE-Module-Long-Description: Sentinel-3 OLCI/SLSTR L1C SYN Tool<br>
    The views expressed herein can in no way be taken
    to reflect the official opinion of either the European
    Union or the European Space Agency.<br>
-   <b>EU, ESA, EUMETSAT</b>
