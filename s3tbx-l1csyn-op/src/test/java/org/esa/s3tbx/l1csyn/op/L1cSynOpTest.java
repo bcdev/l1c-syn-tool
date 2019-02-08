@@ -18,8 +18,8 @@ public class L1cSynOpTest {
 
     @Test
     public void testL1cSynOpTest() throws IOException {
-        String slstrFilePath = L1cSynOpTest.class.getResource("SLSTRSub100.nc").getFile();
-        String olciFilePath = L1cSynOpTest.class.getResource("OLCISub100.nc").getFile();
+        String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
+        String olciFilePath = L1cSynOpTest.class.getResource("S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.nc").getFile();
 
         Product slstrProduct = ProductIO.readProduct(slstrFilePath);
         Product olciProduct = ProductIO.readProduct(olciFilePath);
@@ -67,7 +67,7 @@ public class L1cSynOpTest {
 
     @Test
     public void testGetResampleParameters() throws IOException {
-        String slstrFilePath = L1cSynOpTest.class.getResource("SLSTRSub100.nc").getFile();
+        String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
         Product slstrProduct = ProductIO.readProduct(slstrFilePath);
 
         Map<String, Object> map = L1cSynOp.getSlstrResampleParams(slstrProduct);

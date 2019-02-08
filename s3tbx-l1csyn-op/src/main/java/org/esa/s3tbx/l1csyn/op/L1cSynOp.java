@@ -1,6 +1,7 @@
 package org.esa.s3tbx.l1csyn.op;
 
 import org.esa.snap.core.datamodel.Product;
+import org.esa.snap.core.datamodel.ProductData;
 import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
@@ -10,8 +11,12 @@ import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 @SuppressWarnings("unused")
 @OperatorMetadata(alias = "L1CSYN",
@@ -108,12 +113,47 @@ public class L1cSynOp extends Operator {
         }
     }
 
+    private String getSynName(Product slstrSource, Product olciSource) throws OperatorException {
+        // pattern is MMM_SS_L_TTTTTT_yyyymmddThhmmss_YYYYMMDDTHHMMSS_yyyyMMDDTHHMMSS_<instance ID>_GGG_<class ID>.<extension>
+        String slstrName = slstrSource.getName();
+        String olciName = olciSource.getName();
+
+        StringBuilder synName = new StringBuilder();
+        if (olciName.contains("S3A") && slstrName.contains("S3A")){
+            synName.append( "S3A_SY_1_SYN____");
+        }
+        else if (olciName.contains("S3B") && slstrName.contains("S3B")){
+            synName.append( "S3B_SY_1_SYN____");
+        }
+        else {
+            throw new OperatorException("The SLSTR and OLCI products are from different missions");
+        }
+        String startTimeEndTime = slstrSource.getName().substring(16,47);
+        synName.append(startTimeEndTime);
+        synName.append("_");
+        DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+        Date date = new Date();
+        String currentDate = dateFormat.format(date);
+        synName.append(currentDate);
+        synName.append("_");
+        String instanceString = slstrSource.getName().substring(64,81);
+        synName.append(instanceString);
+        synName.append("_");
+        synName.append("LN2_");
+        synName.append("O_NT_"); /// Operational, non-time-critical
+        String slstrBaseline = slstrSource.getName().substring(91,94);
+        synName.append(slstrBaseline);
+        synName.append(".SEN3");
+        return synName.toString();
+    }
+
     private boolean isValidOlciProduct(Product product) {
-        return product.getProductType().contains("OL_1") || product.getName().contains("OLCI");
+        return product.getProductType().contains("OL_1") || product.getName().contains("OL");
     }
 
     private boolean isValidSlstrProduct(Product product) {
-        return product.getProductType().contains("SL_1") || product.getName().contains("SLSTR");
+        return product.getProductType().contains("SL_1") || product.getName().contains("SL");
     }
 
     public static class Spi extends OperatorSpi {
