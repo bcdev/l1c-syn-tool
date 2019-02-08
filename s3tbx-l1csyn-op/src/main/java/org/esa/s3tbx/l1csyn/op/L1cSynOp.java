@@ -32,7 +32,7 @@ public class L1cSynOp extends Operator {
     @TargetProduct(label = "L1C SYN Product", description = "L1C SYNERGY output product")
     private Product l1cTarget;
 
-    @Parameter(label = "Allowed time difference", defaultValue = "10", unit = "h",
+    @Parameter(label = "Allowed time difference", defaultValue = "200", unit = "s",
             description = "Allowed time difference between SLSTR and OLCI products")
     private long allowedTimeDiff;
 
@@ -102,9 +102,9 @@ public class L1cSynOp extends Operator {
         long slstrTime = slstrSource.getStartTime().getAsDate().getTime();
         long olciTime = olciSource.getEndTime().getAsDate().getTime();
         long diff = slstrTime - olciTime;
-        long diffInHours = (diff) / (1000 * 60 * 60);
-        if (diffInHours > allowedTimeDiff) {
-            throw new OperatorException("The SLSTR and OLCI products differ more than" + String.format("%d", diffInHours) + ". Please check your input times");
+        long diffInSeconds = (diff) / (1000 );
+        if (diffInSeconds > allowedTimeDiff) {
+            throw new OperatorException("The SLSTR and OLCI products differ more than" + String.format("%d", diffInSeconds) + ". Please check your input times");
         }
     }
 
