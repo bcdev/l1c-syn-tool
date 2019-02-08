@@ -28,12 +28,6 @@ public class L1cSynDefaultForm extends JTabbedPane {
                             new ParameterDescriptorFactory());
             addParameterPane(propertyContainer, "Processing Parameters");
 
-
-
-            final PropertyContainer propertyContainer2 =
-                    PropertyContainer.createMapBacked(parameterMap, operatorSpi.getOperatorClass(),
-                            new ParameterDescriptorFactory());
-            addParameterPane(propertyContainer2, "deleteme");
         }
 
         ///////////// END OF PUBLIC //////////////
@@ -48,6 +42,10 @@ public class L1cSynDefaultForm extends JTabbedPane {
 
             this.add(title, new JScrollPane(parametersPanel));
         }
+
+
+
+
 }
 
 

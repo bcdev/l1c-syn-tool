@@ -82,11 +82,14 @@ public class L1cSynDialog extends SingleTargetProductDialog {
 
         final TargetProductSelectorModel targetProductSelectorModel = getTargetProductSelector().getModel();
 
+        targetProductSelectorModel.setFormatName("NetCDF4-CF");
+
         SourceProductSelectionListener sourceProductSelectionListener =
                 new SourceProductSelectionListener(targetProductSelectorModel, targetProductNameSuffix);
         sourceProductSelectorList.get(0).addSelectionChangeListener(sourceProductSelectionListener);
 
         form.add("I/O Parameters", ioParametersPanel);
+
 
 
         OperatorParameterSupport parameterSupport = new OperatorParameterSupport(operatorSpi.getOperatorDescriptor(),
@@ -98,23 +101,32 @@ public class L1cSynDialog extends SingleTargetProductDialog {
                 parameterSupport,
                 appContext,
                 helpID);
-        getJDialog().setJMenuBar(menuSupport.createDefaultMenu());
+         getJDialog().setJMenuBar(menuSupport.createDefaultMenu());
+
     }
 
     private void setupSourceProductSelectorList(OperatorSpi operatorSpi) {
-        sourceProductSelectorList = new ArrayList<>(3);
-        sourceProductSelectorMap = new HashMap<>(3);
+        sourceProductSelectorList = new ArrayList<>(2);
+        sourceProductSelectorMap = new HashMap<>(2);
         final Field[] fields = operatorSpi.getOperatorClass().getDeclaredFields();
         for (Field field : fields) {
             final SourceProduct annot = field.getAnnotation(SourceProduct.class);
             if (annot != null) {
                 final ProductFilter productFilter = new AnnotatedSourceProductFilter(annot);
                 SourceProductSelector sourceProductSelector = new SourceProductSelector(appContext);
+                if (field.getName().equals("olciSource")) {
+                     sourceProductSelector = new SourceProductSelector(appContext, "OLCI PRODUCT",false);
+                }
+                else if (field.getName().equals("slstrSource")){
+                     sourceProductSelector = new SourceProductSelector(appContext, "SLSTR PRODUCT",false);
+                }
                 sourceProductSelector.setProductFilter(productFilter);
                 sourceProductSelectorList.add(sourceProductSelector);
                 sourceProductSelectorMap.put(field, sourceProductSelector);
             }
         }
+
+
     }
 
     private HashMap<String, Product> createSourceProductsMap() {
