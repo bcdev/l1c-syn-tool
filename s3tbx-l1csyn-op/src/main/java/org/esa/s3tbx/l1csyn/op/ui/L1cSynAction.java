@@ -12,13 +12,13 @@ import java.awt.event.ActionEvent;
 @ActionID(category = "Preprocessing", id = "org.esa.s3tbx.l1csyn.op.ui.L1cSynAction" )
 @ActionRegistration(displayName = "#CTL_L1cSynAction_Text")
 @ActionReference(path = "Menu/Optical/Preprocessing", position = 0 )
-@NbBundle.Messages({"CTL_L1cSynAction_Text=L1C SYN Tool Test GUI"})
+@NbBundle.Messages({"CTL_L1cSynAction_Text=L1C SYN Tool 2"})
 
 public class L1cSynAction extends AbstractSnapAction {
     private static final String OPERATOR_ALIAS = "L1CSYN";
 
     public L1cSynAction() {
-        putValue(SHORT_DESCRIPTION, "Generates florescence line height (FLH) / maximum chlorophyll index (MCI) from spectral bands.");
+        putValue(SHORT_DESCRIPTION, "Creates L1C Product from OLCI and SLSTR products");
     }
 
     @Override
@@ -29,6 +29,7 @@ public class L1cSynAction extends AbstractSnapAction {
 
 
         dialog.setTargetProductNameSuffix("_L1CSYN");
+
         dialog.getJDialog().pack();
         dialog.show();
     }

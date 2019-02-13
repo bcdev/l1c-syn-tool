@@ -1,26 +1,31 @@
 package org.esa.s3tbx.l1csyn.op.ui;
 
+import com.bc.ceres.binding.PropertyContainer;
 import com.bc.ceres.swing.TableLayout;
+import com.bc.ceres.swing.binding.BindingContext;
+import com.bc.ceres.swing.binding.PropertyPane;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductFilter;
 import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.OperatorSpi;
+import org.esa.snap.core.gpf.annotations.ParameterDescriptorFactory;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.ui.*;
 import org.esa.snap.ui.AppContext;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.lang.reflect.Field;
 import java.util.*;
 
 public class L1cSynDialog extends SingleTargetProductDialog {
 
-    private List<SourceProductSelector> sourceProductSelectorList;
+    private static List<SourceProductSelector> sourceProductSelectorList;
     private Map<Field, SourceProductSelector> sourceProductSelectorMap;
 
     private String operatorName;
     private Map<String, Object> parameterMap;
-    private L1cSynDefaultForm form;
+    private JTabbedPane form;
     private String targetProductNameSuffix;
     private AppContext appContext;
 
@@ -46,6 +51,7 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         return GPF.createProduct(operatorName, parameterMap, sourceProducts);
     }
 
+
     @Override
     public int show() {
         initSourceProductSelectors();
@@ -66,7 +72,6 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         if (!sourceProductSelectorList.isEmpty()) {
             setSourceProductSelectorToolTipTexts();
         }
-
         final TableLayout tableLayout = new TableLayout(1);
         tableLayout.setTableAnchor(TableLayout.Anchor.WEST);
         tableLayout.setTableWeightX(1.0);
@@ -88,10 +93,9 @@ public class L1cSynDialog extends SingleTargetProductDialog {
                 new SourceProductSelectionListener(targetProductSelectorModel, targetProductNameSuffix);
         sourceProductSelectorList.get(0).addSelectionChangeListener(sourceProductSelectionListener);
 
+
+
         form.add("I/O Parameters", ioParametersPanel);
-
-
-
         OperatorParameterSupport parameterSupport = new OperatorParameterSupport(operatorSpi.getOperatorDescriptor(),
                 null,
                 parameterMap,
@@ -102,6 +106,7 @@ public class L1cSynDialog extends SingleTargetProductDialog {
                 appContext,
                 helpID);
          getJDialog().setJMenuBar(menuSupport.createDefaultMenu());
+
 
     }
 
@@ -125,12 +130,10 @@ public class L1cSynDialog extends SingleTargetProductDialog {
                 sourceProductSelectorMap.put(field, sourceProductSelector);
             }
         }
-
-
     }
 
-    private HashMap<String, Product> createSourceProductsMap() {
-        final HashMap<String, Product> sourceProducts = new HashMap<>(8);
+     HashMap<String, Product> createSourceProductsMap() {
+        final HashMap<String, Product> sourceProducts = new HashMap<>(2);
         for (Field field : sourceProductSelectorMap.keySet()) {
             final SourceProductSelector selector = sourceProductSelectorMap.get(field);
             String key = field.getName();
@@ -168,10 +171,35 @@ public class L1cSynDialog extends SingleTargetProductDialog {
             throw new IllegalArgumentException("operatorName");
         }
         parameterMap = new LinkedHashMap<>(17);
-        form = new L1cSynDefaultForm(operatorSpi, parameterMap);
+
+        ///
+        form = new JTabbedPane();
         initComponents();
-        form.initialize();
+        final PropertyContainer propertyContainer =
+                PropertyContainer.createMapBacked(parameterMap, operatorSpi.getOperatorClass(),
+                        new ParameterDescriptorFactory());
+        addFormParameterPane(propertyContainer, "Processing Parameters", form);
+        ///
+
     }
+
+    private void addFormParameterPane(PropertyContainer propertyContainer, String title, JTabbedPane form) {
+        BindingContext context = new BindingContext(propertyContainer);
+        PropertyPane parametersPane = new PropertyPane(context);
+        JPanel parametersPanel = parametersPane.createPanel();
+        parametersPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
+        JButton button = new JButton("Regional Subsetting");
+
+        ////
+        HashMap<String, Product> map = createSourceProductsMap();
+        //Product product = null;
+        button.addActionListener(new L1cSynSubsetAction( ));
+
+        ///
+        parametersPanel.add(button);
+        form.add(title, new JScrollPane(parametersPanel));
+    }
+
 
     private void setSourceProductSelectorToolTipTexts() {
         for (Field field : sourceProductSelectorMap.keySet()) {
@@ -199,4 +227,12 @@ public class L1cSynDialog extends SingleTargetProductDialog {
     public void setTargetProductNameSuffix(String suffix) {
         targetProductNameSuffix = suffix;
     }
+
+    public static Product getSourceProduct() {
+
+        Product slstrSource = sourceProductSelectorList.get(0).getSelectedProduct();
+
+        return slstrSource;
+    }
+
 }
