@@ -51,7 +51,7 @@ public class L1cSynSubsetAction extends AbstractSnapAction implements ActionList
         }*/
 
         ProductSubsetDialog dialog = new ProductSubsetDialog(window,product);
-        Component[] components = dialog.getJDialog().getComponents();
+        //Component[] components = dialog.getJDialog().getComponents();
         //JTabbedPane tab = (JTabbedPane) components[0];
         dialog.getJDialog().pack();
 

@@ -89,11 +89,6 @@ public class L1cSynDialog extends SingleTargetProductDialog {
 
         targetProductSelectorModel.setFormatName("NetCDF4-CF");
 
-        SourceProductSelectionListener sourceProductSelectionListener =
-                new SourceProductSelectionListener(targetProductSelectorModel, targetProductNameSuffix);
-        sourceProductSelectorList.get(0).addSelectionChangeListener(sourceProductSelectionListener);
-
-
 
         form.add("I/O Parameters", ioParametersPanel);
         OperatorParameterSupport parameterSupport = new OperatorParameterSupport(operatorSpi.getOperatorDescriptor(),
@@ -192,9 +187,7 @@ public class L1cSynDialog extends SingleTargetProductDialog {
 
         ////
         HashMap<String, Product> map = createSourceProductsMap();
-        //Product product = null;
         button.addActionListener(new L1cSynSubsetAction( ));
-
         ///
         parametersPanel.add(button);
         form.add(title, new JScrollPane(parametersPanel));
