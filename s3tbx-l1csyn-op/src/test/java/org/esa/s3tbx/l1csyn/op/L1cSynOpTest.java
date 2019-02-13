@@ -24,6 +24,7 @@ public class L1cSynOpTest {
         Product slstrProduct = ProductIO.readProduct(slstrFilePath);
         Product olciProduct = ProductIO.readProduct(olciFilePath);
         Operator l1cSynOp = new L1cSynOp();
+        l1cSynOp.setParameterDefaultValues();
         l1cSynOp.setSourceProduct("olciProduct", olciProduct);
         l1cSynOp.setSourceProduct("slstrProduct", slstrProduct);
         Product result = l1cSynOp.getTargetProduct();
