@@ -1,11 +1,9 @@
 package org.esa.s3tbx.l1csyn.op.ui;
 
-import org.esa.snap.core.dataio.ProductSubsetDef;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.MetadataElement;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.TiePointGrid;
-import org.esa.snap.rcp.SnapApp;
 import org.esa.snap.rcp.actions.AbstractSnapAction;
 import org.esa.snap.ui.AppContext;
 import org.esa.snap.ui.product.ProductSubsetDialog;
@@ -24,7 +22,11 @@ public class L1cSynSubsetAction extends AbstractSnapAction implements ActionList
      private Product olciProduct;
      private Product slstrProduct;
      private ProductSubsetDialog dialog;
-     private ProductSubsetDef subsetDef;
+     private L1cSynDialog parentDialog;
+
+     public L1cSynSubsetAction(L1cSynDialog parentDialog){
+         this.parentDialog = parentDialog;
+     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -38,27 +40,18 @@ public class L1cSynSubsetAction extends AbstractSnapAction implements ActionList
         dialog = new ProductSubsetDialog(window,product);
 
         JButton runButton = (JButton) dialog.getButton(1);
-        //runButton.removeActionListener(runButton.getActionListeners()[0]);
         runButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                L1cSynDialog.setParameters(dialog.getProductSubsetDef());
+                parentDialog.setParameters(dialog.getProductSubsetDef());
                 System.out.println("Do Something Clicked");
-                //SnapApp.getDefault().getProductManager().addProduct(dialog.getProduct());
-                //SnapApp.getDefault().getProductManager().removeAllProducts();
             }
         });
-        //SnapApp.getDefault().getProductManager()
         dialog.getJDialog().pack();
         dialog.show();
         dialog.getJDialog().setVisible(false);
 
-    }
-
-    public ProductSubsetDef getSubsetInfo(){
-        dialog.getJDialog().setVisible(true);
-        return dialog.getProductSubsetDef();
     }
 
 

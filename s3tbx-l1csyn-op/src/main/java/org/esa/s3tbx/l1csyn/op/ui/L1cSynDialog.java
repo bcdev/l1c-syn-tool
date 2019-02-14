@@ -5,9 +5,7 @@ import com.bc.ceres.binding.PropertySet;
 import com.bc.ceres.swing.TableLayout;
 import com.bc.ceres.swing.binding.BindingContext;
 import com.bc.ceres.swing.binding.PropertyPane;
-import org.esa.s3tbx.l1csyn.op.L1cSynOp;
 import org.esa.snap.core.dataio.ProductSubsetDef;
-import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductFilter;
 import org.esa.snap.core.gpf.GPF;
@@ -35,8 +33,8 @@ public class L1cSynDialog extends SingleTargetProductDialog {
 
     private static OperatorSpi operatorSpi;
     private String helpID;
-
-    /*
+    private HashMap<String, Object> paneMap;
+     /*
      * DefaultDialog constructor
      */
     public L1cSynDialog(String operatorName, AppContext appContext, String title, String helpID, String targetProductNameSuffix) {
@@ -179,6 +177,7 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         final PropertyContainer propertyContainer =
                 PropertyContainer.createMapBacked(parameterMap, operatorSpi.getOperatorClass(),
                         new ParameterDescriptorFactory());
+        paneMap = new LinkedHashMap<>();
         addFormParameterPane(propertyContainer, "Processing Parameters", form);
         ///
 
@@ -190,13 +189,18 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         JPanel parametersPanel = parametersPane.createPanel();
         parametersPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
         JButton button = new JButton("Regional Subsetting");
-        ////
-        //HashMap<String, Product> map = createSourceProductsMap();
-        button.addActionListener(new L1cSynSubsetAction( ));
+        button.addActionListener(new L1cSynSubsetAction(this));
         ///
         parametersPanel.add(button);
-        form.add(title, new JScrollPane(parametersPanel));
-        //final ProductSubsetDef subsetDef = subsetDialog.getProductSubsetDef();
+        JScrollPane scrollPane = new JScrollPane(parametersPanel);
+        form.add(title,scrollPane );
+        paneMap.put(title,scrollPane);
+    }
+
+    private void updateFormParameterPane(String title) {
+        //BindingContext context = new BindingContext(propertyContainer);
+        JScrollPane scrollPane = (JScrollPane) paneMap.get(title);
+        scrollPane.updateUI();
     }
 
 
@@ -227,10 +231,14 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         targetProductNameSuffix = suffix;
     }
 
-     static void setParameters(ProductSubsetDef subsetDef){
+      void setParameters(ProductSubsetDef subsetDef){
          OperatorParameterSupport parameterSupport = new OperatorParameterSupport(operatorSpi.getOperatorDescriptor());
          PropertySet propertyContainer = parameterSupport.getPropertySet();
          propertyContainer.setValue("upsampling", "Bilinear");
+         propertyContainer.setValue("time",2L);
+          
+
+         //updateFormParameterPane("Processing Parameters");
          //this.subsetDef = subsetDef;
     }
 

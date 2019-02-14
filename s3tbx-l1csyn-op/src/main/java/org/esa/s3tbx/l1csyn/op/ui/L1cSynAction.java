@@ -29,7 +29,6 @@ public class L1cSynAction extends AbstractSnapAction {
 
 
         dialog.setTargetProductNameSuffix("_L1CSYN");
-
         dialog.getJDialog().pack();
         dialog.show();
     }
