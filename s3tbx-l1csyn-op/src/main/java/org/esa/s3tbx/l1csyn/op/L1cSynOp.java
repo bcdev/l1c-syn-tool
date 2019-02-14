@@ -25,7 +25,7 @@ import java.util.TimeZone;
 
 @SuppressWarnings("unused")
 @OperatorMetadata(alias = "L1CSYN",
-        //label = "L1C SYN Tool",
+        label = "L1C SYN Tool",
         authors = "Marco Peters, Roman Shevchuk",
         copyright = "Brockmann Consult GmbH",
         description = "Sentinel-3 OLCI/SLSTR L1C SYN Tool",
@@ -41,20 +41,6 @@ public class L1cSynOp extends Operator {
 
     @TargetProduct(label = "L1C SYN Product", description = "L1C SYNERGY output product")
     private Product l1cTarget;
-
-    /*@Parameter(converter = JtsGeometryConverter.class,
-            description = "The subset region in geographical coordinates using WKT-format,\n" +
-                    "e.g. POLYGON((<lon1> <lat1>, <lon2> <lat2>, ..., <lon1> <lat1>))\n" +
-                    "(make sure to quote the option due to spaces in <geometry>).\n" +
-                    "If not given, the entire scene is used.")
-    private Geometry geoRegion;
-
-    @Parameter(converter = RectangleConverter.class,
-            description = "The subset region in pixel coordinates.\n" +
-                    "Use the following format: <x>,<y>,<width>,<height>\n" +
-                    "If not given, the entire scene is used. The 'geoRegion' parameter has precedence over this parameter.")
-    private Rectangle region = null;
-    */
 
     @Parameter(label = "Allowed time difference", defaultValue = "10", unit = "h",
             description = "Allowed time difference between SLSTR and OLCI products")
@@ -83,7 +69,6 @@ public class L1cSynOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
-        //setParameterDefaultValues();
 
         if (!isValidOlciProduct(olciSource)) {
             throw new OperatorException("OLCI product is not valid");

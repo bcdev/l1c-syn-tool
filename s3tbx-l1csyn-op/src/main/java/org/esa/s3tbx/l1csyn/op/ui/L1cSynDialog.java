@@ -4,7 +4,6 @@ import com.bc.ceres.binding.PropertyContainer;
 import com.bc.ceres.swing.TableLayout;
 import com.bc.ceres.swing.binding.BindingContext;
 import com.bc.ceres.swing.binding.PropertyPane;
-import org.esa.s3tbx.l1csyn.op.L1cSynOp;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductFilter;
 import org.esa.snap.core.gpf.GPF;
@@ -47,7 +46,7 @@ public class L1cSynDialog extends SingleTargetProductDialog {
     }
 
     @Override
-    protected Product createTargetProduct() throws Exception {
+    protected Product createTargetProduct()  {
         final HashMap<String, Product> sourceProducts = createSourceProductsMap();
         return GPF.createProduct(operatorName, parameterMap, sourceProducts);
     }
@@ -90,7 +89,6 @@ public class L1cSynDialog extends SingleTargetProductDialog {
 
         targetProductSelectorModel.setFormatName("NetCDF4-CF");
 
-        targetProductSelectorModel.setProductName("somename");
 
         form.add("I/O Parameters", ioParametersPanel);
         OperatorParameterSupport parameterSupport = new OperatorParameterSupport(operatorSpi.getOperatorDescriptor(),
@@ -186,9 +184,8 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         JPanel parametersPanel = parametersPane.createPanel();
         parametersPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
         JButton button = new JButton("Regional Subsetting");
-
         ////
-        HashMap<String, Product> map = createSourceProductsMap();
+        //HashMap<String, Product> map = createSourceProductsMap();
         button.addActionListener(new L1cSynSubsetAction( ));
         ///
         parametersPanel.add(button);
@@ -223,14 +220,8 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         targetProductNameSuffix = suffix;
     }
 
-    private String[] getSourceFilenames() {
-        String slstrName = sourceProductSelectorList.get(0).getSelectedProduct().getName();
-        String olciName = sourceProductSelectorList.get(1).getSelectedProduct().getName();
-        String[] nameArray = {slstrName,olciName};
-        return nameArray;
-    }
 
-    public static Product[] getSourceProducts() {
+     static Product[] getSourceProducts() {
         Product slstrSource = sourceProductSelectorList.get(0).getSelectedProduct();
         Product olciSource = sourceProductSelectorList.get(1).getSelectedProduct();
         Product[] products = {slstrSource,olciSource};
