@@ -1,9 +1,13 @@
 package org.esa.s3tbx.l1csyn.op.ui;
 
 import com.bc.ceres.binding.PropertyContainer;
+import com.bc.ceres.binding.PropertySet;
 import com.bc.ceres.swing.TableLayout;
 import com.bc.ceres.swing.binding.BindingContext;
 import com.bc.ceres.swing.binding.PropertyPane;
+import org.esa.s3tbx.l1csyn.op.L1cSynOp;
+import org.esa.snap.core.dataio.ProductSubsetDef;
+import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductFilter;
 import org.esa.snap.core.gpf.GPF;
@@ -22,14 +26,14 @@ public class L1cSynDialog extends SingleTargetProductDialog {
 
     private static List<SourceProductSelector> sourceProductSelectorList;
     private Map<Field, SourceProductSelector> sourceProductSelectorMap;
-
+    //private static ProductSubsetDef subsetDef;
     private String operatorName;
-    private Map<String, Object> parameterMap;
+    private static Map<String, Object> parameterMap;
     private JTabbedPane form;
     private String targetProductNameSuffix;
     private AppContext appContext;
 
-    private OperatorSpi operatorSpi;
+    private static OperatorSpi operatorSpi;
     private String helpID;
 
     /*
@@ -104,6 +108,8 @@ public class L1cSynDialog extends SingleTargetProductDialog {
 
 
     }
+
+
 
     private void setupSourceProductSelectorList(OperatorSpi operatorSpi) {
         sourceProductSelectorList = new ArrayList<>(2);
@@ -190,6 +196,7 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         ///
         parametersPanel.add(button);
         form.add(title, new JScrollPane(parametersPanel));
+        //final ProductSubsetDef subsetDef = subsetDialog.getProductSubsetDef();
     }
 
 
@@ -220,6 +227,12 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         targetProductNameSuffix = suffix;
     }
 
+     static void setParameters(ProductSubsetDef subsetDef){
+         OperatorParameterSupport parameterSupport = new OperatorParameterSupport(operatorSpi.getOperatorDescriptor());
+         PropertySet propertyContainer = parameterSupport.getPropertySet();
+         propertyContainer.setValue("upsampling", "Bilinear");
+         //this.subsetDef = subsetDef;
+    }
 
      static Product[] getSourceProducts() {
         Product slstrSource = sourceProductSelectorList.get(0).getSelectedProduct();
@@ -227,5 +240,6 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         Product[] products = {slstrSource,olciSource};
         return products ;
     }
+
 
 }

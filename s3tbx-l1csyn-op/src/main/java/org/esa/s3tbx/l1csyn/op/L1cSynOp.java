@@ -52,9 +52,13 @@ public class L1cSynOp extends Operator {
             valueSet = {"Nearest", "Bilinear", "Bicubic"},
             defaultValue = "Nearest"
     )
+
+
+
+
     private  String upsamplingMethod;
 
-    @Parameter(alias="bandselection",
+    @Parameter(alias="bandSelection",
             label = "Group of bands selected",
             description = "Preselected group of bands",
             valueSet = {"All", "Radiance only", "Radiance and quality flags"},
