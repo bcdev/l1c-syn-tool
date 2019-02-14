@@ -27,7 +27,7 @@ public class L1cSynSubsetAction extends AbstractSnapAction implements ActionList
     public void actionPerformed(ActionEvent e) {
         final AppContext appContext = getAppContext();
 
-        product = L1cSynDialog.getSourceProduct();
+        product = L1cSynDialog.getSourceProducts()[0];
         if (product ==null){
             throw new IllegalArgumentException("No product selected");
         }

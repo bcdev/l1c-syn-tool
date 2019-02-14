@@ -4,6 +4,7 @@ import com.bc.ceres.binding.PropertyContainer;
 import com.bc.ceres.swing.TableLayout;
 import com.bc.ceres.swing.binding.BindingContext;
 import com.bc.ceres.swing.binding.PropertyPane;
+import org.esa.s3tbx.l1csyn.op.L1cSynOp;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductFilter;
 import org.esa.snap.core.gpf.GPF;
@@ -89,6 +90,7 @@ public class L1cSynDialog extends SingleTargetProductDialog {
 
         targetProductSelectorModel.setFormatName("NetCDF4-CF");
 
+        targetProductSelectorModel.setProductName("somename");
 
         form.add("I/O Parameters", ioParametersPanel);
         OperatorParameterSupport parameterSupport = new OperatorParameterSupport(operatorSpi.getOperatorDescriptor(),
@@ -221,11 +223,18 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         targetProductNameSuffix = suffix;
     }
 
-    public static Product getSourceProduct() {
+    private String[] getSourceFilenames() {
+        String slstrName = sourceProductSelectorList.get(0).getSelectedProduct().getName();
+        String olciName = sourceProductSelectorList.get(1).getSelectedProduct().getName();
+        String[] nameArray = {slstrName,olciName};
+        return nameArray;
+    }
 
+    public static Product[] getSourceProducts() {
         Product slstrSource = sourceProductSelectorList.get(0).getSelectedProduct();
-
-        return slstrSource;
+        Product olciSource = sourceProductSelectorList.get(1).getSelectedProduct();
+        Product[] products = {slstrSource,olciSource};
+        return products ;
     }
 
 }
