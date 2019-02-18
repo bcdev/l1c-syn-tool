@@ -26,22 +26,20 @@ public class L1cSynSubsetAction extends AbstractSnapAction implements ActionList
      public L1cSynSubsetAction(L1cSynDialog parentDialog,String type){
          this.parentDialog = parentDialog;
          this.type = type;
-         //this.product = product;
      }
 
     @Override
     public void actionPerformed(ActionEvent e)  {
         final AppContext appContext = getAppContext();
 
-
         Window window = appContext.getApplicationWindow();
         if (type.equals("OLCI")){
-            product=parentDialog.getSourceProducts()[0];
+            product=parentDialog.createSourceProductsMap().get("olciProduct");
         }
         else if (type.equals("SLSTR")){
-            product=parentDialog.getSourceProducts()[1];
-        }
+            product=parentDialog.createSourceProductsMap().get("slstrProduct");
 
+        }
 
         dialog = new ProductSubsetDialog(window,product);
 
@@ -52,8 +50,9 @@ public class L1cSynSubsetAction extends AbstractSnapAction implements ActionList
                 ProductSubsetDef subsetDef =  dialog.getProductSubsetDef();
 
                 try {
-                    Product olciSub = product.createSubset(subsetDef, "subset"+product.getName(), product.getDescription());
-                    SnapApp.getDefault().getProductManager().addProduct(olciSub);
+                    Product subProduct = product.createSubset(subsetDef, "subset_"+product.getName(), product.getDescription());
+                    //SnapApp.getDefault().getProductManager().addProduct(subProduct);
+                    parentDialog.setSourceProduct(type,subProduct);
                 }
                 catch (Exception exception) {
                     final String msg = "An error occurred while creating the product subset:\n" +

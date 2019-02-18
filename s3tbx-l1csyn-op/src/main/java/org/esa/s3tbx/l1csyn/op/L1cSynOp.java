@@ -50,9 +50,6 @@ public class L1cSynOp extends Operator {
             defaultValue = "Nearest"
     )
 
-
-
-
     private  String upsamplingMethod;
 
     @Parameter(alias="bandSelection",
@@ -63,9 +60,6 @@ public class L1cSynOp extends Operator {
     )
     private String bandSelection;
 
-    //@Parameter(description = "The list of bands in the target product.", alias = "sourceBands", itemAlias = "band", rasterDataNodeType = Band.class)
-    //private String[] targetBandNames;
-    //The interface for band selection and default selection will be enabled for version-2 */
 
 
     @Override
@@ -78,13 +72,6 @@ public class L1cSynOp extends Operator {
         if (!isValidSlstrProduct(slstrSource)) {
             throw new OperatorException("SLSTR product is not valid");
         }
-
-        // Will be enabled/reworked along with the band selection in version-2
-        /*if (targetBandNames == null) {
-            throw new OperatorException("Zero bands for target product are chosen");
-        }
-        setSlstrBands(targetBandNames, slstrSource);
-        setOlciBands(targetBandNames,olciSource);*/
 
         checkDate(slstrSource, olciSource);
 
@@ -158,7 +145,7 @@ public class L1cSynOp extends Operator {
     }
 
 
-    public static String getSynName(Product slstrSource, Product olciSource) throws OperatorException {
+    public String getSynName(Product slstrSource, Product olciSource) throws OperatorException {
         // pattern is MMM_SS_L_TTTTTT_yyyymmddThhmmss_YYYYMMDDTHHMMSS_yyyyMMDDTHHMMSS_<instance ID>_GGG_<class ID>.<extension>
         String slstrName = slstrSource.getName();
         String olciName = olciSource.getName();

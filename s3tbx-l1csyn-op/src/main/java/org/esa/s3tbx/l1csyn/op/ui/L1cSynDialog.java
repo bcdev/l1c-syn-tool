@@ -1,14 +1,13 @@
 package org.esa.s3tbx.l1csyn.op.ui;
 
 import com.bc.ceres.binding.PropertyContainer;
-import com.bc.ceres.binding.PropertySet;
 import com.bc.ceres.swing.TableLayout;
 import com.bc.ceres.swing.binding.BindingContext;
 import com.bc.ceres.swing.binding.PropertyPane;
-import org.esa.snap.core.dataio.ProductSubsetDef;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductFilter;
 import org.esa.snap.core.gpf.GPF;
+import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.core.gpf.OperatorSpi;
 import org.esa.snap.core.gpf.annotations.ParameterDescriptorFactory;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
@@ -18,13 +17,14 @@ import org.esa.snap.ui.AppContext;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.lang.reflect.Field;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class L1cSynDialog extends SingleTargetProductDialog{
 
     private static List<SourceProductSelector> sourceProductSelectorList;
     private Map<Field, SourceProductSelector> sourceProductSelectorMap;
-    //private static ProductSubsetDef subsetDef;
     private String operatorName;
     private static Map<String, Object> parameterMap;
     private JTabbedPane form;
@@ -34,7 +34,7 @@ public class L1cSynDialog extends SingleTargetProductDialog{
     private static OperatorSpi operatorSpi;
     private String helpID;
     private HashMap<String, Object> paneMap;
-     /*
+    /*
      * DefaultDialog constructor
      */
     public L1cSynDialog(String operatorName, AppContext appContext, String title, String helpID, String targetProductNameSuffix) {
@@ -87,8 +87,6 @@ public class L1cSynDialog extends SingleTargetProductDialog{
         ioParametersPanel.add(tableLayout.createVerticalSpacer());
         final TargetProductSelectorModel targetProductSelectorModel = getTargetProductSelector().getModel();
         targetProductSelectorModel.setFormatName("NetCDF4-CF");
-
-
         form.add("I/O Parameters", ioParametersPanel);
         OperatorParameterSupport parameterSupport = new OperatorParameterSupport(operatorSpi.getOperatorDescriptor(),
                 null,
@@ -99,7 +97,7 @@ public class L1cSynDialog extends SingleTargetProductDialog{
                 parameterSupport,
                 appContext,
                 helpID);
-         getJDialog().setJMenuBar(menuSupport.createDefaultMenu());
+        getJDialog().setJMenuBar(menuSupport.createDefaultMenu());
     }
 
 
@@ -114,10 +112,10 @@ public class L1cSynDialog extends SingleTargetProductDialog{
                 final ProductFilter productFilter = new AnnotatedSourceProductFilter(annot);
                 SourceProductSelector sourceProductSelector = new SourceProductSelector(appContext);
                 if (field.getName().equals("olciSource")) {
-                     sourceProductSelector = new SourceProductSelector(appContext, "OLCI PRODUCT",false);
+                    sourceProductSelector = new SourceProductSelector(appContext, "OLCI PRODUCT",false);
                 }
                 else if (field.getName().equals("slstrSource")){
-                     sourceProductSelector = new SourceProductSelector(appContext, "SLSTR PRODUCT",false);
+                    sourceProductSelector = new SourceProductSelector(appContext, "SLSTR PRODUCT",false);
                 }
                 sourceProductSelector.setProductFilter(productFilter);
                 sourceProductSelectorList.add(sourceProductSelector);
@@ -126,7 +124,7 @@ public class L1cSynDialog extends SingleTargetProductDialog{
         }
     }
 
-     HashMap<String, Product> createSourceProductsMap() {
+    HashMap<String, Product> createSourceProductsMap() {
         final HashMap<String, Product> sourceProducts = new HashMap<>(2);
         for (Field field : sourceProductSelectorMap.keySet()) {
             final SourceProductSelector selector = sourceProductSelectorMap.get(field);
@@ -164,7 +162,7 @@ public class L1cSynDialog extends SingleTargetProductDialog{
         if (operatorSpi == null) {
             throw new IllegalArgumentException("operatorName");
         }
-        parameterMap = new LinkedHashMap<>(17);
+        parameterMap = new LinkedHashMap<>(10);
 
         ///
         form = new JTabbedPane();
@@ -182,15 +180,17 @@ public class L1cSynDialog extends SingleTargetProductDialog{
         BindingContext context = new BindingContext(propertyContainer);
         PropertyPane parametersPane = new PropertyPane(context);
         JPanel parametersPanel = parametersPane.createPanel();
-        parametersPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
+        //parametersPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
+
+
         JButton olciSubsetButton = new JButton("OLCI Subset");
+        olciSubsetButton.setLocation(100,100);
         olciSubsetButton.addActionListener(new L1cSynSubsetAction(this,"OLCI"));
         parametersPanel.add(olciSubsetButton);
         JButton slstrSubsetButton = new JButton("SLSTR Subset");
+        slstrSubsetButton.setLocation(100,200);
         slstrSubsetButton.addActionListener(new L1cSynSubsetAction(this,"SLSTR"));
         parametersPanel.add(slstrSubsetButton);
-        ///
-
         JScrollPane scrollPane = new JScrollPane(parametersPanel);
         form.add(title,scrollPane );
         paneMap.put(title,scrollPane);
@@ -219,21 +219,20 @@ public class L1cSynDialog extends SingleTargetProductDialog{
         }
     }
 
-    public void setTargetProductNameSuffix(String suffix) {
+    /*public void setTargetProductNameSuffix(String suffix) {
         targetProductNameSuffix = suffix;
+    }*/
+
+
+    public void setSourceProduct(String type, Product product) {
+        if (type.equals("OLCI")) {
+            sourceProductSelectorList.get(0).setSelectedProduct(product);
+        }
+        else if (type.equals("SLSTR")){
+            sourceProductSelectorList.get(1).setSelectedProduct(product);
+        }
     }
 
-      void setParameters(Product newProduct){
-
-          createSourceProductsMap();
-    }
-
-     static Product[] getSourceProducts() {
-        Product slstrSource = sourceProductSelectorList.get(0).getSelectedProduct();
-        Product olciSource = sourceProductSelectorList.get(1).getSelectedProduct();
-        Product[] products = {slstrSource,olciSource};
-        return products ;
-    }
 
 
 }
