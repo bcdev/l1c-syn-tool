@@ -84,25 +84,6 @@ public class L1cSynOp extends Operator {
         l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
     }
 
-
-    protected void setSlstrBands(String[]  targetBandNames, Product slstrSource) {
-        String[] bands = slstrSource.getBandNames();
-            for (String bandName : bands) {
-                if (!Arrays.asList(targetBandNames).contains(bandName)) {
-                    slstrSource.removeBand(slstrSource.getBand(bandName));
-            }
-        }
-    }
-
-    protected void setOlciBands(String[]  targetBandNames, Product olciSource) {
-        String[] bands = olciSource.getBandNames();
-        for (String bandName : bands) {
-            if (!Arrays.asList(targetBandNames).contains(bandName)) {
-                olciSource.removeBand(slstrSource.getBand(bandName));
-            }
-        }
-    }
-
     static Map<String, Object> getReprojectParams() {
         HashMap<String, Object> params = new HashMap<>();
         params.put("resampling", "Nearest");
