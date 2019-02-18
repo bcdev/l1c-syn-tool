@@ -18,10 +18,7 @@ import org.esa.snap.core.util.converters.RectangleConverter;
 import java.awt.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 
 @SuppressWarnings("unused")
 @OperatorMetadata(alias = "L1CSYN",
@@ -66,9 +63,9 @@ public class L1cSynOp extends Operator {
     )
     private String bandSelection;
 
-    /*@Parameter(description = "The list of bands in the target product.", alias = "sourceBands", itemAlias = "band", rasterDataNodeType = Band.class)
-    private String[] targetBandNames;
-    The interface for band selection and default selection will be enabled for version-2 */
+    //@Parameter(description = "The list of bands in the target product.", alias = "sourceBands", itemAlias = "band", rasterDataNodeType = Band.class)
+    //private String[] targetBandNames;
+    //The interface for band selection and default selection will be enabled for version-2 */
 
 
     @Override
@@ -82,12 +79,12 @@ public class L1cSynOp extends Operator {
             throw new OperatorException("SLSTR product is not valid");
         }
 
-        /* Will be enabled/reworked along with the band selection in version-2
-        if (targetBandNames == null) {
+        // Will be enabled/reworked along with the band selection in version-2
+        /*if (targetBandNames == null) {
             throw new OperatorException("Zero bands for target product are chosen");
-        }*/
-        setSlstrBands(bandSelection, slstrSource);
-        setOlciBands(bandSelection,olciSource);
+        }
+        setSlstrBands(targetBandNames, slstrSource);
+        setOlciBands(targetBandNames,olciSource);*/
 
         checkDate(slstrSource, olciSource);
 
@@ -100,24 +97,21 @@ public class L1cSynOp extends Operator {
         l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
     }
 
-    protected void setSlstrBands(String bandSelection, Product slstrSource) {
-        Band[] bands = slstrSource.getBands();
-        if (bandSelection.equals("Radiance only")){
-            for (Band band : bands) {
-                if (! band.getName().contains("BT")) {
-                    slstrSource.removeBand(band);
-                }
+
+    protected void setSlstrBands(String[]  targetBandNames, Product slstrSource) {
+        String[] bands = slstrSource.getBandNames();
+            for (String bandName : bands) {
+                if (!Arrays.asList(targetBandNames).contains(bandName)) {
+                    slstrSource.removeBand(slstrSource.getBand(bandName));
             }
         }
     }
 
-    protected void setOlciBands(String bandSelection, Product olciSource) {
-        Band[] bands = olciSource.getBands();
-        if (bandSelection.equals("Radiance only")){
-            for (Band band : bands) {
-                if (! band.getName().contains("radiance")) {
-                    olciSource.removeBand(band);
-                }
+    protected void setOlciBands(String[]  targetBandNames, Product olciSource) {
+        String[] bands = olciSource.getBandNames();
+        for (String bandName : bands) {
+            if (!Arrays.asList(targetBandNames).contains(bandName)) {
+                olciSource.removeBand(slstrSource.getBand(bandName));
             }
         }
     }

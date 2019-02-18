@@ -1,9 +1,8 @@
 package org.esa.s3tbx.l1csyn.op.ui;
 
-import org.esa.snap.core.datamodel.Band;
-import org.esa.snap.core.datamodel.MetadataElement;
+import org.esa.snap.core.dataio.ProductSubsetDef;
 import org.esa.snap.core.datamodel.Product;
-import org.esa.snap.core.datamodel.TiePointGrid;
+import org.esa.snap.rcp.SnapApp;
 import org.esa.snap.rcp.actions.AbstractSnapAction;
 import org.esa.snap.ui.AppContext;
 import org.esa.snap.ui.product.ProductSubsetDialog;
@@ -19,23 +18,30 @@ import java.awt.event.ActionListener;
 
 
 public class L1cSynSubsetAction extends AbstractSnapAction implements ActionListener {
-     private Product olciProduct;
-     private Product slstrProduct;
+     private Product product;
      private ProductSubsetDialog dialog;
      private L1cSynDialog parentDialog;
+     private String type;
 
-     public L1cSynSubsetAction(L1cSynDialog parentDialog){
+     public L1cSynSubsetAction(L1cSynDialog parentDialog,String type){
          this.parentDialog = parentDialog;
+         this.type = type;
+         //this.product = product;
      }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent e)  {
         final AppContext appContext = getAppContext();
 
-        olciProduct = L1cSynDialog.getSourceProducts()[0];
-        slstrProduct = L1cSynDialog.getSourceProducts()[1];
-        Product product = createProduct(olciProduct,slstrProduct);
+
         Window window = appContext.getApplicationWindow();
+        if (type.equals("OLCI")){
+            product=parentDialog.getSourceProducts()[0];
+        }
+        else if (type.equals("SLSTR")){
+            product=parentDialog.getSourceProducts()[1];
+        }
+
 
         dialog = new ProductSubsetDialog(window,product);
 
@@ -43,49 +49,24 @@ public class L1cSynSubsetAction extends AbstractSnapAction implements ActionList
         runButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                ProductSubsetDef subsetDef =  dialog.getProductSubsetDef();
 
-                parentDialog.setParameters(dialog.getProductSubsetDef());
-                System.out.println("Do Something Clicked");
+                try {
+                    Product olciSub = product.createSubset(subsetDef, "subset"+product.getName(), product.getDescription());
+                    SnapApp.getDefault().getProductManager().addProduct(olciSub);
+                }
+                catch (Exception exception) {
+                    final String msg = "An error occurred while creating the product subset:\n" +
+                            exception.getMessage();
+                    SnapApp.getDefault().handleError(msg, exception);
+                }
+                System.out.println("Remove this in production");
             }
         });
         dialog.getJDialog().pack();
         dialog.show();
-        dialog.getJDialog().setVisible(false);
-
     }
 
 
-    private Product createProduct(Product olciProduct, Product slstrProduct){
-       if (olciProduct==null && slstrProduct==null) {
-           throw new IllegalArgumentException("No product selected");
-       }
-       else if (slstrProduct==null) {
-           return olciProduct;
-       }
-       else if (olciProduct==null) {
-           return  slstrProduct;
-       }
-       else {
-           Band[] slstrBands = slstrProduct.getBands();
-           for (Band band : slstrBands){
-               if (! olciProduct.containsBand(band.getName())) {
-                   olciProduct.addBand(band);
-               }
-           }
-           TiePointGrid[] slstrTiePointGrids = slstrProduct.getTiePointGrids();
-           for (TiePointGrid tiePointGrid : slstrTiePointGrids){
-               if (! olciProduct.containsTiePointGrid(tiePointGrid.getName())) {
-                   olciProduct.addTiePointGrid(tiePointGrid);
-               }
-           }
-           MetadataElement[] elements = slstrProduct.getMetadataRoot().getElements();
-           for (MetadataElement element : elements){
-               if (! olciProduct.getMetadataRoot().containsElement(element.getName())) {
-                   olciProduct.getMetadataRoot().addElement(element);
-               }
-           }
-           return  olciProduct;
-       }
-    }
 
 }

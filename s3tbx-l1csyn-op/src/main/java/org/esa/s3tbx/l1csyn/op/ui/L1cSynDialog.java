@@ -20,7 +20,7 @@ import javax.swing.border.EmptyBorder;
 import java.lang.reflect.Field;
 import java.util.*;
 
-public class L1cSynDialog extends SingleTargetProductDialog {
+public class L1cSynDialog extends SingleTargetProductDialog{
 
     private static List<SourceProductSelector> sourceProductSelectorList;
     private Map<Field, SourceProductSelector> sourceProductSelectorMap;
@@ -79,16 +79,13 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         tableLayout.setTableWeightX(1.0);
         tableLayout.setTableFill(TableLayout.Fill.HORIZONTAL);
         tableLayout.setTablePadding(3, 3);
-
         JPanel ioParametersPanel = new JPanel(tableLayout);
         for (SourceProductSelector selector : sourceProductSelectorList) {
             ioParametersPanel.add(selector.createDefaultPanel());
         }
         ioParametersPanel.add(getTargetProductSelector().createDefaultPanel());
         ioParametersPanel.add(tableLayout.createVerticalSpacer());
-
         final TargetProductSelectorModel targetProductSelectorModel = getTargetProductSelector().getModel();
-
         targetProductSelectorModel.setFormatName("NetCDF4-CF");
 
 
@@ -103,8 +100,6 @@ public class L1cSynDialog extends SingleTargetProductDialog {
                 appContext,
                 helpID);
          getJDialog().setJMenuBar(menuSupport.createDefaultMenu());
-
-
     }
 
 
@@ -188,21 +183,18 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         PropertyPane parametersPane = new PropertyPane(context);
         JPanel parametersPanel = parametersPane.createPanel();
         parametersPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
-        JButton button = new JButton("Regional Subsetting");
-        button.addActionListener(new L1cSynSubsetAction(this));
+        JButton olciSubsetButton = new JButton("OLCI Subset");
+        olciSubsetButton.addActionListener(new L1cSynSubsetAction(this,"OLCI"));
+        parametersPanel.add(olciSubsetButton);
+        JButton slstrSubsetButton = new JButton("SLSTR Subset");
+        slstrSubsetButton.addActionListener(new L1cSynSubsetAction(this,"SLSTR"));
+        parametersPanel.add(slstrSubsetButton);
         ///
-        parametersPanel.add(button);
+
         JScrollPane scrollPane = new JScrollPane(parametersPanel);
         form.add(title,scrollPane );
         paneMap.put(title,scrollPane);
     }
-
-    private void updateFormParameterPane(String title) {
-        //BindingContext context = new BindingContext(propertyContainer);
-        JScrollPane scrollPane = (JScrollPane) paneMap.get(title);
-        scrollPane.updateUI();
-    }
-
 
     private void setSourceProductSelectorToolTipTexts() {
         for (Field field : sourceProductSelectorMap.keySet()) {
@@ -231,15 +223,9 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         targetProductNameSuffix = suffix;
     }
 
-      void setParameters(ProductSubsetDef subsetDef){
-         OperatorParameterSupport parameterSupport = new OperatorParameterSupport(operatorSpi.getOperatorDescriptor());
-         PropertySet propertyContainer = parameterSupport.getPropertySet();
-         propertyContainer.setValue("upsampling", "Bilinear");
-         propertyContainer.setValue("time",2L);
-          
+      void setParameters(Product newProduct){
 
-         //updateFormParameterPane("Processing Parameters");
-         //this.subsetDef = subsetDef;
+          createSourceProductsMap();
     }
 
      static Product[] getSourceProducts() {
