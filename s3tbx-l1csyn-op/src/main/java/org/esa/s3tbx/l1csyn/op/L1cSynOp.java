@@ -1,9 +1,6 @@
 package org.esa.s3tbx.l1csyn.op;
 
-import com.vividsolutions.jts.geom.Geometry;
-import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
-import org.esa.snap.core.datamodel.ProductData;
 import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
@@ -12,13 +9,13 @@ import org.esa.snap.core.gpf.annotations.OperatorMetadata;
 import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
-import org.esa.snap.core.util.converters.JtsGeometryConverter;
-import org.esa.snap.core.util.converters.RectangleConverter;
 
-import java.awt.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TimeZone;
 
 @SuppressWarnings("unused")
 @OperatorMetadata(alias = "L1CSYN",
@@ -49,16 +46,15 @@ public class L1cSynOp extends Operator {
             valueSet = {"Nearest", "Bilinear", "Bicubic"},
             defaultValue = "Nearest"
     )
-
     private  String upsamplingMethod;
 
-    @Parameter(alias="bandSelection",
-            label = "Group of bands selected",
-            description = "Preselected group of bands",
-            valueSet = {"All", "Radiance only", "Radiance and quality flags"},
-            defaultValue = "All"
+    @Parameter(alias = "reprojectionCRS",
+            label = "Reprojection crs",
+            description = "T",
+            valueSet = {"EPSG:4326", "EPSG:9108", "EPSG:9122"},
+            defaultValue = "EPSG:4326"
     )
-    private String bandSelection;
+    private String reprojectionCRS;
 
 
 
@@ -84,18 +80,18 @@ public class L1cSynOp extends Operator {
         l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
     }
 
-    static Map<String, Object> getReprojectParams() {
+     Map<String, Object> getReprojectParams() {
         HashMap<String, Object> params = new HashMap<>();
         params.put("resampling", "Nearest");
         params.put("orthorectify", false);
         params.put("noDataValue", "NaN");
         params.put("includeTiePointGrids", true);
         params.put("addDeltaBands", false);
-        params.put("crs", "EPSG:4326");
+        params.put("crs", reprojectionCRS);
         return params;
     }
 
-    static Map<String, Object> getCollocateParams() {
+    protected Map<String, Object> getCollocateParams() {
         HashMap<String, Object> params = new HashMap<>();
         params.put("targetProductType", "S3_L1C_SYN");
         params.put("renameMasterComponents", false);
@@ -104,7 +100,7 @@ public class L1cSynOp extends Operator {
         return params;
     }
 
-    protected static HashMap<String, Object> getSlstrResampleParams(Product toResample, String upsamplingMethod) {
+    protected  HashMap<String, Object> getSlstrResampleParams(Product toResample, String upsamplingMethod) {
         HashMap<String, Object> params = new HashMap<>();
         params.put("targetWidth", toResample.getSceneRasterWidth());
         params.put("targetHeight", toResample.getSceneRasterHeight());

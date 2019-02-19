@@ -44,7 +44,8 @@ public class L1cSynOpTest {
 
     @Test
     public void testGetCollocateParams() {
-        Map<String, Object> map = L1cSynOp.getCollocateParams();
+        Operator l1cSynOp = new L1cSynOp();
+        Map<String, Object> map = ((L1cSynOp) l1cSynOp).getCollocateParams();
         boolean renameMasterComponents = (boolean) map.get("renameMasterComponents");
         boolean renameSlaveComponents = (boolean) map.get("renameSlaveComponents");
         String resamplingType = (String) map.get("resamplingType");
@@ -57,7 +58,9 @@ public class L1cSynOpTest {
 
     @Test
     public void testGetReprojectParams() {
-        Map<String, Object> map = L1cSynOp.getReprojectParams();
+        Operator l1cSynOp = new L1cSynOp();
+        l1cSynOp.setParameterDefaultValues();
+        Map<String, Object> map = ((L1cSynOp) l1cSynOp).getReprojectParams();
         String resampling = (String) map.get("resampling");
         boolean orthorectify = (boolean) map.get("orthorectify");
         String crs = (String) map.get("crs");
@@ -72,7 +75,8 @@ public class L1cSynOpTest {
         String slstrFilePath = L1cSynOpTest.class.getResource("SLSTRSub100.nc").getFile();
         Product slstrProduct = ProductIO.readProduct(slstrFilePath);
         String upsamplingMethod = "Nearest";
-        Map<String, Object> map = L1cSynOp.getSlstrResampleParams(slstrProduct, upsamplingMethod);
+        Operator l1cSynOp = new L1cSynOp();
+        Map<String, Object> map = ((L1cSynOp) l1cSynOp).getSlstrResampleParams(slstrProduct, upsamplingMethod);
         int width = (int) map.get("targetWidth");
         int height = (int) map.get("targetHeight");
         String upsampling = (String) map.get("upsampling");

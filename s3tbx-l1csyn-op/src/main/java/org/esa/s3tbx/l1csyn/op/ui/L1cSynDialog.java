@@ -16,10 +16,12 @@ import org.esa.snap.ui.AppContext;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.List;
 
 public class L1cSynDialog extends SingleTargetProductDialog{
 
@@ -180,15 +182,18 @@ public class L1cSynDialog extends SingleTargetProductDialog{
         BindingContext context = new BindingContext(propertyContainer);
         PropertyPane parametersPane = new PropertyPane(context);
         JPanel parametersPanel = parametersPane.createPanel();
-        //parametersPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
-
+        parametersPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
+        //parametersPanel.setLayout(new GridBagLayout());
+        //GridBagConstraints gbc = new GridBagConstraints();
+        //gbc.gridx = 4;
+        //gbc.gridy = 20;
 
         JButton olciSubsetButton = new JButton("OLCI Subset");
-        olciSubsetButton.setLocation(100,100);
+        //olciSubsetButton.setLocation(2,2);
         olciSubsetButton.addActionListener(new L1cSynSubsetAction(this,"OLCI"));
         parametersPanel.add(olciSubsetButton);
         JButton slstrSubsetButton = new JButton("SLSTR Subset");
-        slstrSubsetButton.setLocation(100,200);
+        //slstrSubsetButton.setLocation(2,4);
         slstrSubsetButton.addActionListener(new L1cSynSubsetAction(this,"SLSTR"));
         parametersPanel.add(slstrSubsetButton);
         JScrollPane scrollPane = new JScrollPane(parametersPanel);
