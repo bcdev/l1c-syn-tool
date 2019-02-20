@@ -26,11 +26,8 @@ public class L1cSynAction extends AbstractSnapAction {
         final AppContext appContext = getAppContext();
 
         final L1cSynDialog dialog = new L1cSynDialog(OPERATOR_ALIAS, appContext, "L1c Synergy Tool", "L1cSynTool", "_L1cSyn");
-
-
-        //dialog.setTargetProductNameSuffix("_L1CSYN");
+        dialog.setTargetProductNameSuffix("_L1CSYN");
         dialog.getJDialog().pack();
         dialog.show();
     }
-
 }

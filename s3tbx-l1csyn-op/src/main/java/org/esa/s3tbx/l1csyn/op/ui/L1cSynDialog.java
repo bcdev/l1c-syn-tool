@@ -7,7 +7,6 @@ import com.bc.ceres.swing.binding.PropertyPane;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductFilter;
 import org.esa.snap.core.gpf.GPF;
-import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.core.gpf.OperatorSpi;
 import org.esa.snap.core.gpf.annotations.ParameterDescriptorFactory;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
@@ -18,24 +17,21 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.lang.reflect.Field;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
 public class L1cSynDialog extends SingleTargetProductDialog{
 
-    private static List<SourceProductSelector> sourceProductSelectorList;
+    private  List<SourceProductSelector> sourceProductSelectorList;
     private Map<Field, SourceProductSelector> sourceProductSelectorMap;
     private String operatorName;
-    private static Map<String, Object> parameterMap;
+    private Map<String, Object> parameterMap;
     private JTabbedPane form;
     private String targetProductNameSuffix;
     private AppContext appContext;
 
-    private static OperatorSpi operatorSpi;
+    private  OperatorSpi operatorSpi;
     private String helpID;
-    private HashMap<String, Object> paneMap;
     /*
      * DefaultDialog constructor
      */
@@ -55,7 +51,6 @@ public class L1cSynDialog extends SingleTargetProductDialog{
         return GPF.createProduct(operatorName, parameterMap, sourceProducts);
     }
 
-
     @Override
     public int show() {
         initSourceProductSelectors();
@@ -68,7 +63,6 @@ public class L1cSynDialog extends SingleTargetProductDialog{
         releaseSourceProductSelectors();
         super.hide();
     }
-
 
     private void initComponents() {
         // Fetch source products
@@ -101,7 +95,6 @@ public class L1cSynDialog extends SingleTargetProductDialog{
                 helpID);
         getJDialog().setJMenuBar(menuSupport.createDefaultMenu());
     }
-
 
 
     private void setupSourceProductSelectorList(OperatorSpi operatorSpi) {
@@ -165,40 +158,33 @@ public class L1cSynDialog extends SingleTargetProductDialog{
             throw new IllegalArgumentException("operatorName");
         }
         parameterMap = new LinkedHashMap<>(10);
-
         ///
         form = new JTabbedPane();
         initComponents();
         final PropertyContainer propertyContainer =
                 PropertyContainer.createMapBacked(parameterMap, operatorSpi.getOperatorClass(),
                         new ParameterDescriptorFactory());
-        paneMap = new LinkedHashMap<>();
         addFormParameterPane(propertyContainer, "Processing Parameters", form);
         ///
-
     }
 
     private void addFormParameterPane(PropertyContainer propertyContainer, String title, JTabbedPane form) {
         BindingContext context = new BindingContext(propertyContainer);
         PropertyPane parametersPane = new PropertyPane(context);
         JPanel parametersPanel = parametersPane.createPanel();
-        parametersPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
-        //parametersPanel.setLayout(new GridBagLayout());
-        //GridBagConstraints gbc = new GridBagConstraints();
-        //gbc.gridx = 4;
-        //gbc.gridy = 20;
+        parametersPanel.setBorder(new EmptyBorder(2, 2, 2, 2));
+        parametersPanel.setSize(3,3);
 
         JButton olciSubsetButton = new JButton("OLCI Subset");
-        //olciSubsetButton.setLocation(2,2);
         olciSubsetButton.addActionListener(new L1cSynSubsetAction(this,"OLCI"));
-        parametersPanel.add(olciSubsetButton);
+        parametersPanel.add(olciSubsetButton,TableLayout.cell(3,2));
+
         JButton slstrSubsetButton = new JButton("SLSTR Subset");
-        //slstrSubsetButton.setLocation(2,4);
         slstrSubsetButton.addActionListener(new L1cSynSubsetAction(this,"SLSTR"));
-        parametersPanel.add(slstrSubsetButton);
+        parametersPanel.add(slstrSubsetButton,TableLayout.cell(3,3));
+
         JScrollPane scrollPane = new JScrollPane(parametersPanel);
-        form.add(title,scrollPane );
-        paneMap.put(title,scrollPane);
+        form.add(title,scrollPane);
     }
 
     private void setSourceProductSelectorToolTipTexts() {
@@ -224,9 +210,9 @@ public class L1cSynDialog extends SingleTargetProductDialog{
         }
     }
 
-    /*public void setTargetProductNameSuffix(String suffix) {
+    protected void setTargetProductNameSuffix(String suffix) {
         targetProductNameSuffix = suffix;
-    }*/
+    }
 
 
     public void setSourceProduct(String type, Product product) {
