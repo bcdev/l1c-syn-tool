@@ -2,6 +2,7 @@ package org.esa.s3tbx.l1csyn.op.ui;
 
 import org.esa.snap.core.dataio.ProductSubsetDef;
 import org.esa.snap.core.datamodel.Product;
+import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.rcp.SnapApp;
 import org.esa.snap.rcp.actions.AbstractSnapAction;
 import org.esa.snap.ui.AppContext;
@@ -40,9 +41,10 @@ public class L1cSynSubsetAction extends AbstractSnapAction implements ActionList
             product=parentDialog.createSourceProductsMap().get("slstrProduct");
 
         }
-
+        if (product == null) {
+            throw new OperatorException("Please choose "+type+" product for subsetting");
+        }
         dialog = new ProductSubsetDialog(window,product);
-
         JButton runButton = (JButton) dialog.getButton(1);
         runButton.addActionListener(new ActionListener() {
             @Override
@@ -51,7 +53,6 @@ public class L1cSynSubsetAction extends AbstractSnapAction implements ActionList
 
                 try {
                     Product subProduct = product.createSubset(subsetDef, "subset_"+product.getName(), product.getDescription());
-                    //SnapApp.getDefault().getProductManager().addProduct(subProduct);
                     parentDialog.setSourceProduct(type,subProduct);
                 }
                 catch (Exception exception) {
