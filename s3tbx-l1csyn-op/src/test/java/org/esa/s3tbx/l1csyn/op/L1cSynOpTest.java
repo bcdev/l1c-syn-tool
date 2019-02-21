@@ -100,7 +100,7 @@ public class L1cSynOpTest {
         assertFalse(resampleOnPyramidLevels);
 
     }
-    
+
     @Test
     public void testOrderSourceProductSelector() throws IOException {
         final AppContext appContext = new DefaultAppContext("SNAP");

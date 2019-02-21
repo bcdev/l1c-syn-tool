@@ -80,13 +80,6 @@ public class L1cSynOp extends Operator {
         sourceProductMap.put("slaveProduct", slstrInput);
         Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
         l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
-        //
-        Product.AutoGrouping olciGrouping = olciSource.getAutoGrouping();
-        Product.AutoGrouping slstrGrouping = slstrSource.getAutoGrouping();
-        Product.AutoGrouping targetGrouping = l1cTarget.getAutoGrouping();
-
-        int a = 1;
-        //
     }
 
      Map<String, Object> getReprojectParams() {
