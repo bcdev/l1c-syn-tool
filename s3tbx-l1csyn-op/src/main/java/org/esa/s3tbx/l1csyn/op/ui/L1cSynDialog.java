@@ -29,7 +29,6 @@ public class L1cSynDialog extends SingleTargetProductDialog{
     private JTabbedPane form;
     private String targetProductNameSuffix;
     private AppContext appContext;
-
     private  OperatorSpi operatorSpi;
     private String helpID;
     /*
@@ -224,6 +223,7 @@ public class L1cSynDialog extends SingleTargetProductDialog{
         }
     }
 
-
-
+    public List<SourceProductSelector> getSourceProductSelectorList() {
+        return sourceProductSelectorList;
+    }
 }

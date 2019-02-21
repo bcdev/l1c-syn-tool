@@ -1,12 +1,21 @@
 package org.esa.s3tbx.l1csyn.op;
 
+import org.esa.s3tbx.l1csyn.op.ui.L1cSynDialog;
 import org.esa.snap.core.dataio.ProductIO;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
+import org.esa.snap.core.datamodel.ProductManager;
 import org.esa.snap.core.gpf.Operator;
+import org.esa.snap.core.gpf.ui.SourceProductSelector;
+import org.esa.snap.core.util.PropertyMap;
+import org.esa.snap.ui.AppContext;
+import org.esa.snap.ui.DefaultAppContext;
+import org.esa.snap.ui.product.ProductSceneView;
 import org.junit.Test;
 
+import java.awt.*;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -91,5 +100,18 @@ public class L1cSynOpTest {
         assertFalse(resampleOnPyramidLevels);
 
     }
+    
+    @Test
+    public void testOrderSourceProductSelector() throws IOException {
+        final AppContext appContext = new DefaultAppContext("SNAP");
+        L1cSynDialog dialog = new L1cSynDialog("L1CSYN", appContext, "L1c Synergy Tool", "L1cSynTool", "_L1cSyn");
+        String slstrFilePath = L1cSynOpTest.class.getResource("SLSTRSub100.nc").getFile();
+        Product slstrProduct = ProductIO.readProduct(slstrFilePath);
+        dialog.setSourceProduct("SLSTR",slstrProduct);
+        List<SourceProductSelector> sourceProductSelectorList = dialog.getSourceProductSelectorList();
+        String slstrProductName = sourceProductSelectorList.get(1).getSelectedProduct().getName();
+        assertEquals("SLSTRSub100",slstrProductName);
+    }
+
 
 }

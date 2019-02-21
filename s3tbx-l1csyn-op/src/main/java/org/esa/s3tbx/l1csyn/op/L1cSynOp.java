@@ -1,6 +1,8 @@
 package org.esa.s3tbx.l1csyn.op;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.esa.snap.core.datamodel.Product;
+import org.esa.snap.core.dataop.maptransf.StereographicDescriptor;
 import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
@@ -78,6 +80,13 @@ public class L1cSynOp extends Operator {
         sourceProductMap.put("slaveProduct", slstrInput);
         Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
         l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
+        //
+        Product.AutoGrouping olciGrouping = olciSource.getAutoGrouping();
+        Product.AutoGrouping slstrGrouping = slstrSource.getAutoGrouping();
+        Product.AutoGrouping targetGrouping = l1cTarget.getAutoGrouping();
+
+        int a = 1;
+        //
     }
 
      Map<String, Object> getReprojectParams() {
