@@ -43,7 +43,8 @@ public class L1cSynOpTest {
 
     @Test
     public void testGetCollocateParams() {
-        Map<String, Object> map = L1cSynOp.getCollocateParams();
+        Operator l1cSynOp = new L1cSynOp();
+        Map<String, Object> map = ((L1cSynOp) l1cSynOp).getCollocateParams();
         boolean renameMasterComponents = (boolean) map.get("renameMasterComponents");
         boolean renameSlaveComponents = (boolean) map.get("renameSlaveComponents");
         String resamplingType = (String) map.get("resamplingType");
@@ -56,7 +57,9 @@ public class L1cSynOpTest {
 
     @Test
     public void testGetReprojectParams() {
-        Map<String, Object> map = L1cSynOp.getReprojectParams();
+        Operator l1cSynOp = new L1cSynOp();
+        l1cSynOp.setParameterDefaultValues();
+        Map<String, Object> map = ((L1cSynOp) l1cSynOp).getReprojectParams();
         String resampling = (String) map.get("resampling");
         boolean orthorectify = (boolean) map.get("orthorectify");
         String crs = (String) map.get("crs");
@@ -70,8 +73,9 @@ public class L1cSynOpTest {
     public void testGetResampleParameters() throws IOException {
         String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
         Product slstrProduct = ProductIO.readProduct(slstrFilePath);
-
-        Map<String, Object> map = L1cSynOp.getSlstrResampleParams(slstrProduct);
+        Operator l1cSynOp = new L1cSynOp();
+        l1cSynOp.setParameterDefaultValues();
+        Map<String, Object> map = ((L1cSynOp) l1cSynOp).getSlstrResampleParams(slstrProduct,"Nearest");
         int width = (int) map.get("targetWidth");
         int height = (int) map.get("targetHeight");
         String upsampling = (String) map.get("upsampling");

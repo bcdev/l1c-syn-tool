@@ -11,6 +11,7 @@
     <modules>
         <module>l1csyn-coreg-lib</module>
         <module>s3tbx-l1csyn-op</module>
+        <module>s3tbx-l1csyn-ui</module>
     </modules>
 
     <distributionManagement>

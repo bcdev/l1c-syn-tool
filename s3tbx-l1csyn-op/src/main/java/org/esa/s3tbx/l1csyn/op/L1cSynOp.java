@@ -1,7 +1,8 @@
 package org.esa.s3tbx.l1csyn.op;
 
+import org.esa.snap.core.datamodel.Band;
+import org.esa.snap.core.datamodel.MetadataElement;
 import org.esa.snap.core.datamodel.Product;
-import org.esa.snap.core.datamodel.ProductData;
 import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
@@ -28,6 +29,8 @@ import java.util.TimeZone;
         version= "1.0")
 public class L1cSynOp extends Operator {
 
+    private long allowedTimeDiff = 200l;
+
     @SourceProduct(alias = "olciProduct", label = "OLCI Product", description = "OLCI source product")
     private Product olciSource;
 
@@ -37,14 +40,42 @@ public class L1cSynOp extends Operator {
     @TargetProduct(label = "L1C SYN Product", description = "L1C SYNERGY output product")
     private Product l1cTarget;
 
-    @Parameter(label = "Allowed time difference", defaultValue = "200", unit = "s",
+    /*@Parameter(alias="time",label = "Allowed time difference", defaultValue = "10", unit = "h",
             description = "Allowed time difference between SLSTR and OLCI products")
-    private long allowedTimeDiff;
+    private long allowedTimeDiff;*/
 
-    /*@Parameter(description = "The list of bands in the target product.", alias = "sourceBands", itemAlias = "band", rasterDataNodeType = Band.class)
-    private String[] targetBandNames;
-    The interface for band selection and default selection will be enabled for version-2 */
+    @Parameter(alias = "upsampling",
+            label = "Resampling upsampling method",
+            description = "The method used for interpolation (upsampling to a finer resolution).",
+            valueSet = {"Nearest", "Bilinear", "Bicubic"},
+            defaultValue = "Nearest"
+    )
+    private  String upsamplingMethod;
 
+    @Parameter(alias = "reprojectionCRS",
+            label = "Reprojection crs",
+            description = "T",
+            valueSet = {"EPSG:4326", "EPSG:9108", "EPSG:9122"},
+            defaultValue = "EPSG:4326"
+    )
+    private String reprojectionCRS;
+
+
+    @Parameter(alias = "bandsOlci",
+            label = "bands OLCI",
+            description = "group of OLCI bands in output",
+            valueSet = {"All","Oa*_radiance","FWHM","lambda"},
+            defaultValue = "All"
+    )
+    private String bandsOlci;
+
+    @Parameter(alias = "bandsSlstr",
+            label = "bands SLSTR",
+            description = "group of SLSTR bands in output",
+            valueSet = {"All","F*BT","S*BT"},
+            defaultValue = "All"
+    )
+    private String bandsSlstr;
 
     @Override
     public void initialize() throws OperatorException {
@@ -57,33 +88,71 @@ public class L1cSynOp extends Operator {
             throw new OperatorException("SLSTR product is not valid");
         }
 
-        /* Will be enabled/reworked along with the band selection in version-2
-        if (targetBandNames == null) {
-            throw new OperatorException("Zero bands for target product are chosen");
-        }*/
-
         checkDate(slstrSource, olciSource);
 
-        Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource), slstrSource);
+        String outputName = getSynName(slstrSource,olciSource);
+        String startDate =  getStartDate(slstrSource,olciSource);
+
+        updateSlstrBands(slstrSource, bandsSlstr);
+        updateOlciBands(olciSource, bandsOlci);
+
+
+        Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource,upsamplingMethod), slstrSource);
         HashMap<String, Product> sourceProductMap = new HashMap<>();
+
         sourceProductMap.put("masterProduct", olciSource);
         sourceProductMap.put("slaveProduct", slstrInput);
         Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
         l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
+        String a = l1cTarget.getName();
+        int b = 1;
     }
 
-    static Map<String, Object> getReprojectParams() {
+    private void updateOlciBands(Product olciSource, String bandsOlci){
+        if (bandsOlci.equals("All")) {
+            return;
+        }
+        else if (bandsOlci.equals("Oa*_radiance")){
+            for (Band band : olciSource.getBands()){
+                if (!band.getName().matches("Oa.._radiance")){
+                    olciSource.removeBand(band);
+                }
+            }
+        }
+    }
+
+    private void updateSlstrBands(Product slstrSource, String bandsSlstr){
+        if (bandsSlstr.equals("All")){
+            return;
+        }
+        else if (bandsSlstr.equals("F*BT")){
+            for (Band band : slstrSource.getBands()){
+                if (!band.getName().matches("F._BT\\S+")){
+                    slstrSource.removeBand(band);
+                }
+            }
+        }
+        else if (bandsSlstr.equals("S*BT")){
+            for (Band band : slstrSource.getBands()){
+                if (!band.getName().matches("S._BT\\S+")){
+                    slstrSource.removeBand(band);
+                }
+            }
+        }
+    }
+
+     Map<String, Object> getReprojectParams() {
         HashMap<String, Object> params = new HashMap<>();
         params.put("resampling", "Nearest");
         params.put("orthorectify", false);
         params.put("noDataValue", "NaN");
         params.put("includeTiePointGrids", true);
         params.put("addDeltaBands", false);
-        params.put("crs", "EPSG:4326");
+        params.put("crs", reprojectionCRS);
         return params;
     }
 
-    static Map<String, Object> getCollocateParams() {
+    protected Map<String, Object> getCollocateParams() {
         HashMap<String, Object> params = new HashMap<>();
         params.put("targetProductType", "S3_L1C_SYN");
         params.put("renameMasterComponents", false);
@@ -92,11 +161,11 @@ public class L1cSynOp extends Operator {
         return params;
     }
 
-    protected static HashMap<String, Object> getSlstrResampleParams(Product toResample) {
+    protected  HashMap<String, Object> getSlstrResampleParams(Product toResample, String upsamplingMethod) {
         HashMap<String, Object> params = new HashMap<>();
         params.put("targetWidth", toResample.getSceneRasterWidth());
         params.put("targetHeight", toResample.getSceneRasterHeight());
-        params.put("upsampling", "Nearest");
+        params.put("upsampling", upsamplingMethod);
         params.put("downsampling", "First");
         params.put("flagDownsampling", "First");
         params.put("resampleOnPyramidLevels", false);
@@ -107,13 +176,48 @@ public class L1cSynOp extends Operator {
         long slstrTime = slstrSource.getStartTime().getAsDate().getTime();
         long olciTime = olciSource.getEndTime().getAsDate().getTime();
         long diff = slstrTime - olciTime;
-        long diffInSeconds = (diff) / (1000 );
+        long diffInSeconds = diff / 1000L ;
         if (diffInSeconds > allowedTimeDiff) {
             throw new OperatorException("The SLSTR and OLCI products differ more than" + String.format("%d", diffInSeconds) + ". Please check your input times");
         }
     }
 
-    private String getSynName(Product slstrSource, Product olciSource) throws OperatorException {
+    private String getStartDate(Product slstrSource, Product olciSource)  {
+        String someDateText = null;
+        Date date;
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSX");
+        Date startDate = null;
+        String startDateString = null;
+        MetadataElement[]  elements = slstrSource.getMetadataRoot().getElements();
+        for (MetadataElement element : elements){
+            MetadataElement[]  elementsLevelTwo = element.getElements();
+            for (MetadataElement elementLevelTwo : elementsLevelTwo){
+                 someDateText = elementLevelTwo.getAttributeString("start_time",null);
+                if (! (someDateText==null)) {
+                    try {
+                        date = dateFormat.parse(someDateText);
+                        if (startDate==null)
+                        {
+                            startDate = date;
+                            startDateString = someDateText;
+                        }
+                        else {
+                            if (startDate.getTime()>date.getTime()){
+                                startDate = date;
+                                startDateString = someDateText;
+                            }
+                        }
+                    }
+                    catch (Exception e) {throw new OperatorException("unexpected date in SLSTR file");}
+                }
+
+            }
+        }
+        return startDateString ;
+    }
+
+
+    public String getSynName(Product slstrSource, Product olciSource) throws OperatorException {
         // pattern is MMM_SS_L_TTTTTT_yyyymmddThhmmss_YYYYMMDDTHHMMSS_yyyyMMDDTHHMMSS_<instance ID>_GGG_<class ID>.<extension>
         String slstrName = slstrSource.getName();
         String olciName = olciSource.getName();
@@ -148,12 +252,13 @@ public class L1cSynOp extends Operator {
         return synName.toString();
     }
 
+
     private boolean isValidOlciProduct(Product product) {
-        return product.getProductType().contains("OL_1") || product.getName().contains("OL");
+        return product.getProductType().contains("OL_1") || product.getName().contains("OL_1");
     }
 
     private boolean isValidSlstrProduct(Product product) {
-        return product.getProductType().contains("SL_1") || product.getName().contains("SL");
+        return product.getProductType().contains("SL_1") || product.getName().contains("SL_1");
     }
 
     public static class Spi extends OperatorSpi {
