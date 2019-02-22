@@ -95,7 +95,7 @@ public class L1cSynOp extends Operator {
 
         updateSlstrBands(slstrSource, bandsSlstr);
         updateOlciBands(olciSource, bandsOlci);
-        
+
         Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource,upsamplingMethod), slstrSource);
         HashMap<String, Product> sourceProductMap = new HashMap<>();
 
