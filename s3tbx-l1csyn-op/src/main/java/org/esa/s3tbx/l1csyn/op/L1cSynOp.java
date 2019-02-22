@@ -95,8 +95,7 @@ public class L1cSynOp extends Operator {
 
         updateSlstrBands(slstrSource, bandsSlstr);
         updateOlciBands(olciSource, bandsOlci);
-
-
+        
         Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource,upsamplingMethod), slstrSource);
         HashMap<String, Product> sourceProductMap = new HashMap<>();
 
@@ -104,8 +103,6 @@ public class L1cSynOp extends Operator {
         sourceProductMap.put("slaveProduct", slstrInput);
         Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
         l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
-        String a = l1cTarget.getName();
-        int b = 1;
     }
 
     private void updateOlciBands(Product olciSource, String bandsOlci){
