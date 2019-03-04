@@ -1,11 +1,9 @@
-package org.esa.s3tbx.l1csyn.ui;
+package org.esa.s3tbx.l1csyn.op;
 
 import com.bc.ceres.binding.PropertyContainer;
 import com.bc.ceres.swing.TableLayout;
 import com.bc.ceres.swing.binding.BindingContext;
 import com.bc.ceres.swing.binding.PropertyPane;
-import com.bc.ceres.swing.selection.AbstractSelectionChangeListener;
-import com.bc.ceres.swing.selection.SelectionChangeEvent;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductFilter;
 import org.esa.snap.core.gpf.GPF;
@@ -13,7 +11,6 @@ import org.esa.snap.core.gpf.OperatorSpi;
 import org.esa.snap.core.gpf.annotations.ParameterDescriptorFactory;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.ui.*;
-import org.esa.snap.core.util.io.FileUtils;
 import org.esa.snap.ui.AppContext;
 
 import javax.swing.*;
@@ -199,8 +196,8 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
     //
     private void setTargetProductName() {
         targetProductSelector = this.getTargetProductSelector();
-            targetProductSelector.getModel().setProductName("abbbba");
-        }
+        targetProductSelector.getModel().setProductName("abbbba");
+    }
     //
     private void releaseSourceProductSelectors() {
         for (SourceProductSelector sourceProductSelector : sourceProductSelectorList) {
