@@ -40,10 +40,6 @@ public class L1cSynOp extends Operator {
     @TargetProduct(label = "L1C SYN Product", description = "L1C SYNERGY output product")
     private Product l1cTarget;
 
-    /*@Parameter(alias="time",label = "Allowed time difference", defaultValue = "10", unit = "h",
-            description = "Allowed time difference between SLSTR and OLCI products")
-    private long allowedTimeDiff;*/
-
     @Parameter(alias = "upsampling",
             label = "Resampling upsampling method",
             description = "The method used for interpolation (upsampling to a finer resolution).",
@@ -90,7 +86,6 @@ public class L1cSynOp extends Operator {
 
         checkDate(slstrSource, olciSource);
 
-        String outputName = getSynName(slstrSource,olciSource);
         String startDate =  getStartDate(slstrSource,olciSource);
 
         updateSlstrBands(slstrSource, bandsSlstr);
@@ -214,8 +209,12 @@ public class L1cSynOp extends Operator {
     }
 
 
-    public String getSynName(Product slstrSource, Product olciSource) throws OperatorException {
+    public static String getSynName(Product slstrSource, Product olciSource) throws OperatorException {
         // pattern is MMM_SS_L_TTTTTT_yyyymmddThhmmss_YYYYMMDDTHHMMSS_yyyyMMDDTHHMMSS_<instance ID>_GGG_<class ID>.<extension>
+        if (slstrSource==null || olciSource==null ){
+            return "L1C";
+        }
+
         String slstrName = slstrSource.getName();
         String olciName = olciSource.getName();
 

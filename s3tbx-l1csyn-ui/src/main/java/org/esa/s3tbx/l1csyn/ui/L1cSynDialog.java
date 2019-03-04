@@ -4,6 +4,8 @@ import com.bc.ceres.binding.PropertyContainer;
 import com.bc.ceres.swing.TableLayout;
 import com.bc.ceres.swing.binding.BindingContext;
 import com.bc.ceres.swing.binding.PropertyPane;
+import com.bc.ceres.swing.selection.AbstractSelectionChangeListener;
+import com.bc.ceres.swing.selection.SelectionChangeEvent;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductFilter;
 import org.esa.snap.core.gpf.GPF;
@@ -11,6 +13,7 @@ import org.esa.snap.core.gpf.OperatorSpi;
 import org.esa.snap.core.gpf.annotations.ParameterDescriptorFactory;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.ui.*;
+import org.esa.snap.core.util.io.FileUtils;
 import org.esa.snap.ui.AppContext;
 
 import javax.swing.*;
@@ -76,10 +79,11 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
         for (SourceProductSelector selector : sourceProductSelectorList) {
             ioParametersPanel.add(selector.createDefaultPanel());
         }
+        TargetProductSelectorModel targetProductSelectorModel = getTargetProductSelector().getModel();
+        targetProductSelectorModel.setFormatName("NetCDF4-BEAM");
+        targetProductSelectorModel.setProductName("l1csynj");
         ioParametersPanel.add(getTargetProductSelector().createDefaultPanel());
         ioParametersPanel.add(tableLayout.createVerticalSpacer());
-        final TargetProductSelectorModel targetProductSelectorModel = getTargetProductSelector().getModel();
-        targetProductSelectorModel.setFormatName("NetCDF4-CF");
         form.add("I/O Parameters", ioParametersPanel);
         OperatorParameterSupport parameterSupport = new OperatorParameterSupport(operatorSpi.getOperatorDescriptor(),
                 null,
@@ -171,15 +175,6 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
         JPanel parametersPanel = parametersPane.createPanel();
         parametersPanel.setBorder(new EmptyBorder(2, 2, 2, 2));
         parametersPanel.setSize(3,3);
-
-        /*JButton olciSubsetButton = new JButton("OLCI Subset");
-        olciSubsetButton.addActionListener(new L1cSynSubsetAction(this,"OLCI"));
-        parametersPanel.add(olciSubsetButton,TableLayout.cell(3,2));
-
-        JButton slstrSubsetButton = new JButton("SLSTR Subset");
-        slstrSubsetButton.addActionListener(new L1cSynSubsetAction(this,"SLSTR"));
-        parametersPanel.add(slstrSubsetButton,TableLayout.cell(3,3));*/
-
         JScrollPane scrollPane = new JScrollPane(parametersPanel);
         form.add(title,scrollPane);
     }
@@ -201,6 +196,12 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
         }
     }
 
+    //
+    private void setTargetProductName() {
+        targetProductSelector = this.getTargetProductSelector();
+            targetProductSelector.getModel().setProductName("abbbba");
+        }
+    //
     private void releaseSourceProductSelectors() {
         for (SourceProductSelector sourceProductSelector : sourceProductSelectorList) {
             sourceProductSelector.releaseProducts();
@@ -224,4 +225,22 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
     public List<SourceProductSelector> getSourceProductSelectorList() {
         return sourceProductSelectorList;
     }
+
+
+    /*private class SourceProductChangeListener extends AbstractSelectionChangeListener {
+
+        private static final String TARGET_PRODUCT_NAME_SUFFIX = "_radiometry";
+
+        @Override
+        public void selectionChanged(SelectionChangeEvent event) {
+            String productName = "";
+            final Product selectedProduct = (Product) event.getSelection().getSelectedValue();
+            if (selectedProduct != null) {
+                productName = FileUtils.getFilenameWithoutExtension(selectedProduct.getName());
+            }
+            final TargetProductSelectorModel targetProductSelectorModel = targetProductSelector.getModel();
+            targetProductSelectorModel.setProductName(productName + TARGET_PRODUCT_NAME_SUFFIX);
+        }
+    }*/
+
 }
