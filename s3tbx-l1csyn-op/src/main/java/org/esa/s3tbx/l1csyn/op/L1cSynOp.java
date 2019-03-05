@@ -175,7 +175,7 @@ public class L1cSynOp extends Operator {
         HashMap<String, String> dateMap = new HashMap<>();
         String startDate;
         String endDate;
-        DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         final long slstrStartTime = slstrSource.getStartTime().getAsDate().getTime();
         final long olciStartTime = olciSource.getStartTime().getAsDate().getTime();
@@ -230,7 +230,7 @@ public class L1cSynOp extends Operator {
         synName.append(endDate);
         synName.append("_");
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         Date date = new Date();
         String currentDate = dateFormat.format(date);
