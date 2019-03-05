@@ -36,7 +36,7 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
     /*
      * DefaultDialog constructor
      */
-    public L1cSynDialog(String operatorName, AppContext appContext, String title, String helpID, String targetProductNameSuffix) {
+    L1cSynDialog(String operatorName, AppContext appContext, String title, String helpID) {
         super(appContext, title, helpID);
         this.helpID = helpID;
         this.operatorName = operatorName;
@@ -120,7 +120,7 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
         }
     }
 
-    HashMap<String, Product> createSourceProductsMap() {
+    private HashMap<String, Product> createSourceProductsMap() {
         final HashMap<String, Product> sourceProducts = new HashMap<>(2);
         for (Field field : sourceProductSelectorMap.keySet()) {
             final SourceProductSelector selector = sourceProductSelectorMap.get(field);

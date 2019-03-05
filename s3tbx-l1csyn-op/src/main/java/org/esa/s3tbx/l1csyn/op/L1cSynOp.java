@@ -84,10 +84,7 @@ public class L1cSynOp extends Operator {
             throw new OperatorException("SLSTR product is not valid");
         }
 
-        checkDate(slstrSource, olciSource);
-
-        String startDate =  getStartDate(slstrSource,olciSource);
-
+        checkDate(slstrSource,olciSource);
         updateSlstrBands(slstrSource, bandsSlstr);
         updateOlciBands(olciSource, bandsOlci);
 
@@ -174,38 +171,32 @@ public class L1cSynOp extends Operator {
         }
     }
 
-    private String getStartDate(Product slstrSource, Product olciSource)  {
-        String someDateText = null;
-        Date date;
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSX");
-        Date startDate = null;
-        String startDateString = null;
-        MetadataElement[]  elements = slstrSource.getMetadataRoot().getElements();
-        for (MetadataElement element : elements){
-            MetadataElement[]  elementsLevelTwo = element.getElements();
-            for (MetadataElement elementLevelTwo : elementsLevelTwo){
-                 someDateText = elementLevelTwo.getAttributeString("start_time",null);
-                if (! (someDateText==null)) {
-                    try {
-                        date = dateFormat.parse(someDateText);
-                        if (startDate==null)
-                        {
-                            startDate = date;
-                            startDateString = someDateText;
-                        }
-                        else {
-                            if (startDate.getTime()>date.getTime()){
-                                startDate = date;
-                                startDateString = someDateText;
-                            }
-                        }
-                    }
-                    catch (Exception e) {throw new OperatorException("unexpected date in SLSTR file");}
-                }
-
-            }
+    private static Map<String, String> getStartEndDate(Product slstrSource, Product olciSource)  {
+        HashMap<String, String> dateMap = new HashMap<>();
+        String startDate;
+        String endDate;
+        DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+        final long slstrStartTime = slstrSource.getStartTime().getAsDate().getTime();
+        final long olciStartTime = olciSource.getStartTime().getAsDate().getTime();
+        if (slstrStartTime < olciStartTime){
+           startDate = dateFormat.format(slstrSource.getStartTime().getAsDate());
         }
-        return startDateString ;
+        else {
+            startDate = dateFormat.format(olciSource.getStartTime().getAsDate());
+        }
+        final long slstrEndTime = slstrSource.getStartTime().getAsDate().getTime();
+        final long olciEndTime = olciSource.getStartTime().getAsDate().getTime();
+        if (slstrEndTime > olciEndTime){
+            endDate = dateFormat.format(slstrSource.getEndTime().getAsDate());
+        }
+        else {
+            endDate = dateFormat.format(olciSource.getEndTime().getAsDate());
+        }
+
+        dateMap.put("startDate",startDate);
+        dateMap.put("endDate",endDate);
+        return  dateMap;
     }
 
 
@@ -228,9 +219,17 @@ public class L1cSynOp extends Operator {
         else {
             throw new OperatorException("The SLSTR and OLCI products are from different missions");
         }
-        String startTimeEndTime = slstrSource.getName().substring(16,47);
+        /*String startTimeEndTime = slstrSource.getName().substring(16,47);
         synName.append(startTimeEndTime);
+        synName.append("_");*/
+        Map<String,String> startEndDateMap = getStartEndDate(slstrSource,olciSource);
+        String startDate = startEndDateMap.get("startDate");
+        String endDate = startEndDateMap.get("endDate");
+        synName.append(startDate);
         synName.append("_");
+        synName.append(endDate);
+        synName.append("_");
+
         DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         Date date = new Date();
@@ -242,7 +241,7 @@ public class L1cSynOp extends Operator {
         synName.append("_");
         synName.append("LN2_");
         synName.append("O_NT_"); /// Operational, non-time-critical
-        String slstrBaseline = slstrSource.getName().substring(91,94);
+        String slstrBaseline = "___"; //slstrSource.getName().substring(91,94);
         synName.append(slstrBaseline);
         synName.append(".SEN3");
         return synName.toString();
