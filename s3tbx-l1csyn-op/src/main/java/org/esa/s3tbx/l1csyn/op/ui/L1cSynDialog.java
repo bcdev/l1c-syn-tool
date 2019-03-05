@@ -4,6 +4,10 @@ import com.bc.ceres.binding.PropertyContainer;
 import com.bc.ceres.swing.TableLayout;
 import com.bc.ceres.swing.binding.BindingContext;
 import com.bc.ceres.swing.binding.PropertyPane;
+import com.bc.ceres.swing.selection.AbstractSelectionChangeListener;
+import com.bc.ceres.swing.selection.SelectionChangeEvent;
+import com.bc.ceres.swing.selection.SelectionChangeListener;
+import org.esa.s3tbx.l1csyn.op.L1cSynOp;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductFilter;
 import org.esa.snap.core.gpf.GPF;
@@ -11,6 +15,7 @@ import org.esa.snap.core.gpf.OperatorSpi;
 import org.esa.snap.core.gpf.annotations.ParameterDescriptorFactory;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.ui.*;
+import org.esa.snap.core.util.io.FileUtils;
 import org.esa.snap.ui.AppContext;
 
 import javax.swing.*;
@@ -25,7 +30,6 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
     private String operatorName;
     private Map<String, Object> parameterMap;
     private JTabbedPane form;
-    private String targetProductNameSuffix;
     private org.esa.snap.ui.AppContext appContext;
     private  OperatorSpi operatorSpi;
     private String helpID;
@@ -37,7 +41,6 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
         this.helpID = helpID;
         this.operatorName = operatorName;
         this.appContext = appContext;
-        this.targetProductNameSuffix = targetProductNameSuffix;
         System.setProperty("gpfMode", "GUI");
         initialize(operatorName);
     }
@@ -78,7 +81,7 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
         }
         TargetProductSelectorModel targetProductSelectorModel = getTargetProductSelector().getModel();
         targetProductSelectorModel.setFormatName("NetCDF4-BEAM");
-        targetProductSelectorModel.setProductName("l1csynj");
+        //targetProductSelectorModel.setProductName("default_SYN_NAME");
         ioParametersPanel.add(getTargetProductSelector().createDefaultPanel());
         ioParametersPanel.add(tableLayout.createVerticalSpacer());
         form.add("I/O Parameters", ioParametersPanel);
@@ -156,14 +159,12 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
             throw new IllegalArgumentException("operatorName");
         }
         parameterMap = new LinkedHashMap<>(10);
-        ///
         form = new JTabbedPane();
         initComponents();
         final PropertyContainer propertyContainer =
                 PropertyContainer.createMapBacked(parameterMap, operatorSpi.getOperatorClass(),
                         new ParameterDescriptorFactory());
         addFormParameterPane(propertyContainer, "Processing Parameters", form);
-        ///
     }
 
     private void addFormParameterPane(PropertyContainer propertyContainer, String title, JTabbedPane form) {
@@ -189,55 +190,35 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
 
     private void initSourceProductSelectors() {
         for (SourceProductSelector sourceProductSelector : sourceProductSelectorList) {
+            sourceProductSelector.addSelectionChangeListener(new SelectionChangeListener() {
+                @Override
+                public void selectionChanged(SelectionChangeEvent selectionChangeEvent) {
+                    setTargetProductName();
+                }
+                @Override
+                public void selectionContextChanged(SelectionChangeEvent selectionChangeEvent) {
+                }
+            });
             sourceProductSelector.initProducts();
         }
     }
 
-    //
     private void setTargetProductName() {
-        targetProductSelector = this.getTargetProductSelector();
-        targetProductSelector.getModel().setProductName("abbbba");
+        final TargetProductSelectorModel targetProductSelectorModel = targetProductSelector.getModel();
+        HashMap sourceProductsMap = createSourceProductsMap ();
+        Product olciProduct = (Product)  sourceProductsMap.get("olciProduct");
+        Product slstrProduct = (Product)  sourceProductsMap.get("slstrProduct");
+
+        if (olciProduct!=null && slstrProduct!=null) {
+            String synName = L1cSynOp.getSynName( slstrProduct, olciProduct);
+            targetProductSelectorModel.setProductName(synName);
+        }
     }
-    //
+
     private void releaseSourceProductSelectors() {
         for (SourceProductSelector sourceProductSelector : sourceProductSelectorList) {
             sourceProductSelector.releaseProducts();
         }
     }
-
-    protected void setTargetProductNameSuffix(String suffix) {
-        targetProductNameSuffix = suffix;
-    }
-
-
-    public void setSourceProduct(String type, Product product) {
-        if (type.equals("OLCI")) {
-            sourceProductSelectorList.get(0).setSelectedProduct(product);
-        }
-        else if (type.equals("SLSTR")){
-            sourceProductSelectorList.get(1).setSelectedProduct(product);
-        }
-    }
-
-    public List<SourceProductSelector> getSourceProductSelectorList() {
-        return sourceProductSelectorList;
-    }
-
-
-    /*private class SourceProductChangeListener extends AbstractSelectionChangeListener {
-
-        private static final String TARGET_PRODUCT_NAME_SUFFIX = "_radiometry";
-
-        @Override
-        public void selectionChanged(SelectionChangeEvent event) {
-            String productName = "";
-            final Product selectedProduct = (Product) event.getSelection().getSelectedValue();
-            if (selectedProduct != null) {
-                productName = FileUtils.getFilenameWithoutExtension(selectedProduct.getName());
-            }
-            final TargetProductSelectorModel targetProductSelectorModel = targetProductSelector.getModel();
-            targetProductSelectorModel.setProductName(productName + TARGET_PRODUCT_NAME_SUFFIX);
-        }
-    }*/
 
 }
