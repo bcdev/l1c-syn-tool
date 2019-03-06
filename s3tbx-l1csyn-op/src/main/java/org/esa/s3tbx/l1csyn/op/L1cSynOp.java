@@ -1,8 +1,8 @@
 package org.esa.s3tbx.l1csyn.op;
 
 import org.esa.snap.core.datamodel.Band;
-import org.esa.snap.core.datamodel.MetadataElement;
 import org.esa.snap.core.datamodel.Product;
+import org.esa.snap.core.datamodel.ProductData;
 import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
@@ -13,6 +13,7 @@ import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -95,6 +96,12 @@ public class L1cSynOp extends Operator {
         sourceProductMap.put("slaveProduct", slstrInput);
         Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
         l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
+
+        Map<String, ProductData.UTC> startEndDateMap = getStartEndDate(slstrSource,olciSource);
+        ProductData.UTC startDate = startEndDateMap.get("startDate");
+        ProductData.UTC endDate = startEndDateMap.get("endDate");
+        l1cTarget.setStartTime(startDate);
+        l1cTarget.setEndTime(endDate);
     }
 
     private void updateOlciBands(Product olciSource, String bandsOlci){
@@ -171,31 +178,34 @@ public class L1cSynOp extends Operator {
         }
     }
 
-    private static Map<String, String> getStartEndDate(Product slstrSource, Product olciSource)  {
-        HashMap<String, String> dateMap = new HashMap<>();
-        String startDate;
-        String endDate;
+    private static Map<String, ProductData.UTC> getStartEndDate(Product slstrSource, Product olciSource)  {
+        HashMap<String, ProductData.UTC> dateMap = new HashMap<>();
+        String startDateString;
+        String endDateString;
+        ProductData.UTC startDateUTC;
+        ProductData.UTC endDateUTC;
+
         DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         final long slstrStartTime = slstrSource.getStartTime().getAsDate().getTime();
         final long olciStartTime = olciSource.getStartTime().getAsDate().getTime();
         if (slstrStartTime < olciStartTime){
-           startDate = dateFormat.format(slstrSource.getStartTime().getAsDate());
+           startDateUTC = slstrSource.getStartTime();
         }
         else {
-            startDate = dateFormat.format(olciSource.getStartTime().getAsDate());
+            startDateUTC = olciSource.getStartTime();
         }
         final long slstrEndTime = slstrSource.getStartTime().getAsDate().getTime();
         final long olciEndTime = olciSource.getStartTime().getAsDate().getTime();
         if (slstrEndTime > olciEndTime){
-            endDate = dateFormat.format(slstrSource.getEndTime().getAsDate());
+            endDateUTC = slstrSource.getEndTime();
         }
         else {
-            endDate = dateFormat.format(olciSource.getEndTime().getAsDate());
+            endDateUTC = olciSource.getEndTime();
         }
 
-        dateMap.put("startDate",startDate);
-        dateMap.put("endDate",endDate);
+        dateMap.put("startDate",startDateUTC);
+        dateMap.put("endDate",endDateUTC);
         return  dateMap;
     }
 
@@ -222,15 +232,17 @@ public class L1cSynOp extends Operator {
         /*String startTimeEndTime = slstrSource.getName().substring(16,47);
         synName.append(startTimeEndTime);
         synName.append("_");*/
-        Map<String,String> startEndDateMap = getStartEndDate(slstrSource,olciSource);
-        String startDate = startEndDateMap.get("startDate");
-        String endDate = startEndDateMap.get("endDate");
-        synName.append(startDate);
+        Map<String, ProductData.UTC> startEndDateMap = getStartEndDate(slstrSource,olciSource);
+        DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
+        Date startDateUTC =  startEndDateMap.get("startDate").getAsDate();
+        String dateStringStart = dateFormat.format(startDateUTC);
+        Date endDateUTC =  startEndDateMap.get("endDate").getAsDate();
+        String dateStringEnd = dateFormat.format(endDateUTC);
+        synName.append(dateStringStart);
         synName.append("_");
-        synName.append(endDate);
+        synName.append(dateStringEnd);
         synName.append("_");
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         Date date = new Date();
         String currentDate = dateFormat.format(date);
@@ -246,7 +258,6 @@ public class L1cSynOp extends Operator {
         synName.append(".SEN3");
         return synName.toString();
     }
-
 
     private boolean isValidOlciProduct(Product product) {
         return product.getProductType().contains("OL_1") || product.getName().contains("OL_1");

@@ -4,7 +4,6 @@ import com.bc.ceres.binding.PropertyContainer;
 import com.bc.ceres.swing.TableLayout;
 import com.bc.ceres.swing.binding.BindingContext;
 import com.bc.ceres.swing.binding.PropertyPane;
-import com.bc.ceres.swing.selection.AbstractSelectionChangeListener;
 import com.bc.ceres.swing.selection.SelectionChangeEvent;
 import com.bc.ceres.swing.selection.SelectionChangeListener;
 import org.esa.s3tbx.l1csyn.op.L1cSynOp;
@@ -15,7 +14,6 @@ import org.esa.snap.core.gpf.OperatorSpi;
 import org.esa.snap.core.gpf.annotations.ParameterDescriptorFactory;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.ui.*;
-import org.esa.snap.core.util.io.FileUtils;
 import org.esa.snap.ui.AppContext;
 
 import javax.swing.*;
@@ -80,7 +78,7 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
             ioParametersPanel.add(selector.createDefaultPanel());
         }
         TargetProductSelectorModel targetProductSelectorModel = getTargetProductSelector().getModel();
-        targetProductSelectorModel.setFormatName("NetCDF4-BEAM");
+        targetProductSelectorModel.setFormatName("NetCDF4-CF");
         //targetProductSelectorModel.setProductName("default_SYN_NAME");
         ioParametersPanel.add(getTargetProductSelector().createDefaultPanel());
         ioParametersPanel.add(tableLayout.createVerticalSpacer());
