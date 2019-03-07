@@ -13,7 +13,6 @@ import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
 
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -74,6 +73,17 @@ public class L1cSynOp extends Operator {
     )
     private String bandsSlstr;
 
+    /*@Parameter(label = "Shapefile", description = "Optional file which may be used for selecting subset.")
+    private File file;
+    */
+
+    @Parameter(alias="geoRegion",label="WKT region",
+            description = "The subset region in geographical coordinates using WKT-format,\n" +
+                    "e.g. POLYGON((<lon1> <lat1>, <lon2> <lat2>, ..., <lon1> <lat1>))\n" +
+                    "(make sure to quote the option due to spaces in <geometry>).\n" +
+                    "If not given, the entire scene is used.")
+    private String geoRegion;
+
     @Override
     public void initialize() throws OperatorException {
 
@@ -100,6 +110,10 @@ public class L1cSynOp extends Operator {
         Map<String, ProductData.UTC> startEndDateMap = getStartEndDate(slstrSource,olciSource);
         ProductData.UTC startDate = startEndDateMap.get("startDate");
         ProductData.UTC endDate = startEndDateMap.get("endDate");
+
+        if (geoRegion!=null){
+            l1cTarget=GPF.createProduct("Subset",getSubsetParameters(geoRegion),l1cTarget);
+        }
         l1cTarget.setStartTime(startDate);
         l1cTarget.setEndTime(endDate);
     }
@@ -145,6 +159,13 @@ public class L1cSynOp extends Operator {
         params.put("includeTiePointGrids", true);
         params.put("addDeltaBands", false);
         params.put("crs", reprojectionCRS);
+        return params;
+    }
+
+    private Map<String, Object> getSubsetParameters(String geoRegion){
+        HashMap<String, Object> params = new HashMap<>();
+        params.put("geoRegion",geoRegion);
+        params.put("copyMetadata",true);
         return params;
     }
 
@@ -253,7 +274,7 @@ public class L1cSynOp extends Operator {
         synName.append("_");
         synName.append("LN2_");
         synName.append("O_NT_"); /// Operational, non-time-critical
-        String slstrBaseline = "___"; //slstrSource.getName().substring(91,94);
+        String slstrBaseline = "___"; //slstrSource.getName().substring(91,94); //todo: clarify if there should be any baseline
         synName.append(slstrBaseline);
         synName.append(".SEN3");
         return synName.toString();
