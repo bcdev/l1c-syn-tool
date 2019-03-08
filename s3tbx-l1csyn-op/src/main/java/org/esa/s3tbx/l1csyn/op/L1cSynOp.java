@@ -1,8 +1,12 @@
 package org.esa.s3tbx.l1csyn.op;
 
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.MultiPolygon;
+import com.vividsolutions.jts.geom.Polygon;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductData;
+import org.esa.snap.core.datamodel.TiePointGrid;
 import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
@@ -11,13 +15,17 @@ import org.esa.snap.core.gpf.annotations.OperatorMetadata;
 import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
+import org.geotools.data.shapefile.ShapefileDataStore;
+import org.geotools.data.simple.SimpleFeatureIterator;
+import org.geotools.data.store.ContentFeatureCollection;
+import org.geotools.data.store.ContentFeatureSource;
+import org.opengis.feature.simple.SimpleFeature;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 
 @SuppressWarnings("unused")
 @OperatorMetadata(alias = "L1CSYN",
@@ -73,9 +81,17 @@ public class L1cSynOp extends Operator {
     )
     private String bandsSlstr;
 
-    /*@Parameter(label = "Shapefile", description = "Optional file which may be used for selecting subset.")
-    private File file;
-    */
+    @Parameter(alias = "tiePointSelection",
+            label = "tie point selection",
+            description = "which tie point should be written to SYN product",
+            valueSet = {"All","only OLCI","only SLSTR"},
+            defaultValue = "All"
+    )
+    private String tiePointSelection;
+
+    @Parameter(label = "Shapefile", description = "Optional file which may be used for selecting subset.")
+    private File shapeFile;
+
 
     @Parameter(alias="geoRegion",label="WKT region",
             description = "The subset region in geographical coordinates using WKT-format,\n" +
@@ -96,6 +112,12 @@ public class L1cSynOp extends Operator {
         }
 
         checkDate(slstrSource,olciSource);
+
+        if (shapeFile!=null) {
+             geoRegion = readShapeFile(shapeFile);
+        }
+        updateTiePointGrids(slstrSource, olciSource, tiePointSelection);
+
         updateSlstrBands(slstrSource, bandsSlstr);
         updateOlciBands(olciSource, bandsOlci);
 
@@ -137,7 +159,7 @@ public class L1cSynOp extends Operator {
         }
         else if (bandsSlstr.equals("F*BT")){
             for (Band band : slstrSource.getBands()){
-                if (!band.getName().matches("F._BT\\S+")){
+                if (! band.getName().matches("F._BT\\S+")){
                     slstrSource.removeBand(band);
                 }
             }
@@ -151,7 +173,20 @@ public class L1cSynOp extends Operator {
         }
     }
 
-     Map<String, Object> getReprojectParams() {
+    private void updateTiePointGrids(Product slstrSource, Product olciSource, String tiePointSelection){
+        if (tiePointSelection.equals("only OLCI")) {
+        for (TiePointGrid tiePointGrid : slstrSource.getTiePointGrids() ) {
+            slstrSource.removeTiePointGrid(tiePointGrid);
+            }
+        }
+        if (tiePointSelection.equals("only SLSTR")) {
+        for (TiePointGrid tiePointGrid : olciSource.getTiePointGrids() ) {
+            olciSource.removeTiePointGrid(tiePointGrid);
+            }
+        }
+    }
+
+    Map<String, Object> getReprojectParams() {
         HashMap<String, Object> params = new HashMap<>();
         params.put("resampling", "Nearest");
         params.put("orthorectify", false);
@@ -240,6 +275,10 @@ public class L1cSynOp extends Operator {
         String slstrName = slstrSource.getName();
         String olciName = olciSource.getName();
 
+        if (slstrName.length()<81 || olciName.length()<81){
+            return "L1C";
+        }
+
         StringBuilder synName = new StringBuilder();
         if (olciName.contains("S3A") && slstrName.contains("S3A")){
             synName.append( "S3A_SY_1_SYN____");
@@ -248,7 +287,8 @@ public class L1cSynOp extends Operator {
             synName.append( "S3B_SY_1_SYN____");
         }
         else {
-            throw new OperatorException("The SLSTR and OLCI products are from different missions");
+            //throw new OperatorException("The SLSTR and OLCI products are from different missions");
+            synName.append( "________________");
         }
         /*String startTimeEndTime = slstrSource.getName().substring(16,47);
         synName.append(startTimeEndTime);
@@ -280,6 +320,35 @@ public class L1cSynOp extends Operator {
         return synName.toString();
     }
 
+    private String readShapeFile(File shapeFile)  {
+        try {
+            ArrayList<Polygon> polygons = new ArrayList<>();
+            GeometryFactory factory = new GeometryFactory();
+            ShapefileDataStore dataStore = new ShapefileDataStore(shapeFile.toURL());
+            ContentFeatureSource featureSource = dataStore.getFeatureSource();
+            ContentFeatureCollection featureCollection = featureSource.getFeatures();
+            SimpleFeatureIterator iterator = featureCollection.features();
+            while (iterator.hasNext()) {
+                SimpleFeature feature = iterator.next();
+                List attributes = feature.getAttributes();
+                for (Object attribute : attributes) {
+                    if ( attribute!=null ) {
+                        MultiPolygon multiPolygon = ((MultiPolygon) attribute);
+                        for (int i=0; i<multiPolygon.getNumGeometries(); i++) {
+                            Polygon polygon = (Polygon) multiPolygon.getGeometryN(i);
+                            polygons.add( polygon);
+                        }
+                    }
+                }
+            }
+            Polygon[] polygonsArray = new Polygon[polygons.size()];
+            polygonsArray   = polygons.toArray(polygonsArray);
+            MultiPolygon combined  = new MultiPolygon(polygonsArray,factory);
+            return combined.toString();
+        }
+        catch (IOException e) {throw  new OperatorException("something is wrong with your shapefile");}
+    }
+    
     private boolean isValidOlciProduct(Product product) {
         return product.getProductType().contains("OL_1") || product.getName().contains("OL_1");
     }
