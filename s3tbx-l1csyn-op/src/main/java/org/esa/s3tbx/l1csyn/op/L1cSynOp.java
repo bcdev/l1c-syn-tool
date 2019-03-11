@@ -84,12 +84,12 @@ public class L1cSynOp extends Operator {
     @Parameter(alias = "tiePointSelection",
             label = "tie point selection",
             description = "which tie point should be written to SYN product",
-            valueSet = {"All","only OLCI","only SLSTR"},
+            valueSet = {"All","only OLCI","only SLSTR","None"},
             defaultValue = "All"
     )
     private String tiePointSelection;
 
-    @Parameter(label = "Shapefile", description = "Optional file which may be used for selecting subset.")
+    @Parameter(label = "Shapefile", description = "Optional file which may be used for selecting subset. This has priority over WKT GeoRegion.")
     private File shapeFile;
 
 
@@ -174,12 +174,12 @@ public class L1cSynOp extends Operator {
     }
 
     private void updateTiePointGrids(Product slstrSource, Product olciSource, String tiePointSelection){
-        if (tiePointSelection.equals("only OLCI")) {
+        if (tiePointSelection.equals("only OLCI") || tiePointSelection.equals("None") ) {
         for (TiePointGrid tiePointGrid : slstrSource.getTiePointGrids() ) {
             slstrSource.removeTiePointGrid(tiePointGrid);
             }
         }
-        if (tiePointSelection.equals("only SLSTR")) {
+        if (tiePointSelection.equals("only SLSTR") || tiePointSelection.equals("None") ) {
         for (TiePointGrid tiePointGrid : olciSource.getTiePointGrids() ) {
             olciSource.removeTiePointGrid(tiePointGrid);
             }
@@ -348,7 +348,7 @@ public class L1cSynOp extends Operator {
         }
         catch (IOException e) {throw  new OperatorException("something is wrong with your shapefile");}
     }
-    
+
     private boolean isValidOlciProduct(Product product) {
         return product.getProductType().contains("OL_1") || product.getName().contains("OL_1");
     }

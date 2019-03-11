@@ -94,19 +94,19 @@
         <dependency>
             <groupId>org.esa.snap</groupId>
             <artifactId>snap-gpf-ui</artifactId>
-            <version>${s3tbx.version}</version>
+            <version>${snap.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.esa.snap</groupId>
             <artifactId>snap-ui</artifactId>
-            <version>${s3tbx.version}</version>
+            <version>${snap.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.esa.snap</groupId>
             <artifactId>snap-rcp</artifactId>
-            <version>${s3tbx.version}</version>
+            <version>${snap.version}</version>
         </dependency>
 
         <dependency>
