@@ -1,7 +1,7 @@
 package org.esa.s3tbx.l1csyn.op;
 
 import org.esa.snap.dataio.netcdf.util.NetcdfFileOpener;
-import org.jfree.util.Log;
+import org.esa.snap.rcp.SnapApp;
 import ucar.ma2.Array;
 import ucar.ma2.InvalidRangeException;
 import ucar.nc2.NetcdfFile;
@@ -33,18 +33,18 @@ class MISRReader {
         this.misrFile = misrFile;
     }
 
-    void readMisrProduct() {
+    void readMisrProduct()  throws IOException,InvalidRangeException  {
         String misrFolder = misrFile.getParent();
         Map fileBandMap = getFileBandMap();
 
         for (Object fileName : fileBandMap.values()){
-            String fullNCPath = misrFolder+fileName;
+            String fullNCPath = misrFolder+"/"+fileName;
             readMisrNetCDF(fullNCPath);
         }
     }
 
 
-    private void readMisrNetCDF(String ncFilename){
+    private void readMisrNetCDF(String ncFilename) throws IOException,InvalidRangeException {
         try {
             File file = new File(ncFilename);
             if (file.exists()) {
@@ -53,9 +53,10 @@ class MISRReader {
                 readVariable(getRowVariableName(netcdfFile),netcdfFile);
                 //readVariable(getColVariableName(ncFilename),netcdfFile);
                 readVariable(getColVariableName(netcdfFile),netcdfFile);
+                SnapApp.getDefault().getLogger().info("file "+file.getName()+" was read successfully...");
             }
             else {
-                Log.warn(ncFilename+" is not present in the MISR file");
+                SnapApp.getDefault().getLogger().info(file.getName()+" is not present in the MISR file");
             }
         }
         catch(IOException e){
@@ -63,14 +64,19 @@ class MISRReader {
     }
 
 
-    private void readVariable(String variableName, NetcdfFile netcdfFile){
+    private void readVariable(String variableName, NetcdfFile netcdfFile) throws IOException,InvalidRangeException{
         Variable variable = netcdfFile.findVariable(variableName);
-        double scaleFactor = Double.parseDouble(variable.findAttribute("scale_factor").getStringValue());
-        double offset = Double.parseDouble(variable.findAttribute("offset").getStringValue());
+        double scaleFactor = variable.findAttribute("scale_factor").getNumericValue().doubleValue();
+        double offset = variable.findAttribute("add_offset").getNumericValue().doubleValue();
+        //double testOnly = extractDouble(variable,0,0,0,scaleFactor,offset);
+        //System.out.println(testOnly+" "+variableName+" "+netcdfFile.getCacheName());
     }
 
     private double extractDouble(Variable variable, int line,int  detector,int camera , double scaleFactor, double offset ) throws InvalidRangeException,IOException {
         Array array = variable.read(new int[]{camera, line, detector}, new int[]{1,1,1});
+        if ( array.getInt(0) == variable.findAttribute("_FillValue").getNumericValue().intValue() ){
+            return Double.NaN;
+        }
         double value = array.getInt(0)*scaleFactor+offset;
         return value;
     }

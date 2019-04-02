@@ -15,15 +15,12 @@ import org.esa.snap.core.gpf.annotations.OperatorMetadata;
 import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
-import org.esa.snap.dataio.netcdf.util.NetcdfFileOpener;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.ContentFeatureCollection;
 import org.geotools.data.store.ContentFeatureSource;
 import org.opengis.feature.simple.SimpleFeature;
-import ucar.ma2.Array;
-import ucar.nc2.NetcdfFile;
-import ucar.nc2.Variable;
+import ucar.ma2.InvalidRangeException;
 
 import java.io.File;
 import java.io.IOException;
@@ -137,7 +134,11 @@ public class L1cSynOp extends Operator {
         {
             //readMisrProduct(misrFile);
             MISRReader misrReader = new MISRReader(misrFile);
-            misrReader.readMisrProduct();
+            try {
+                misrReader.readMisrProduct();
+            }
+            catch (InvalidRangeException e1){}
+            catch (IOException e2){}
         }
 
         Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
