@@ -15,11 +15,15 @@ import org.esa.snap.core.gpf.annotations.OperatorMetadata;
 import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
+import org.esa.snap.dataio.netcdf.util.NetcdfFileOpener;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.ContentFeatureCollection;
 import org.geotools.data.store.ContentFeatureSource;
 import org.opengis.feature.simple.SimpleFeature;
+import ucar.ma2.Array;
+import ucar.nc2.NetcdfFile;
+import ucar.nc2.Variable;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +38,7 @@ import java.util.*;
         copyright = "Brockmann Consult GmbH",
         description = "Sentinel-3 OLCI/SLSTR L1C SYN Tool",
         category = "Optical/Pre-Processing",
-        version= "1.0")
+        version = "1.0")
 public class L1cSynOp extends Operator {
 
     private long allowedTimeDiff = 200l;
@@ -54,7 +58,7 @@ public class L1cSynOp extends Operator {
             valueSet = {"Nearest", "Bilinear", "Bicubic"},
             defaultValue = "Nearest"
     )
-    private  String upsamplingMethod;
+    private String upsamplingMethod;
 
     @Parameter(alias = "reprojectionCRS",
             label = "Reprojection crs",
@@ -68,7 +72,7 @@ public class L1cSynOp extends Operator {
     @Parameter(alias = "bandsOlci",
             label = "bands OLCI",
             description = "group of OLCI bands in output",
-            valueSet = {"All","Oa*_radiance","FWHM","lambda"},
+            valueSet = {"All", "Oa*_radiance", "FWHM", "lambda"},
             defaultValue = "All"
     )
     private String bandsOlci;
@@ -76,7 +80,7 @@ public class L1cSynOp extends Operator {
     @Parameter(alias = "bandsSlstr",
             label = "bands SLSTR",
             description = "group of SLSTR bands in output",
-            valueSet = {"All","F*BT","S*BT"},
+            valueSet = {"All", "F*BT", "S*BT"},
             defaultValue = "All"
     )
     private String bandsSlstr;
@@ -84,7 +88,7 @@ public class L1cSynOp extends Operator {
     @Parameter(alias = "tiePointSelection",
             label = "tie point selection",
             description = "which tie point should be written to SYN product",
-            valueSet = {"All","only OLCI","only SLSTR","None"},
+            valueSet = {"All", "only OLCI", "only SLSTR", "None"},
             defaultValue = "All"
     )
     private String tiePointSelection;
@@ -92,8 +96,10 @@ public class L1cSynOp extends Operator {
     @Parameter(label = "Shapefile", description = "Optional file which may be used for selecting subset. This has priority over WKT GeoRegion.")
     private File shapeFile;
 
+    @Parameter(label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
+    private File misrFile;
 
-    @Parameter(alias="geoRegion",label="WKT region",
+    @Parameter(alias = "geoRegion", label = "WKT region",
             description = "The subset region in geographical coordinates using WKT-format,\n" +
                     "e.g. POLYGON((<lon1> <lat1>, <lon2> <lat2>, ..., <lon1> <lat1>))\n" +
                     "(make sure to quote the option due to spaces in <geometry>).\n" +
@@ -111,77 +117,86 @@ public class L1cSynOp extends Operator {
             throw new OperatorException("SLSTR product is not valid");
         }
 
-        checkDate(slstrSource,olciSource);
+        checkDate(slstrSource, olciSource);
 
-        if (shapeFile!=null) {
-             geoRegion = readShapeFile(shapeFile);
+        if (shapeFile != null) {
+            geoRegion = readShapeFile(shapeFile);
         }
         updateTiePointGrids(slstrSource, olciSource, tiePointSelection);
 
         updateSlstrBands(slstrSource, bandsSlstr);
         updateOlciBands(olciSource, bandsOlci);
 
-        Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource,upsamplingMethod), slstrSource);
+        Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource, upsamplingMethod), slstrSource);
         HashMap<String, Product> sourceProductMap = new HashMap<>();
 
         sourceProductMap.put("masterProduct", olciSource);
         sourceProductMap.put("slaveProduct", slstrInput);
+
+        if (misrFile != null)
+        {
+            //readMisrProduct(misrFile);
+            MISRReader misrReader = new MISRReader(misrFile);
+            misrReader.readMisrProduct();
+        }
+
         Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
         l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
 
-        Map<String, ProductData.UTC> startEndDateMap = getStartEndDate(slstrSource,olciSource);
+        Map<String, ProductData.UTC> startEndDateMap = getStartEndDate(slstrSource, olciSource);
         ProductData.UTC startDate = startEndDateMap.get("startDate");
         ProductData.UTC endDate = startEndDateMap.get("endDate");
 
-        if (geoRegion!=null){
-            l1cTarget=GPF.createProduct("Subset",getSubsetParameters(geoRegion),l1cTarget);
+        if (geoRegion != null) {
+            l1cTarget = GPF.createProduct("Subset", getSubsetParameters(geoRegion), l1cTarget);
         }
         l1cTarget.setStartTime(startDate);
         l1cTarget.setEndTime(endDate);
+        l1cTarget.setName(getSynName(slstrSource, olciSource));
     }
 
-    private void updateOlciBands(Product olciSource, String bandsOlci){
-        if (bandsOlci.equals("All")) {
-            return;
+    private void updateOlciBands(Product olciSource, String bandsOlci) {
+        if (bandsOlci.equals("Oa*_radiance")) {
+            for (Band band : olciSource.getBands()) {
+                if (!band.getName().matches("Oa.._radiance")) {
+                    olciSource.removeBand(band);
+                }
+            }
         }
-        else if (bandsOlci.equals("Oa*_radiance")){
-            for (Band band : olciSource.getBands()){
-                if (!band.getName().matches("Oa.._radiance")){
+        else if (bandsOlci.equals("lambda")) {
+            for (Band band : olciSource.getBands()) {
+                if (!band.getName().contains("lambda")) {
                     olciSource.removeBand(band);
                 }
             }
         }
     }
 
-    private void updateSlstrBands(Product slstrSource, String bandsSlstr){
-        if (bandsSlstr.equals("All")){
-            return;
-        }
-        else if (bandsSlstr.equals("F*BT")){
-            for (Band band : slstrSource.getBands()){
-                if (! band.getName().matches("F._BT\\S+")){
+    private void updateSlstrBands(Product slstrSource, String bandsSlstr) {
+        if (bandsSlstr.equals("F*BT")) {
+            for (Band band : slstrSource.getBands()) {
+                if (!band.getName().matches("F._BT\\S+")) {
                     slstrSource.removeBand(band);
                 }
             }
-        }
-        else if (bandsSlstr.equals("S*BT")){
-            for (Band band : slstrSource.getBands()){
-                if (!band.getName().matches("S._BT\\S+")){
+        } else if (bandsSlstr.equals("S*BT")) {
+            for (Band band : slstrSource.getBands()) {
+                if (!band.getName().matches("S._BT\\S+")) {
                     slstrSource.removeBand(band);
                 }
             }
         }
     }
 
-    private void updateTiePointGrids(Product slstrSource, Product olciSource, String tiePointSelection){
-        if (tiePointSelection.equals("only OLCI") || tiePointSelection.equals("None") ) {
-        for (TiePointGrid tiePointGrid : slstrSource.getTiePointGrids() ) {
-            slstrSource.removeTiePointGrid(tiePointGrid);
+    private void updateTiePointGrids(Product slstrSource, Product olciSource, String tiePointSelection) {
+        if (tiePointSelection.equals("only OLCI") || tiePointSelection.equals("None")) {
+            for (TiePointGrid tiePointGrid : slstrSource.getTiePointGrids()) {
+                slstrSource.removeTiePointGrid(tiePointGrid);
             }
         }
-        if (tiePointSelection.equals("only SLSTR") || tiePointSelection.equals("None") ) {
-        for (TiePointGrid tiePointGrid : olciSource.getTiePointGrids() ) {
-            olciSource.removeTiePointGrid(tiePointGrid);
+        if (tiePointSelection.equals("only SLSTR") || tiePointSelection.equals("None")) {
+            for (TiePointGrid tiePointGrid : olciSource.getTiePointGrids()) {
+                olciSource.removeTiePointGrid(tiePointGrid);
             }
         }
     }
@@ -197,10 +212,10 @@ public class L1cSynOp extends Operator {
         return params;
     }
 
-    private Map<String, Object> getSubsetParameters(String geoRegion){
+    private Map<String, Object> getSubsetParameters(String geoRegion) {
         HashMap<String, Object> params = new HashMap<>();
-        params.put("geoRegion",geoRegion);
-        params.put("copyMetadata",true);
+        params.put("geoRegion", geoRegion);
+        params.put("copyMetadata", true);
         return params;
     }
 
@@ -213,7 +228,7 @@ public class L1cSynOp extends Operator {
         return params;
     }
 
-    protected  HashMap<String, Object> getSlstrResampleParams(Product toResample, String upsamplingMethod) {
+    protected HashMap<String, Object> getSlstrResampleParams(Product toResample, String upsamplingMethod) {
         HashMap<String, Object> params = new HashMap<>();
         params.put("targetWidth", toResample.getSceneRasterWidth());
         params.put("targetHeight", toResample.getSceneRasterHeight());
@@ -228,13 +243,13 @@ public class L1cSynOp extends Operator {
         long slstrTime = slstrSource.getStartTime().getAsDate().getTime();
         long olciTime = olciSource.getEndTime().getAsDate().getTime();
         long diff = slstrTime - olciTime;
-        long diffInSeconds = diff / 1000L ;
+        long diffInSeconds = diff / 1000L;
         if (diffInSeconds > allowedTimeDiff) {
             throw new OperatorException("The SLSTR and OLCI products differ more than" + String.format("%d", diffInSeconds) + ". Please check your input times");
         }
     }
 
-    private static Map<String, ProductData.UTC> getStartEndDate(Product slstrSource, Product olciSource)  {
+    private static Map<String, ProductData.UTC> getStartEndDate(Product slstrSource, Product olciSource) {
         HashMap<String, ProductData.UTC> dateMap = new HashMap<>();
         String startDateString;
         String endDateString;
@@ -245,59 +260,55 @@ public class L1cSynOp extends Operator {
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         final long slstrStartTime = slstrSource.getStartTime().getAsDate().getTime();
         final long olciStartTime = olciSource.getStartTime().getAsDate().getTime();
-        if (slstrStartTime < olciStartTime){
-           startDateUTC = slstrSource.getStartTime();
-        }
-        else {
+        if (slstrStartTime < olciStartTime) {
+            startDateUTC = slstrSource.getStartTime();
+        } else {
             startDateUTC = olciSource.getStartTime();
         }
         final long slstrEndTime = slstrSource.getStartTime().getAsDate().getTime();
         final long olciEndTime = olciSource.getStartTime().getAsDate().getTime();
-        if (slstrEndTime > olciEndTime){
+        if (slstrEndTime > olciEndTime) {
             endDateUTC = slstrSource.getEndTime();
-        }
-        else {
+        } else {
             endDateUTC = olciSource.getEndTime();
         }
 
-        dateMap.put("startDate",startDateUTC);
-        dateMap.put("endDate",endDateUTC);
-        return  dateMap;
+        dateMap.put("startDate", startDateUTC);
+        dateMap.put("endDate", endDateUTC);
+        return dateMap;
     }
 
 
     public static String getSynName(Product slstrSource, Product olciSource) throws OperatorException {
         // pattern is MMM_SS_L_TTTTTT_yyyymmddThhmmss_YYYYMMDDTHHMMSS_yyyyMMDDTHHMMSS_<instance ID>_GGG_<class ID>.<extension>
-        if (slstrSource==null || olciSource==null ){
+        if (slstrSource == null || olciSource == null) {
             return "L1C";
         }
 
         String slstrName = slstrSource.getName();
         String olciName = olciSource.getName();
 
-        if (slstrName.length()<81 || olciName.length()<81){
+        if (slstrName.length() < 81 || olciName.length() < 81) {
             return "L1C";
         }
 
         StringBuilder synName = new StringBuilder();
-        if (olciName.contains("S3A") && slstrName.contains("S3A")){
-            synName.append( "S3A_SY_1_SYN____");
-        }
-        else if (olciName.contains("S3B") && slstrName.contains("S3B")){
-            synName.append( "S3B_SY_1_SYN____");
-        }
-        else {
+        if (olciName.contains("S3A") && slstrName.contains("S3A")) {
+            synName.append("S3A_SY_1_SYN____");
+        } else if (olciName.contains("S3B") && slstrName.contains("S3B")) {
+            synName.append("S3B_SY_1_SYN____");
+        } else {
             //throw new OperatorException("The SLSTR and OLCI products are from different missions");
-            synName.append( "________________");
+            synName.append("________________");
         }
         /*String startTimeEndTime = slstrSource.getName().substring(16,47);
         synName.append(startTimeEndTime);
         synName.append("_");*/
-        Map<String, ProductData.UTC> startEndDateMap = getStartEndDate(slstrSource,olciSource);
+        Map<String, ProductData.UTC> startEndDateMap = getStartEndDate(slstrSource, olciSource);
         DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
-        Date startDateUTC =  startEndDateMap.get("startDate").getAsDate();
+        Date startDateUTC = startEndDateMap.get("startDate").getAsDate();
         String dateStringStart = dateFormat.format(startDateUTC);
-        Date endDateUTC =  startEndDateMap.get("endDate").getAsDate();
+        Date endDateUTC = startEndDateMap.get("endDate").getAsDate();
         String dateStringEnd = dateFormat.format(endDateUTC);
         synName.append(dateStringStart);
         synName.append("_");
@@ -309,7 +320,7 @@ public class L1cSynOp extends Operator {
         String currentDate = dateFormat.format(date);
         synName.append(currentDate);
         synName.append("_");
-        String instanceString = slstrSource.getName().substring(64,81);
+        String instanceString = slstrSource.getName().substring(64, 81);
         synName.append(instanceString);
         synName.append("_");
         synName.append("LN2_");
@@ -320,7 +331,7 @@ public class L1cSynOp extends Operator {
         return synName.toString();
     }
 
-    private String readShapeFile(File shapeFile)  {
+    private String readShapeFile(File shapeFile) {
         try {
             ArrayList<Polygon> polygons = new ArrayList<>();
             GeometryFactory factory = new GeometryFactory();
@@ -332,21 +343,22 @@ public class L1cSynOp extends Operator {
                 SimpleFeature feature = iterator.next();
                 List attributes = feature.getAttributes();
                 for (Object attribute : attributes) {
-                    if ( attribute!=null ) {
+                    if (attribute != null) {
                         MultiPolygon multiPolygon = ((MultiPolygon) attribute);
-                        for (int i=0; i<multiPolygon.getNumGeometries(); i++) {
+                        for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
                             Polygon polygon = (Polygon) multiPolygon.getGeometryN(i);
-                            polygons.add( polygon);
+                            polygons.add(polygon);
                         }
                     }
                 }
             }
             Polygon[] polygonsArray = new Polygon[polygons.size()];
-            polygonsArray   = polygons.toArray(polygonsArray);
-            MultiPolygon combined  = new MultiPolygon(polygonsArray,factory);
+            polygonsArray = polygons.toArray(polygonsArray);
+            MultiPolygon combined = new MultiPolygon(polygonsArray, factory);
             return combined.toString();
+        } catch (IOException e) {
+            throw new OperatorException("something is wrong with your shapefile");
         }
-        catch (IOException e) {throw  new OperatorException("something is wrong with your shapefile");}
     }
 
     private boolean isValidOlciProduct(Product product) {

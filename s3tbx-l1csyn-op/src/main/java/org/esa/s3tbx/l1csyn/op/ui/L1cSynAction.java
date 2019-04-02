@@ -9,9 +9,9 @@ import org.openide.util.NbBundle;
 
 import java.awt.event.ActionEvent;
 
-@ActionID(category = "Preprocessing", id = "org.esa.s3tbx.l1csyn.op.ui.L1cSynAction" )
+@ActionID(category = "Preprocessing", id = "org.esa.s3tbx.l1csyn.op.ui.L1cSynAction")
 @ActionRegistration(displayName = "#CTL_L1cSynAction_Text")
-@ActionReference(path = "Menu/Optical/Preprocessing", position = 0 )
+@ActionReference(path = "Menu/Optical/Preprocessing", position = 0)
 @NbBundle.Messages({"CTL_L1cSynAction_Text=L1C SYN Tool 2"})
 
 public class L1cSynAction extends AbstractSnapAction {

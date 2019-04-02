@@ -21,16 +21,17 @@ import javax.swing.border.EmptyBorder;
 import java.lang.reflect.Field;
 import java.util.*;
 
-public class L1cSynDialog  extends SingleTargetProductDialog {
+public class L1cSynDialog extends SingleTargetProductDialog {
 
-    private  List<SourceProductSelector> sourceProductSelectorList;
+    private List<SourceProductSelector> sourceProductSelectorList;
     private Map<Field, SourceProductSelector> sourceProductSelectorMap;
     private String operatorName;
     private Map<String, Object> parameterMap;
     private JTabbedPane form;
     private org.esa.snap.ui.AppContext appContext;
-    private  OperatorSpi operatorSpi;
+    private OperatorSpi operatorSpi;
     private String helpID;
+
     /*
      * DefaultDialog constructor
      */
@@ -44,7 +45,7 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
     }
 
     @Override
-    protected Product createTargetProduct()  {
+    protected Product createTargetProduct() {
         final HashMap<String, Product> sourceProducts = createSourceProductsMap();
         return GPF.createProduct(operatorName, parameterMap, sourceProducts);
     }
@@ -106,10 +107,9 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
                 final ProductFilter productFilter = new AnnotatedSourceProductFilter(annot);
                 SourceProductSelector sourceProductSelector = new SourceProductSelector(appContext);
                 if (field.getName().equals("olciSource")) {
-                    sourceProductSelector = new SourceProductSelector(appContext, "OLCI PRODUCT",false);
-                }
-                else if (field.getName().equals("slstrSource")){
-                    sourceProductSelector = new SourceProductSelector(appContext, "SLSTR PRODUCT",false);
+                    sourceProductSelector = new SourceProductSelector(appContext, "OLCI PRODUCT", false);
+                } else if (field.getName().equals("slstrSource")) {
+                    sourceProductSelector = new SourceProductSelector(appContext, "SLSTR PRODUCT", false);
                 }
                 sourceProductSelector.setProductFilter(productFilter);
                 sourceProductSelectorList.add(sourceProductSelector);
@@ -134,9 +134,11 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
 
     private static class AnnotatedSourceProductFilter implements ProductFilter {
         private final SourceProduct annot;
+
         private AnnotatedSourceProductFilter(SourceProduct annot) {
             this.annot = annot;
         }
+
         @Override
         public boolean accept(Product product) {
             if (!annot.type().isEmpty() && !product.getProductType().matches(annot.type())) {
@@ -170,9 +172,9 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
         PropertyPane parametersPane = new PropertyPane(context);
         JPanel parametersPanel = parametersPane.createPanel();
         parametersPanel.setBorder(new EmptyBorder(2, 2, 2, 2));
-        parametersPanel.setSize(3,3);
+        parametersPanel.setSize(3, 3);
         JScrollPane scrollPane = new JScrollPane(parametersPanel);
-        form.add(title,scrollPane);
+        form.add(title, scrollPane);
     }
 
     private void setSourceProductSelectorToolTipTexts() {
@@ -193,6 +195,7 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
                 public void selectionChanged(SelectionChangeEvent selectionChangeEvent) {
                     setTargetProductName();
                 }
+
                 @Override
                 public void selectionContextChanged(SelectionChangeEvent selectionChangeEvent) {
                 }
@@ -203,12 +206,12 @@ public class L1cSynDialog  extends SingleTargetProductDialog {
 
     private void setTargetProductName() {
         final TargetProductSelectorModel targetProductSelectorModel = targetProductSelector.getModel();
-        HashMap sourceProductsMap = createSourceProductsMap ();
-        Product olciProduct = (Product)  sourceProductsMap.get("olciProduct");
-        Product slstrProduct = (Product)  sourceProductsMap.get("slstrProduct");
+        HashMap sourceProductsMap = createSourceProductsMap();
+        Product olciProduct = (Product) sourceProductsMap.get("olciProduct");
+        Product slstrProduct = (Product) sourceProductsMap.get("slstrProduct");
 
-        if (olciProduct!=null && slstrProduct!=null) {
-            String synName = L1cSynOp.getSynName( slstrProduct, olciProduct);
+        if (olciProduct != null && slstrProduct != null) {
+            String synName = L1cSynOp.getSynName(slstrProduct, olciProduct);
             targetProductSelectorModel.setProductName(synName);
         }
     }
