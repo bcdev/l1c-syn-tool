@@ -10,6 +10,7 @@ import ucar.nc2.Variable;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 class MISRReader {
@@ -48,8 +49,10 @@ class MISRReader {
             File file = new File(ncFilename);
             if (file.exists()) {
                 NetcdfFile netcdfFile = NetcdfFileOpener.open(file);
-                readVariable(getRowVariableName(ncFilename),netcdfFile);
-                readVariable(getColVariableName(ncFilename),netcdfFile);
+                //readVariable(getRowVariableName(ncFilename),netcdfFile);
+                readVariable(getRowVariableName(netcdfFile),netcdfFile);
+                //readVariable(getColVariableName(ncFilename),netcdfFile);
+                readVariable(getColVariableName(netcdfFile),netcdfFile);
             }
             else {
                 Log.warn(ncFilename+" is not present in the MISR file");
@@ -67,16 +70,17 @@ class MISRReader {
     }
 
     private double extractDouble(Variable variable, int line,int  detector,int camera , double scaleFactor, double offset ) throws InvalidRangeException,IOException {
-        Array array = variable.read(new int[]{line,detector,camera}, new int[]{1,1,1});
-        double value = array.getDouble(0)*scaleFactor+offset;
-        return value ;
+        Array array = variable.read(new int[]{camera, line, detector}, new int[]{1,1,1});
+        double value = array.getInt(0)*scaleFactor+offset;
+        return value;
     }
 
     private Array extractDoubleArray(Variable variable, int lineStart, int detectorStart,
                                      int cameraStart, int lineShape, int detectorShape,
                                      int cameraShape, double scaleFactor) throws InvalidRangeException,IOException{
 
-        Array array = variable.read(new int[]{lineStart,detectorStart,cameraStart}, new int[]{lineShape,detectorShape,cameraShape});
+        Array array = variable.read(new int[]{cameraStart,lineStart ,detectorStart}, new int[]{cameraShape,lineShape,detectorShape});
+
         return array;
     }
 
@@ -96,12 +100,33 @@ class MISRReader {
         return map;
     }
 
+    private String getRowVariableName(NetcdfFile netcdfFile){
+        List<Variable> variables = netcdfFile.getVariables();
+        for (Variable variable : variables){
+            if (variable.getName().toLowerCase().contains("row")){
+                return variable.getName();
+            }
+        }
+        throw new NullPointerException("Row variable not found");
+    }
+
+    private String getColVariableName(NetcdfFile netcdfFile){
+        List<Variable> variables = netcdfFile.getVariables();
+        for (Variable variable : variables){
+            if (variable.getName().toLowerCase().contains("col")){
+                return variable.getName();
+            }
+        }
+        throw new NullPointerException("Col variable not found");
+
+    }
+
     private String getRowVariableName(String ncFileName) throws  IOException{
         if (ncFileName.matches("misreg_Oref_Oa...nc"))  {
             return "delta_row_"+ncFileName.substring(14,16);
         }
         else if (ncFileName.matches("misregist_Oref_[SF]..nc")){
-            return "col_corresp_"+ncFileName.substring(15,17).toLowerCase()+"_an";
+            return "row_corresp_"+ncFileName.substring(15,17).toLowerCase()+"_an";
         }
         else if (ncFileName.matches("misregist_Oref_[abci]o.nc")) {
             return "row_corresp_"+ncFileName.substring(15,17);
@@ -118,7 +143,7 @@ class MISRReader {
             return "col_corresp_"+ncFileName.substring(15,17).toLowerCase()+"_an";
         }
         else if (ncFileName.matches("misregist_Oref_[abci]o.nc")) {
-            return "row_corresp_"+ncFileName.substring(15,17);
+            return "col_corresp_"+ncFileName.substring(15,17);
         }
         throw new IOException("Error while trying to read "+ncFileName+" file");
     }
