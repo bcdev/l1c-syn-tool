@@ -33,6 +33,8 @@ class MISRReader {
         this.misrFile = misrFile;
     }
 
+    private File getMisrFile() { return this.misrFile; }
+
     void readMisrProduct()  throws IOException,InvalidRangeException  {
         String misrFolder = misrFile.getParent();
         Map fileBandMap = getFileBandMap();
@@ -41,6 +43,33 @@ class MISRReader {
             String fullNCPath = misrFolder+"/"+fileName;
             readMisrNetCDF(fullNCPath);
         }
+    }
+
+    private int[] getLineDetectorCamera(int x, int y){
+        int[] lineDetectorCameraIndexes = new int[3];
+        // TODO: implement
+        return lineDetectorCameraIndexes;
+    }
+
+    double[] getPixelByBand(String bandName,int line,int  detector,int camera) throws  IOException,InvalidRangeException{
+        String misrFolder = misrFile.getParent();
+        Map fileBandMap = getFileBandMap();
+        String fileName = fileBandMap.get(bandName).toString();
+        String fullNCPath = misrFolder+"/"+fileName;
+        NetcdfFile netcdfFile = NetcdfFileOpener.open(fullNCPath);
+        Variable rowVariable = netcdfFile.findVariable(getRowVariableName(netcdfFile));
+        Variable colVariable = netcdfFile.findVariable(getColVariableName(netcdfFile));
+        double rowScaleFactor = rowVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
+        double rowOffset = rowVariable.findAttribute("add_offset").getNumericValue().doubleValue();
+        double colScaleFactor = colVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
+        double colOffset = colVariable.findAttribute("add_offset").getNumericValue().doubleValue();
+
+        double[] rowColArray = new double[2];
+        double testOnlyRow = extractDouble(rowVariable,line,detector,camera,rowScaleFactor,rowOffset);
+        double testOnlyCol = extractDouble(colVariable,line,detector,camera,colScaleFactor,colOffset);
+        rowColArray[0]=testOnlyRow;
+        rowColArray[1]=testOnlyCol;
+        return rowColArray;
     }
 
 
