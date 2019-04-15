@@ -332,6 +332,14 @@ public class L1cSynOp extends Operator {
         return synName.toString();
     }
 
+    private int readDetectorIndex(int x,int y){
+        String indexString = olciSource.getBand("detector_index").getPixelString(x,y);
+        int pixelIndex = Integer.parseInt(indexString);
+        return pixelIndex;
+    }
+
+
+
     private String readShapeFile(File shapeFile) {
         try {
             ArrayList<Polygon> polygons = new ArrayList<>();
