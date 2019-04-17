@@ -133,12 +133,17 @@ public class L1cSynOp extends Operator {
         if (misrFile != null)
         {
             //readMisrProduct(misrFile);
-            MISRReader misrReader = new MISRReader(misrFile);
+            /*MISRReader misrReader = new MISRReader(misrFile);
             try {
                 misrReader.readMisrProduct();
+            }*/
+            SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource,slstrSource,misrFile);
+            try{
+                HashMap mapOlciSlstr = misrTransform.getSlstrOlciMap();
+                int a =1;
             }
-            catch (InvalidRangeException e1){}
-            catch (IOException e2){}
+            catch (InvalidRangeException e1){throw  new OperatorException("Misregistration failed. InvalidRangeException");}
+            catch (IOException e2){throw new OperatorException("Misregistration failes. I/O Exception ");}
         }
 
         Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
