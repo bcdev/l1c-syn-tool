@@ -139,7 +139,7 @@ public class L1cSynOp extends Operator {
             }*/
             SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource,slstrSource,misrFile);
             try{
-                HashMap mapOlciSlstr = misrTransform.getSlstrOlciMap();
+                TreeMap mapOlciSlstr = misrTransform.getSlstrOlciMap();
                 int a =1;
             }
             catch (InvalidRangeException e1){throw  new OperatorException("Misregistration failed. InvalidRangeException");}

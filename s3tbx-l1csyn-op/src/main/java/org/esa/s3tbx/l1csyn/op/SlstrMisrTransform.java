@@ -5,9 +5,8 @@ import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.dataio.netcdf.util.NetcdfFileOpener;
 import java.util.Map.Entry;
-import ucar.ma2.Array;
-import ucar.ma2.Index;
-import ucar.ma2.InvalidRangeException;
+
+import ucar.ma2.*;
 import ucar.nc2.Dimension;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
@@ -57,7 +56,7 @@ public class SlstrMisrTransform {
         Array detectorArray = detectorVariable.read(new int[]{f,jL1b}, new int[]{1,1});
         short detectorValue = detectorArray.getShort(0);
 
-        int nDetCam = 1; //todo: check where this parameter comes from?
+        int nDetCam = 740; //todo: check where this parameter comes from?
         short[] df = getOlciFrameOffset(netcdfFile);
         Short dfMin = Collections.min(Arrays.asList(ArrayUtils.toObject(df)));
 
@@ -83,9 +82,9 @@ public class SlstrMisrTransform {
         return rowCol;
     }
 
-    private HashMap getMisrOlciMap() throws IOException, InvalidRangeException {
+    private TreeMap<int[], int[]> getMisrOlciMap() throws IOException, InvalidRangeException {
         // provides mapping between MISR (row/col) and OLCI instrument grid (N_LINE_OLC/N_DET_CAM/N_CAM) from MISR product
-        String bandName = "/misreg_Oref_Oa17.nc";
+        String bandName = "/misregist_Oref_S1.nc";
         String path = this.misrPath;
         String misrBandFile = path+bandName;
         NetcdfFile netcdfFile = NetcdfFile.open(misrBandFile);
@@ -104,16 +103,22 @@ public class SlstrMisrTransform {
         double colOffset = colVariable.findAttribute("add_offset").getNumericValue().doubleValue();
 
 
-        HashMap<int[], int[]> rowColMap = new HashMap<>();
+        TreeMap<int[], int[]> rowColMap = new TreeMap<>(intArrayComparator());
         for (int i=0; i<nLineOlcLength; i++){
             for (int j=0; j<nDetCamLength; j++){
                 for (int k=0; k<nCamLength; k++){
-                    int[] position = {i,j,k};
+                    int[] position = {k,i,j};
                     Index index = Index.factory(position);
-                    int row = rowArray.getInt(index);//*rowScaleFactor + rowOffset;  //todo: clarify how to do rounding if we get float at this point.
-                    int col = colArray.getInt(index);//*colScaleFactor + colOffset;
-                    int[] rowColArray = {row,col};
-                    rowColMap.put(position,rowColArray);
+                    //todo: clarify how to do rounding if we get float at this point.
+
+                    //int row  = (int) Math.floor(((ArrayInt.D3) rowArray).get(k,i,j)*rowScaleFactor + rowOffset);
+                    int row  = ((ArrayInt.D3) rowArray).get(k,i,j);
+                    //int col  = (int) Math.floor(((ArrayInt.D3) colArray).get(k,i,j)*colScaleFactor + colOffset);
+                    int col  = ((ArrayInt.D3) colArray).get(k,i,j);
+
+                    int[] rowColArray = {col,row};
+                    //rowColMap.put(position,rowColArray);
+                    rowColMap.put(rowColArray,position);
                 }
             }
         }
@@ -121,10 +126,10 @@ public class SlstrMisrTransform {
         return rowColMap;
     }
 
-    private HashMap getOlciGridImageMap(int x, int y) throws IOException, InvalidRangeException {
+    private TreeMap getOlciGridImageMap(int x, int y) throws IOException, InvalidRangeException {
         // Provides mapping between OLCI image grid(x,y) and OLCI instrument grid(m,j,k)
         //x and y are dimensions of OLCI L1B raster
-        HashMap<int[], int[]> olciMap = new HashMap<>();
+        TreeMap<int[], int[]> olciMap = new TreeMap<>(intArrayComparator());
 
         String path = olciImageProduct.getFileLocation().getParent();
         String instrumentDataPath = path+"/instrument_data.nc";
@@ -133,7 +138,7 @@ public class SlstrMisrTransform {
         //another implementation
         Variable detectorVariable = netcdfFile.findVariable("detector_index");
         Array detectorArray = detectorVariable.read();
-        int nDetCam = 1; //todo: check where this parameter comes from?
+        int nDetCam = 740; //todo: check where this parameter comes from?
         short[] df = getOlciFrameOffset(netcdfFile);
         Short dfMin = Collections.min(Arrays.asList(ArrayUtils.toObject(df)));
         int[] shape = detectorArray.getShape();
@@ -141,17 +146,20 @@ public class SlstrMisrTransform {
             for (int j1L1b=0; j1L1b<y; j1L1b++){
                 int[] position = {j1L1b,f};
                 Index index = Index.factory(position);
-                short detectorValue = detectorArray.getShort(index);
-                int p = detectorValue;
-                int m = (int) Math.floor(p/nDetCam)+1;
-                int j = p - (m-1)*nDetCam;
-                int k = f -df[p]+dfMin;
+                //short detectorValue = detectorArray.getShort(index);
+                short detectorValue = ( (ArrayShort.D2) detectorArray).get(j1L1b,f);
+                if (detectorValue!= -1) {
+                    int p = detectorValue;
+                    int m = (int) Math.floor(p / nDetCam) + 1;
+                    int j = p - (m - 1) * nDetCam;
+                    int k = f - df[p] + dfMin;
 
-                int[] finalArray = new int[3];
-                finalArray[0]=m;
-                finalArray[1]=k;
-                finalArray[2]=j;
-                olciMap.put(position,finalArray);
+                    int[] finalArray = new int[3];
+                    finalArray[0] = m;
+                    finalArray[1] = k;
+                    finalArray[2] = j;
+                    olciMap.put(position, finalArray);
+                }
             }
         }
 
@@ -170,14 +178,40 @@ public class SlstrMisrTransform {
         return olciMap;
     }
 
-    private HashMap getSlstrImageMap(int x, int y) throws IOException, InvalidRangeException{
+    private TreeMap getSlstrImageMap(int x, int y) throws IOException, InvalidRangeException{
         // Provides mapping between SLSTR image grid(x,y) and SLSTR instrument grid(scan,pixel,detector)
         //x and y are dimensions of SLSTR L1B raster
-        HashMap<int[], int[]> slstrMap = new HashMap<>();
+        TreeMap<int[], int[]> slstrMap = new TreeMap<>(intArrayComparator());
         String path = slstrImageProduct.getFileLocation().getParent();
-        String indexFilePath = path+"/indices_ao.nc";
+        String indexFilePath = path+"/indices_an.nc";
         NetcdfFile netcdfFile = NetcdfFileOpener.open(indexFilePath);
+        //
+        Variable scanVariable = netcdfFile.findVariable("scan_an");
+        Variable pixelVariable = netcdfFile.findVariable("pixel_an");
+        Variable detectorVariable = netcdfFile.findVariable("detector_an");
+
+        Array scanArray = scanVariable.read();
+        Array pixelArray = pixelVariable.read();
+        Array detectorArray = detectorVariable.read();
+
         for (int i=0; i<x; i++){
+            for (int j=0; j<y; j++) {
+                int[] imagePosition = {j,i};
+                Index index = Index.factory(imagePosition);
+                //short scan = scanArray.getShort(index);
+                //short pixel = pixelArray.getShort(index);
+                //byte detector = detectorArray.getByte(index);
+                short scan =  ((ArrayShort.D2) scanArray).get(j,i);
+                short pixel =  ((ArrayShort.D2) pixelArray).get(j,i);
+                byte detector =  ((ArrayByte.D2) detectorArray).get(j,i);
+                int[] gridPosition = {scan,pixel,detector};
+                if (scan!= -1 && pixel!= -1 && detector!= -1) {
+                    slstrMap.put(imagePosition, gridPosition);
+                }
+            }
+        }
+        //
+        /*for (int i=0; i<x; i++){
             for (int j=0; j<y; j++) {
                 int[] imagePosition = new int[2];
                 imagePosition[0]=i;
@@ -185,21 +219,20 @@ public class SlstrMisrTransform {
                 int [] gridPosition = getSlstrGridScanDetectorPixel(x,y,netcdfFile);
                 slstrMap.put(imagePosition, gridPosition);
             }
-        }
+        }*/
         return slstrMap;
     }
 
-    private HashMap getSlstrGridMisrMap(Map mapSlstr ) {
+    private TreeMap getSlstrGridMisrMap(Map mapSlstr ) {
         //provides map between SLSTR instrument grid (scan,pixel,detector) and MISR file (row,col)
-
-        HashMap<int[], int[]> gridMap = new HashMap<>();
+        TreeMap<int[], int[]> gridMap = new TreeMap<>(intArrayComparator());
         for (Object value : mapSlstr.values()){
-            int[] scanPixelnDetector = (int[]) value;
-            int scan = scanPixelnDetector[0];
-            int pixel = scanPixelnDetector[1];
-            int detector = scanPixelnDetector[2];
+            int[] scanPixelDetector = (int[]) value;
+            int scan = scanPixelDetector[0];
+            int pixel = scanPixelDetector[1];
+            int detector = scanPixelDetector[2];
             int[] rowCol = getColRow(scan,pixel,detector);
-            gridMap.put(scanPixelnDetector,rowCol);
+            gridMap.put(scanPixelDetector,rowCol);
         }
         return gridMap;
     }
@@ -220,32 +253,32 @@ public class SlstrMisrTransform {
     }
 
 
-     HashMap getSlstrOlciMap() throws InvalidRangeException,IOException {
+     TreeMap getSlstrOlciMap() throws InvalidRangeException,IOException {
         //Provides mapping between SLSTR image grid and OLCI image grid
         //todo: find faster way to implement it.
-        HashMap<int[], int[]> gridMap = new HashMap<>();
+        TreeMap<int[], int[]> gridMap = new TreeMap<>(intArrayComparator());
 
-        HashMap slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(),slstrImageProduct.getSceneRasterHeight());
-        HashMap slsrtMisrMap  = getSlstrGridMisrMap(slstrImageMap);
-        HashMap misrOlciMap   = getMisrOlciMap();
-        HashMap olciImageMap  = getOlciGridImageMap(olciImageProduct.getSceneRasterWidth(),olciImageProduct.getSceneRasterHeight());
-
+        TreeMap slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(),slstrImageProduct.getSceneRasterHeight());
+        TreeMap slsrtMisrMap  = getSlstrGridMisrMap(slstrImageMap);
+        TreeMap misrOlciMap   = getMisrOlciMap();
+        TreeMap olciImageMap  = getOlciGridImageMap(olciImageProduct.getSceneRasterWidth(),olciImageProduct.getSceneRasterHeight());
         for ( Iterator<Map.Entry<int[],int[]>> entries = slstrImageMap.entrySet().iterator(); entries.hasNext();) {
             Map.Entry<int[],int[]> entry = entries.next();
             int[] slstrScanPixDet = entry.getValue();
             int[] rowCol = (int[]) slsrtMisrMap.get( slstrScanPixDet);
             int[] mjk = (int[]) misrOlciMap.get(rowCol);
-            int[] xy  = (int[]) olciImageMap.get(mjk);
-
-            gridMap.put(entry.getKey(),xy);
+            //System.out.println(mjk+" "+olciImageMap.get(mjk));
+            if (mjk!= null) {
+                int[] xy = (int[]) olciImageMap.get(mjk);
+                gridMap.put(entry.getKey(), xy);
+            }
         }
         return gridMap;
     }
 
     private int[] getSlstrPosOnOlciGrid(int x,int y) throws InvalidRangeException,IOException{
         // Provides a relation between SLSTR and OLCI image grids for a single SLSTR pixel(x,y) on OL
-
-        HashMap<int[], int[]> gridMap = getSlstrOlciMap();
+        TreeMap<int[], int[]> gridMap = getSlstrOlciMap();
         int[] key = {x,y};
         int[] positionOnOlciGrid= gridMap.get(key);
         return positionOnOlciGrid;
@@ -283,5 +316,21 @@ public class SlstrMisrTransform {
     private void readOlciRemovedPixels(){
     }
 
+    public static Comparator<int[]> intArrayComparator(){
+        return ( left, right ) -> {
+            int comparedLength = Integer.compare(left.length, right.length);
+            if(comparedLength == 0){
+                for( int i = 0; i < left.length; i++ ){
+                    int comparedValue = Integer.compare(left[i], right[i]);
+                    if(comparedValue != 0){
+                        return comparedValue;
+                    }
+                }
+                return 0;
+            } else {
+                return comparedLength;
+            }
+        };
+    }
 
 }
