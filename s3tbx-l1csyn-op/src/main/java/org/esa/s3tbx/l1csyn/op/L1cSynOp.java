@@ -132,22 +132,24 @@ public class L1cSynOp extends Operator {
 
         if (misrFile != null)
         {
-            //readMisrProduct(misrFile);
-            /*MISRReader misrReader = new MISRReader(misrFile);
-            try {
-                misrReader.readMisrProduct();
-            }*/
             SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource,slstrSource,misrFile);
             try{
                 TreeMap mapOlciSlstr = misrTransform.getSlstrOlciMap();
-                int a =1;
+                HashMap<String, Product> misrSourceProductMap = new HashMap<>();
+                misrSourceProductMap.put("olciSourceProduct",olciSource);
+                misrSourceProductMap.put("slstrSourceProduct",slstrSource);
+                HashMap<String, Object> misrParams = new HashMap<>();
+                misrParams.put("pixelMap",mapOlciSlstr);
+                l1cTarget = GPF.createProduct("Misregister",misrParams,misrSourceProductMap);
             }
             catch (InvalidRangeException e1){throw  new OperatorException("Misregistration failed. InvalidRangeException");}
             catch (IOException e2){throw new OperatorException("Misregistration failes. I/O Exception ");}
         }
+        else {
+            Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
+            l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
+        }
 
-        Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
-        l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
 
         Map<String, ProductData.UTC> startEndDateMap = getStartEndDate(slstrSource, olciSource);
         ProductData.UTC startDate = startEndDateMap.get("startDate");
