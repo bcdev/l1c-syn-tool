@@ -3,6 +3,7 @@ package org.esa.s3tbx.l1csyn.op;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Polygon;
+import org.esa.snap.core.dataio.ProductIO;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductData;
@@ -114,6 +115,9 @@ public class L1cSynOp extends Operator {
             throw new OperatorException("SLSTR product is not valid");
         }
 
+        //todo decide if make it optional
+        fixSlstrProductType();
+
         checkDate(slstrSource, olciSource);
 
         if (shapeFile != null) {
@@ -124,12 +128,9 @@ public class L1cSynOp extends Operator {
         updateSlstrBands(slstrSource, bandsSlstr);
         updateOlciBands(olciSource, bandsOlci);
 
-        Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource, upsamplingMethod), slstrSource);
-        HashMap<String, Product> sourceProductMap = new HashMap<>();
 
-        sourceProductMap.put("masterProduct", olciSource);
-        sourceProductMap.put("slaveProduct", slstrInput);
 
+        Product collocatedTarget;
         if (misrFile != null)
         {
             SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource,slstrSource,misrFile);
@@ -140,17 +141,21 @@ public class L1cSynOp extends Operator {
                 misrSourceProductMap.put("slstrSourceProduct",slstrSource);
                 HashMap<String, Object> misrParams = new HashMap<>();
                 misrParams.put("pixelMap",mapOlciSlstr);
-                l1cTarget = GPF.createProduct("Misregister",misrParams,misrSourceProductMap);
+                collocatedTarget = GPF.createProduct("Misregister",misrParams,misrSourceProductMap);
             }
             catch (InvalidRangeException e1){throw  new OperatorException("Misregistration failed. InvalidRangeException");}
             catch (IOException e2){throw new OperatorException("Misregistration failes. I/O Exception ");}
         }
+
         else {
-            Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
-            l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
+            Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource, upsamplingMethod), slstrSource);
+            HashMap<String, Product> sourceProductMap = new HashMap<>();
+            sourceProductMap.put("masterProduct", olciSource);
+            sourceProductMap.put("slaveProduct", slstrInput);
+            collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
         }
 
-
+        l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
         Map<String, ProductData.UTC> startEndDateMap = getStartEndDate(slstrSource, olciSource);
         ProductData.UTC startDate = startEndDateMap.get("startDate");
         ProductData.UTC endDate = startEndDateMap.get("endDate");
@@ -162,6 +167,9 @@ public class L1cSynOp extends Operator {
         l1cTarget.setEndTime(endDate);
         l1cTarget.setName(getSynName(slstrSource, olciSource));
     }
+
+
+
 
     private void updateOlciBands(Product olciSource, String bandsOlci) {
         if (bandsOlci.equals("Oa*_radiance")) {
@@ -284,6 +292,20 @@ public class L1cSynOp extends Operator {
         dateMap.put("startDate", startDateUTC);
         dateMap.put("endDate", endDateUTC);
         return dateMap;
+    }
+
+    private void fixSlstrProductType() {
+        String filePath = slstrSource.getFileLocation().toString();
+        File slstrFile = new File(filePath);
+                //File slstrFile =  slstrSource.getFileLocation().toPath().toFile();
+        HashMap params = new HashMap();
+        params.put("file",slstrFile);
+        params.put("formatName","Sen3");
+                //this.slstrSource = GPF.createProduct("Read",params);
+        try{
+            this.slstrSource = ProductIO.readProduct(slstrFile, "Sen3"); }
+        catch (IOException e2){throw new OperatorException("Can not reopen SLSTR product ");}
+        int a = 1;
     }
 
 

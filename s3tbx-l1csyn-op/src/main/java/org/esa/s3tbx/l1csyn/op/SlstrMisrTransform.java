@@ -20,7 +20,6 @@ public class SlstrMisrTransform {
 
     private int N_DET_CAM = 740;
 
-
     SlstrMisrTransform (Product olciImageProduct, Product slstrImageProduct, File misrManifest){
         this.olciImageProduct = olciImageProduct;
         this.slstrImageProduct = slstrImageProduct;
@@ -28,49 +27,7 @@ public class SlstrMisrTransform {
     }
 
 
-    private int[] getSlstrGridScanDetectorPixel(int row, int col, NetcdfFile netcdfFile) throws IOException, InvalidRangeException {
-        Variable scanVariable = netcdfFile.findVariable("scan_an");
-        Variable pixelVariable = netcdfFile.findVariable("pixel_an");
-        Variable detectorVariable = netcdfFile.findVariable("detector_an");
 
-        Array scanArray = scanVariable.read(new int[]{row,col}, new int[]{1,1});
-        short scanValue = scanArray.getShort(0);
-
-        Array pixelArray = pixelVariable.read(new int[]{row,col}, new int[]{1,1});
-        short pixelValue = pixelArray.getShort(0);
-
-        Array detectorArray = detectorVariable.read(new int[]{row,col}, new int[]{1,1});
-        byte detectorValue = detectorArray.getByte(0);
-
-        int[] finalArray = new int[3];
-        finalArray[0] = scanValue;
-        finalArray[1] = pixelValue;
-        finalArray[2] = detectorValue;
-        return finalArray;
-    }
-
-    private int[] getOlciGridPixelPosition (int f, int jL1b, NetcdfFile netcdfFile) throws IOException, InvalidRangeException {
-
-        Variable detectorVariable = netcdfFile.findVariable("detector_index");
-        Array detectorArray = detectorVariable.read(new int[]{f,jL1b}, new int[]{1,1});
-        short detectorValue = detectorArray.getShort(0);
-
-        int nDetCam = N_DET_CAM; //todo: check where this parameter comes from?
-        short[] df = getOlciFrameOffset(netcdfFile);
-        Short dfMin = Collections.min(Arrays.asList(ArrayUtils.toObject(df)));
-
-        int p = detectorValue;
-        int m = (int) Math.floor(p/nDetCam)+1;
-        int j = p - (m-1)*nDetCam;
-        int k = f -df[p]+dfMin;
-
-
-        int[] finalArray = new int[3];
-        finalArray[0]=m;
-        finalArray[1]=k;
-        finalArray[2]=j;
-        return finalArray;
-    }
 
     private int[] getColRow (int scan, int pixel, int detector){
         //todo : clarify the formula
@@ -97,22 +54,39 @@ public class SlstrMisrTransform {
         Variable colVariable = netcdfFile.findVariable(colVariableName);
         Array rowArray = rowVariable.read();
         Array colArray = colVariable.read();
-        //double rowScaleFactor = rowVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
-        //double rowOffset = rowVariable.findAttribute("add_offset").getNumericValue().doubleValue();
-        //double colScaleFactor = colVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
-        //double colOffset = colVariable.findAttribute("add_offset").getNumericValue().doubleValue();
-
+        double rowScaleFactor = rowVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
+        double rowOffset = rowVariable.findAttribute("add_offset").getNumericValue().doubleValue();
+        double colScaleFactor = colVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
+        double colOffset = colVariable.findAttribute("add_offset").getNumericValue().doubleValue();
+        int col = -1;
+        int row = -1;
         TreeMap<int[], int[]> rowColMap = new TreeMap<>(intArrayComparator());
-        for (int i=0; i<nLineOlcLength; i++){
-            for (int j=0; j<nDetCamLength; j++){
-                for (int k=0; k<nCamLength; k++){
+        int minRow;
+        int minCol;
+        minRow = (int) MAMath.getMinimum(rowArray);
+        minCol = (int) MAMath.getMinimum(colArray);
+
+
+        for (int i=0; i<nCamLength; i++){
+            for (int j=0; j<nLineOlcLength; j++){
+                for (int k=0; k<nDetCamLength; k++){
                     int[] position = {k,i,j};
                     //todo: clarify how to do rounding if we get float at this point.
                     //int row  = (int) Math.floor(((ArrayInt.D3) rowArray).get(k,i,j)*rowScaleFactor + rowOffset);
-                    int row  = ((ArrayInt.D3) rowArray).get(k,i,j);
                     //int col  = (int) Math.floor(((ArrayInt.D3) colArray).get(k,i,j)*colScaleFactor + colOffset);
-                    int col  = ((ArrayShort.D3) colArray).get(k,i,j);
+                    if (colVariableName.matches("L1b_col_.._an")) {
+                        row  = ((ArrayInt.D3) rowArray).get(i,j,k);
+                        col = ((ArrayShort.D3) colArray).get(i, j, k);
+                    }
+                    else if (colVariableName.matches( "col_corresp_s._an")) {
+                        row  = (int) Math.floor( ( ((ArrayInt.D3) rowArray).get(i,j,k)  )*rowScaleFactor + rowOffset);
+                        col  = (int) Math.floor( ( ((ArrayInt.D3) colArray).get(i,j,k)  )*colScaleFactor + colOffset);
+                        //row  = (int) Math.floor(  ((ArrayInt.D3) rowArray).get(i,j,k) -minRow );
+                        //col  = (int) Math.floor(  ((ArrayInt.D3) colArray).get(i,j,k) -minCol  );
+                    }
+
                     int[] rowColArray = {row,col};
+
 
                     rowColMap.put(rowColArray,position);
                 }
@@ -177,6 +151,8 @@ public class SlstrMisrTransform {
 
         Variable scanOffsetVariable = netcdfFile.findVariable("l0_scan_offset_an");
         int scanOffset = scanOffsetVariable.readScalarInt();
+        //todo remove later
+        scanOffset = 0;
 
         for (int i=0; i<x; i++){
             for (int j=0; j<y; j++) {
@@ -206,7 +182,6 @@ public class SlstrMisrTransform {
         }
         return gridMap;
     }
-
 
     private short[] getOlciFrameOffset(NetcdfFile netcdfFile) throws IOException{
         Variable frameVariable =  netcdfFile.findVariable("frame_offset");
@@ -256,34 +231,23 @@ public class SlstrMisrTransform {
     private String getRowVariableName(NetcdfFile netcdfFile){
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables){
-            if (variable.getName().matches("L1b_row_.._an")){
+            if (variable.getName().matches("L1b_row_.._an") || variable.getName().matches("row_corresp_s._an")){
                 return variable.getName();
             }
         }
-        throw new NullPointerException("Row variable not foun   d");
+        throw new NullPointerException("Row variable not found");
     }
 
     private String getColVariableName(NetcdfFile netcdfFile){
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables){
-            if (variable.getName().matches("L1b_col_.._an")){
+            if (variable.getName().matches("L1b_col_.._an") || variable.getName().matches("col_corresp_s._an")){
                 return variable.getName();
             }
         }
         throw new NullPointerException("Col variable not found");
     }
-
-    private void readSlstrIndexFile(){
-    }
-
-    private void readOlciIndexFile(){
-    }
-
-    private void readSlstrOrphanPixels(){
-    }
-
-    private void readOlciRemovedPixels(){
-    }
+    
 
     public static Comparator<int[]> intArrayComparator(){
         return ( left, right ) -> {
