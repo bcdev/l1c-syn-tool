@@ -172,12 +172,32 @@ public class SlstrMisrTransform {
     private TreeMap getSlstrGridMisrMap(Map mapSlstr ) {
         //provides map between SLSTR instrument grid (scan,pixel,detector) and MISR file (row,col)
         TreeMap<int[], int[]> gridMap = new TreeMap<>(intArrayComparator());
+        //test block to rescal row-col
+        // todo: optimize
+        int minRow = 99999999;
+        int minCol = 99999999;
         for (Object value : mapSlstr.values()){
             int[] scanPixelDetector = (int[]) value;
             int scan = scanPixelDetector[0];
             int pixel = scanPixelDetector[1];
             int detector = scanPixelDetector[2];
             int[] rowCol = getColRow(scan,pixel,detector);
+            if (rowCol[0]<minRow){
+                minRow=rowCol[0];
+            }
+            if (rowCol[1]<minCol){
+                minCol=rowCol[1];
+            }
+        }
+        //
+        for (Object value : mapSlstr.values()){
+            int[] scanPixelDetector = (int[]) value;
+            int scan = scanPixelDetector[0];
+            int pixel = scanPixelDetector[1];
+            int detector = scanPixelDetector[2];
+            int[] rowCol = getColRow(scan,pixel,detector);
+            rowCol[0] = rowCol[0]-minRow;
+            rowCol[1] = rowCol[1]-minCol;
             gridMap.put(scanPixelDetector,rowCol);
         }
         return gridMap;
