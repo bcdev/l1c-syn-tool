@@ -247,7 +247,7 @@ public class SlstrMisrTransform {
         }
         throw new NullPointerException("Col variable not found");
     }
-    
+
 
     public static Comparator<int[]> intArrayComparator(){
         return ( left, right ) -> {

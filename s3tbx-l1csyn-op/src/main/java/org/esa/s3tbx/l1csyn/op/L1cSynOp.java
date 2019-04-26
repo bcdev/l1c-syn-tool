@@ -297,15 +297,12 @@ public class L1cSynOp extends Operator {
     private void fixSlstrProductType() {
         String filePath = slstrSource.getFileLocation().toString();
         File slstrFile = new File(filePath);
-                //File slstrFile =  slstrSource.getFileLocation().toPath().toFile();
         HashMap params = new HashMap();
         params.put("file",slstrFile);
         params.put("formatName","Sen3");
-                //this.slstrSource = GPF.createProduct("Read",params);
         try{
             this.slstrSource = ProductIO.readProduct(slstrFile, "Sen3"); }
         catch (IOException e2){throw new OperatorException("Can not reopen SLSTR product ");}
-        int a = 1;
     }
 
 
