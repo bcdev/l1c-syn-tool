@@ -104,7 +104,7 @@ public class MisrOp extends Operator {
         for (Band slstrBand : slstrSourceProduct.getBands()){
             //ProductUtils.copyBand(slstrBand.getName(),olciSourceProduct,targetProduct,false);
             if (!targetProduct.containsBand(slstrBand.getName())) {
-                targetProduct.addBand("slstrBand.getName()", slstrBand.getDataType());
+                targetProduct.addBand(slstrBand.getName(), slstrBand.getDataType());
             }
         }
 
