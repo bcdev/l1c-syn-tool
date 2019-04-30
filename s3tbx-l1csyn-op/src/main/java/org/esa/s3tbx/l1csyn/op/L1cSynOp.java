@@ -4,10 +4,7 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Polygon;
 import org.esa.snap.core.dataio.ProductIO;
-import org.esa.snap.core.datamodel.Band;
-import org.esa.snap.core.datamodel.Product;
-import org.esa.snap.core.datamodel.ProductData;
-import org.esa.snap.core.datamodel.TiePointGrid;
+import org.esa.snap.core.datamodel.*;
 import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
@@ -115,7 +112,7 @@ public class L1cSynOp extends Operator {
             throw new OperatorException("SLSTR product is not valid");
         }
 
-        //todo decide if make it optional
+        //todo : decide if it can be made it optional. Pull request addressing SLSTR product type was added to SNAP.
         fixSlstrProductType();
 
         checkDate(slstrSource, olciSource);
@@ -124,17 +121,15 @@ public class L1cSynOp extends Operator {
             geoRegion = readShapeFile(shapeFile);
         }
         updateTiePointGrids(slstrSource, olciSource, tiePointSelection);
-
         updateSlstrBands(slstrSource, bandsSlstr);
         updateOlciBands(olciSource, bandsOlci);
 
-
-
         Product collocatedTarget;
+
         if (misrFile != null)
         {
-            SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource,slstrSource,misrFile);
             try{
+                SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource,slstrSource,misrFile);
                 TreeMap mapOlciSlstr = misrTransform.getSlstrOlciMap();
                 HashMap<String, Product> misrSourceProductMap = new HashMap<>();
                 misrSourceProductMap.put("olciSourceProduct",olciSource);
@@ -163,6 +158,13 @@ public class L1cSynOp extends Operator {
         if (geoRegion != null) {
             l1cTarget = GPF.createProduct("Subset", getSubsetParameters(geoRegion), l1cTarget);
         }
+        //
+        MetadataElement slstrMetadata = slstrSource.getMetadataRoot();
+        //MetadataElement olciMetadata = olciSource.getMetadataRoot();
+        slstrMetadata.setName("SLSTRmetadata");
+        l1cTarget.getMetadataRoot().addElement(slstrMetadata);
+        //l1cTarget.getMetadataRoot().addElement(olciMetadata);
+        //
         l1cTarget.setStartTime(startDate);
         l1cTarget.setEndTime(endDate);
         l1cTarget.setName(getSynName(slstrSource, olciSource));
@@ -297,12 +299,9 @@ public class L1cSynOp extends Operator {
     private void fixSlstrProductType() {
         String filePath = slstrSource.getFileLocation().toString();
         File slstrFile = new File(filePath);
-        HashMap params = new HashMap();
-        params.put("file",slstrFile);
-        params.put("formatName","Sen3");
         try{
             this.slstrSource = ProductIO.readProduct(slstrFile, "Sen3"); }
-        catch (IOException e2){throw new OperatorException("Can not reopen SLSTR product ");}
+        catch (IOException e2){throw new OperatorException("Can not reopen SLSTR product.");}
     }
 
 
@@ -325,12 +324,8 @@ public class L1cSynOp extends Operator {
         } else if (olciName.contains("S3B") && slstrName.contains("S3B")) {
             synName.append("S3B_SY_1_SYN____");
         } else {
-            //throw new OperatorException("The SLSTR and OLCI products are from different missions");
             synName.append("________________");
         }
-        /*String startTimeEndTime = slstrSource.getName().substring(16,47);
-        synName.append(startTimeEndTime);
-        synName.append("_");*/
         Map<String, ProductData.UTC> startEndDateMap = getStartEndDate(slstrSource, olciSource);
         DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
         Date startDateUTC = startEndDateMap.get("startDate").getAsDate();

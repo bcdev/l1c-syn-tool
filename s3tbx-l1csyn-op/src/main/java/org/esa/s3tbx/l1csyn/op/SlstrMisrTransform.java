@@ -54,10 +54,10 @@ public class SlstrMisrTransform {
         Variable colVariable = netcdfFile.findVariable(colVariableName);
         Array rowArray = rowVariable.read();
         Array colArray = colVariable.read();
-        double rowScaleFactor = rowVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
-        double rowOffset = rowVariable.findAttribute("add_offset").getNumericValue().doubleValue();
-        double colScaleFactor = colVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
-        double colOffset = colVariable.findAttribute("add_offset").getNumericValue().doubleValue();
+       // double rowScaleFactor = rowVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
+       // double rowOffset = rowVariable.findAttribute("add_offset").getNumericValue().doubleValue();
+       // double colScaleFactor = colVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
+       // double colOffset = colVariable.findAttribute("add_offset").getNumericValue().doubleValue();
         int col = -1;
         int row = -1;
         TreeMap<int[], int[]> rowColMap = new TreeMap<>(intArrayComparator());
@@ -75,14 +75,14 @@ public class SlstrMisrTransform {
                     //int row  = (int) Math.floor(((ArrayInt.D3) rowArray).get(k,i,j)*rowScaleFactor + rowOffset);
                     //int col  = (int) Math.floor(((ArrayInt.D3) colArray).get(k,i,j)*colScaleFactor + colOffset);
                     if (colVariableName.matches("L1b_col_.._an")) {
-                        row  = ((ArrayInt.D3) rowArray).get(i,j,k);
-                        col = ((ArrayShort.D3) colArray).get(i, j, k);
+                        row  = ((ArrayInt.D3) rowArray).get(i,j,k) - minRow;
+                        col = ((ArrayShort.D3) colArray).get(i, j, k) - minCol;
                     }
                     else if (colVariableName.matches( "col_corresp_s._an")) {
-                        row  = (int) Math.floor( ( ((ArrayInt.D3) rowArray).get(i,j,k)  )*rowScaleFactor + rowOffset);
-                        col  = (int) Math.floor( ( ((ArrayInt.D3) colArray).get(i,j,k)  )*colScaleFactor + colOffset);
-                        //row  = (int) Math.floor(  ((ArrayInt.D3) rowArray).get(i,j,k) -minRow );
-                        //col  = (int) Math.floor(  ((ArrayInt.D3) colArray).get(i,j,k) -minCol  );
+                        //row  = (int) Math.floor( ( ((ArrayInt.D3) rowArray).get(i,j,k)  )*rowScaleFactor + rowOffset);
+                        //col  = (int) Math.floor( ( ((ArrayInt.D3) colArray).get(i,j,k)  )*colScaleFactor + colOffset);
+                        row  = (int) Math.floor(  ((ArrayInt.D3) rowArray).get(i,j,k) -minRow );
+                        col  = (int) Math.floor(  ((ArrayInt.D3) colArray).get(i,j,k) -minCol  );
                     }
 
                     int[] rowColArray = {row,col};
@@ -94,6 +94,18 @@ public class SlstrMisrTransform {
         }
 
         return rowColMap;
+    }
+
+    private TreeMap getOlciMisrMap() throws IOException{
+        TreeMap<int[], int[]> olciMap = new TreeMap<>(intArrayComparator());
+        String bandName = "/misreg_Oref_Oa17";
+        String path = this.misrPath;
+        String misrBandFile = path+bandName;
+        NetcdfFile netcdfFile = NetcdfFile.open(misrBandFile);
+        String rowVariableName = "L1b_row_17";
+        String colVariableName = "L1b_col_17";
+
+        return olciMap;
     }
 
     private TreeMap getOlciGridImageMap(int x, int y) throws IOException, InvalidRangeException {
