@@ -16,6 +16,8 @@ import java.awt.event.ActionEvent;
 
 public class L1cSynAction extends AbstractSnapAction {
     private static final String OPERATOR_ALIAS = "L1CSYN";
+    private static final String HELP_ID = "l1cSynTool";
+
 
     public L1cSynAction() {
         putValue(SHORT_DESCRIPTION, "Creates L1C Product from OLCI and SLSTR products");
@@ -25,7 +27,7 @@ public class L1cSynAction extends AbstractSnapAction {
     public void actionPerformed(ActionEvent e) {
         final AppContext appContext = getAppContext();
 
-        final L1cSynDialog dialog = new L1cSynDialog(OPERATOR_ALIAS, appContext, "L1C Synergy Tool", "L1cSynTool");
+        final L1cSynDialog dialog = new L1cSynDialog(OPERATOR_ALIAS, appContext, "L1C Synergy Tool", HELP_ID);
         dialog.getJDialog().pack();
         dialog.show();
     }

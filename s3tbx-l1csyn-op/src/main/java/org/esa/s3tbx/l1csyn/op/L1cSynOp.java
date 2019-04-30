@@ -13,6 +13,7 @@ import org.esa.snap.core.gpf.annotations.OperatorMetadata;
 import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
+import org.esa.snap.statistics.output.BandNameCreator;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.ContentFeatureCollection;
@@ -25,6 +26,8 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
 @OperatorMetadata(alias = "L1CSYN",
@@ -67,18 +70,18 @@ public class L1cSynOp extends Operator {
     @Parameter(alias = "bandsOlci",
             label = "bands OLCI",
             description = "group of OLCI bands in output",
-            valueSet = {"All", "Oa*_radiance", "FWHM", "lambda"},
+            valueSet = {"All", "Oa.._radiance", "FWHM_band_.*", "lambda0_band_.*"},
             defaultValue = "All"
     )
-    private String bandsOlci;
+    private String[] bandsOlci;
 
     @Parameter(alias = "bandsSlstr",
             label = "bands SLSTR",
             description = "group of SLSTR bands in output",
-            valueSet = {"All", "F*BT", "S*BT"},
+            valueSet = {"All", "F._BT_.*", "S._BT_.*"},
             defaultValue = "All"
     )
-    private String bandsSlstr;
+    private String[] bandsSlstr;
 
     @Parameter(alias = "tiePointSelection",
             label = "tie point selection",
@@ -120,6 +123,8 @@ public class L1cSynOp extends Operator {
         if (shapeFile != null) {
             geoRegion = readShapeFile(shapeFile);
         }
+
+        //todo: decide if it's better to do in the beginning or in the ened of processing.
         updateTiePointGrids(slstrSource, olciSource, tiePointSelection);
         updateSlstrBands(slstrSource, bandsSlstr);
         updateOlciBands(olciSource, bandsOlci);
@@ -173,8 +178,18 @@ public class L1cSynOp extends Operator {
 
 
 
-    private void updateOlciBands(Product olciSource, String bandsOlci) {
-        if (bandsOlci.equals("Oa*_radiance")) {
+    private void updateOlciBands(Product olciSource, String[] bandsOlci) {
+        if (! Arrays.asList(bandsOlci).contains("All")) {
+            Pattern pattern = Pattern.compile("\\b(" + String.join("|",bandsOlci) + ")\\b");
+            for (String bandName : olciSource.getBandNames()){
+                Matcher matcher = pattern.matcher(bandName);
+                if (! matcher.matches()){
+                    olciSource.removeBand(olciSource.getBand(bandName));
+                }
+            }
+        }
+
+        /*if (bandsOlci.equals("Oa*_radiance")) {
             for (Band band : olciSource.getBands()) {
                 if (!band.getName().matches("Oa.._radiance")) {
                     olciSource.removeBand(band);
@@ -187,23 +202,33 @@ public class L1cSynOp extends Operator {
                     olciSource.removeBand(band);
                 }
             }
-        }
+        }*/
     }
 
-    private void updateSlstrBands(Product slstrSource, String bandsSlstr) {
-        if (bandsSlstr.equals("F*BT")) {
+    private void updateSlstrBands(Product slstrSource, String[] bandsSlstr) {
+        if (! Arrays.asList(bandsSlstr).contains("All")) {
+            Pattern pattern = Pattern.compile("\\b(" + String.join("|",bandsSlstr) + ")\\b");
+            for (String bandName : slstrSource.getBandNames()){
+                Matcher matcher = pattern.matcher(bandName);
+                if (! matcher.matches()){
+                    slstrSource.removeBand(slstrSource.getBand(bandName));
+                }
+            }
+        }
+        /*
+        if (bandsSlstr[0].equals("F*BT")) {
             for (Band band : slstrSource.getBands()) {
                 if (!band.getName().matches("F._BT\\S+")) {
                     slstrSource.removeBand(band);
                 }
             }
-        } else if (bandsSlstr.equals("S*BT")) {
+        } else if (bandsSlstr[0].equals("S*BT")) {
             for (Band band : slstrSource.getBands()) {
                 if (!band.getName().matches("S._BT\\S+")) {
                     slstrSource.removeBand(band);
                 }
             }
-        }
+        }*/
     }
 
     private void updateTiePointGrids(Product slstrSource, Product olciSource, String tiePointSelection) {
