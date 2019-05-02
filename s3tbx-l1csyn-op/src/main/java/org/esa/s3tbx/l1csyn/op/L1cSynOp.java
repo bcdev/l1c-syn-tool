@@ -4,7 +4,10 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Polygon;
 import org.esa.snap.core.dataio.ProductIO;
-import org.esa.snap.core.datamodel.*;
+import org.esa.snap.core.datamodel.MetadataElement;
+import org.esa.snap.core.datamodel.Product;
+import org.esa.snap.core.datamodel.ProductData;
+import org.esa.snap.core.datamodel.TiePointGrid;
 import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
@@ -13,7 +16,6 @@ import org.esa.snap.core.gpf.annotations.OperatorMetadata;
 import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
-import org.esa.snap.statistics.output.BandNameCreator;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.ContentFeatureCollection;
@@ -126,8 +128,8 @@ public class L1cSynOp extends Operator {
 
         //todo: decide if it's better to do in the beginning or in the ened of processing.
         updateTiePointGrids(slstrSource, olciSource, tiePointSelection);
-        updateSlstrBands(slstrSource, bandsSlstr);
-        updateOlciBands(olciSource, bandsOlci);
+        updateBands(slstrSource, bandsSlstr);
+        updateBands(olciSource, bandsOlci);
 
         Product collocatedTarget;
 
@@ -178,58 +180,19 @@ public class L1cSynOp extends Operator {
 
 
 
-    private void updateOlciBands(Product olciSource, String[] bandsOlci) {
-        if (! Arrays.asList(bandsOlci).contains("All")) {
-            Pattern pattern = Pattern.compile("\\b(" + String.join("|",bandsOlci) + ")\\b");
-            for (String bandName : olciSource.getBandNames()){
+    private void updateBands(Product product, String[] bandsList){
+        if (! Arrays.asList(bandsList).contains("All")) {
+            Pattern pattern = Pattern.compile("\\b(" + String.join("|",bandsList) + ")\\b");
+            for (String bandName : product.getBandNames()){
                 Matcher matcher = pattern.matcher(bandName);
                 if (! matcher.matches()){
-                    olciSource.removeBand(olciSource.getBand(bandName));
+                    product.removeBand(product.getBand(bandName));
                 }
             }
         }
-
-        /*if (bandsOlci.equals("Oa*_radiance")) {
-            for (Band band : olciSource.getBands()) {
-                if (!band.getName().matches("Oa.._radiance")) {
-                    olciSource.removeBand(band);
-                }
-            }
-        }
-        else if (bandsOlci.equals("lambda")) {
-            for (Band band : olciSource.getBands()) {
-                if (!band.getName().contains("lambda")) {
-                    olciSource.removeBand(band);
-                }
-            }
-        }*/
     }
 
-    private void updateSlstrBands(Product slstrSource, String[] bandsSlstr) {
-        if (! Arrays.asList(bandsSlstr).contains("All")) {
-            Pattern pattern = Pattern.compile("\\b(" + String.join("|",bandsSlstr) + ")\\b");
-            for (String bandName : slstrSource.getBandNames()){
-                Matcher matcher = pattern.matcher(bandName);
-                if (! matcher.matches()){
-                    slstrSource.removeBand(slstrSource.getBand(bandName));
-                }
-            }
-        }
-        /*
-        if (bandsSlstr[0].equals("F*BT")) {
-            for (Band band : slstrSource.getBands()) {
-                if (!band.getName().matches("F._BT\\S+")) {
-                    slstrSource.removeBand(band);
-                }
-            }
-        } else if (bandsSlstr[0].equals("S*BT")) {
-            for (Band band : slstrSource.getBands()) {
-                if (!band.getName().matches("S._BT\\S+")) {
-                    slstrSource.removeBand(band);
-                }
-            }
-        }*/
-    }
+
 
     private void updateTiePointGrids(Product slstrSource, Product olciSource, String tiePointSelection) {
         if (tiePointSelection.equals("only OLCI") || tiePointSelection.equals("None")) {
