@@ -127,9 +127,12 @@ public class L1cSynOp extends Operator {
         }
 
         //todo: decide if it's better to do in the beginning or in the ened of processing.
-        updateTiePointGrids(slstrSource, olciSource, tiePointSelection);
-        updateBands(slstrSource, bandsSlstr);
-        updateBands(olciSource, bandsOlci);
+
+        if (!Arrays.stream(bandsSlstr).anyMatch("All"::equals)){
+            updateBands(slstrSource, bandsSlstr);}
+        if (!Arrays.stream(bandsOlci).anyMatch("All"::equals)) {
+            updateBands(olciSource, bandsOlci);
+        }
 
         Product collocatedTarget;
 
@@ -175,6 +178,10 @@ public class L1cSynOp extends Operator {
         l1cTarget.setStartTime(startDate);
         l1cTarget.setEndTime(endDate);
         l1cTarget.setName(getSynName(slstrSource, olciSource));
+
+        if (!tiePointSelection.equals("All")) {
+            updateTiePointGrids(l1cTarget, tiePointSelection);
+        }
     }
 
 
@@ -193,16 +200,15 @@ public class L1cSynOp extends Operator {
     }
 
 
-
-    private void updateTiePointGrids(Product slstrSource, Product olciSource, String tiePointSelection) {
+    private void updateTiePointGrids(Product l1cTarget, String tiePointSelection) {
         if (tiePointSelection.equals("only OLCI") || tiePointSelection.equals("None")) {
             for (TiePointGrid tiePointGrid : slstrSource.getTiePointGrids()) {
-                slstrSource.removeTiePointGrid(tiePointGrid);
+                l1cTarget.removeBand(l1cTarget.getBand(tiePointGrid.getName()));
             }
         }
         if (tiePointSelection.equals("only SLSTR") || tiePointSelection.equals("None")) {
             for (TiePointGrid tiePointGrid : olciSource.getTiePointGrids()) {
-                olciSource.removeTiePointGrid(tiePointGrid);
+                l1cTarget.removeBand(l1cTarget.getBand(tiePointGrid.getName()));
             }
         }
     }
