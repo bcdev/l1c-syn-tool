@@ -73,7 +73,7 @@ public class L1cSynOp extends Operator {
     @Parameter(alias = "bandsOlci",
             label = "OLCI raster data",
             description = "group of OLCI bands in output",
-            valueSet = {"All", "Oa.._radiance", "FWHM_band_.*", "lambda0_band_.*","solar_flux_band_.*","quality_flags_.*",
+            valueSet = {"All", "Oa.._radiance", "FWHM_band_.*", "lambda0_band_.*","solar_flux_band_.*","quality_flags.*",
                     "atmospheric_temperature_profile_.*","TP_.*","horizontal_wind.*","total_.*","humidity","sea_level_pressure","O.*A","S.*A"},
             defaultValue = "All"
     )
