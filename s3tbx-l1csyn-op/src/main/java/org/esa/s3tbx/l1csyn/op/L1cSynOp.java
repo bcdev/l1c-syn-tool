@@ -63,8 +63,8 @@ public class L1cSynOp extends Operator {
         HashMap<String, Product> sourceProductMap = new HashMap<>();
         sourceProductMap.put("masterProduct", olciSource);
         sourceProductMap.put("slaveProduct", slstrInput);
-        Product collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
-        l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
+        l1cTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
+        //l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
     }
 
     static Map<String, Object> getReprojectParams() {
