@@ -107,9 +107,9 @@ public class L1cSynDialog extends SingleTargetProductDialog {
                 final ProductFilter productFilter = new AnnotatedSourceProductFilter(annot);
                 SourceProductSelector sourceProductSelector = new SourceProductSelector(appContext);
                 if (field.getName().equals("olciSource")) {
-                    sourceProductSelector = new SourceProductSelector(appContext, "OLCI PRODUCT", false);
+                    sourceProductSelector = new SourceProductSelector(appContext, "OLCI Product", false);
                 } else if (field.getName().equals("slstrSource")) {
-                    sourceProductSelector = new SourceProductSelector(appContext, "SLSTR PRODUCT", false);
+                    sourceProductSelector = new SourceProductSelector(appContext, "SLSTR Product", false);
                 }
                 sourceProductSelector.setProductFilter(productFilter);
                 sourceProductSelectorList.add(sourceProductSelector);
