@@ -3,6 +3,7 @@ package org.esa.s3tbx.l1csyn.op;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Polygon;
+import org.apache.commons.lang.ArrayUtils;
 import org.esa.snap.core.dataio.ProductIO;
 import org.esa.snap.core.datamodel.MetadataElement;
 import org.esa.snap.core.datamodel.Product;
@@ -62,7 +63,7 @@ public class L1cSynOp extends Operator {
 
     @Parameter(alias = "reprojectionCRS",
             label = "Reprojection CRS",
-            description = "T",
+            description = "The CRS used for the reprojection. If set to None or left empty, no reprojection will be performed.",
             //valueSet = {"EPSG:4326", "EPSG:9108", "EPSG:9122"},
             defaultValue = "EPSG:4326"
     )
@@ -70,28 +71,31 @@ public class L1cSynOp extends Operator {
 
 
     @Parameter(alias = "bandsOlci",
-            label = "Bands OLCI",
+            label = "OLCI raster data",
             description = "group of OLCI bands in output",
-            valueSet = {"All", "Oa.._radiance", "FWHM_band_.*", "lambda0_band_.*"},
+            valueSet = {"All", "Oa.._radiance", "FWHM_band_.*", "lambda0_band_.*","solar_flux_band_.*","quality_flags_.*",
+                    "atmospheric_temperature_profile_.*","TP_.*","horizontal_wind.*","total_.*","humidity","sea_level_pressure","O.*A","S.*A"},
             defaultValue = "All"
     )
     private String[] bandsOlci;
 
     @Parameter(alias = "bandsSlstr",
-            label = "Bands SLSTR",
+            label = "SLSTR raster data",
             description = "group of SLSTR bands in output",
-            valueSet = {"All", "F._BT_.*", "S._BT_.*"},
+            valueSet = {"All", "F._BT_.*", "S._BT_.*","S*._radiance_an",".*_an.*",".*_ao.*",".*_bn.*",".*_bo.*",".*_bn.*",".*_co.*",".*_cn.*",
+                    ".*_tn.*",".*_tx.*"},
             defaultValue = "All"
     )
     private String[] bandsSlstr;
 
-    @Parameter(alias = "tiePointSelection",
+    /*@Parameter(alias = "tiePointSelection",
             label = "Tie_point selection",
             description = "which tie point should be written to SYN product",
             valueSet = {"All", "only OLCI", "only SLSTR", "None"},
             defaultValue = "All"
     )
     private String tiePointSelection;
+    */
 
     @Parameter(label = "Shapefile", description = "Optional file which may be used for selecting subset. This has priority over WKT GeoRegion.")
     private File shapeFile;
@@ -179,9 +183,9 @@ public class L1cSynOp extends Operator {
         l1cTarget.setEndTime(endDate);
         l1cTarget.setName(getSynName(slstrSource, olciSource));
 
-        if (!tiePointSelection.equals("All")) {
+        /*if (!tiePointSelection.equals("All")) {
             updateTiePointGrids(l1cTarget, tiePointSelection);
-        }
+        }*/
         if (!Arrays.stream(bandsSlstr).anyMatch("All"::equals)) {
             updateBands(slstrSource, l1cTarget, bandsSlstr);
         }
@@ -191,13 +195,26 @@ public class L1cSynOp extends Operator {
     }
 
 
-    private void updateBands(Product product, Product l1cTarget, String[] bandsList) {
+    private void updateBands(Product inputProduct, Product l1cTarget, String[] bandsList) {
         if (!Arrays.asList(bandsList).contains("All")) {
             Pattern pattern = Pattern.compile("\\b(" + String.join("|", bandsList) + ")\\b");
-            for (String bandName : product.getBandNames()) {
+            String[] bandNames = inputProduct.getBandNames();
+            String[] tiePointGridNames = inputProduct.getTiePointGridNames();
+
+
+            String[] tiePointBandNames = (String[]) ArrayUtils.addAll(bandNames, tiePointGridNames);
+
+            for (String bandName : tiePointBandNames) {
                 Matcher matcher = pattern.matcher(bandName);
                 if (!matcher.matches()) {
-                    l1cTarget.removeBand(product.getBand(bandName));
+                    l1cTarget.removeBand(l1cTarget.getBand(bandName));
+                }
+            }
+            String[] maskNames = inputProduct.getMaskGroup().getNodeNames();
+            for (String maskName : maskNames) {
+                Matcher matcher = pattern.matcher(maskName);
+                if (!matcher.matches()) {
+                    l1cTarget.getMaskGroup().remove(l1cTarget.getMaskGroup().get(maskName));
                 }
             }
         }
