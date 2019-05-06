@@ -61,16 +61,16 @@ public class L1cSynOp extends Operator {
     private String upsamplingMethod;
 
     @Parameter(alias = "reprojectionCRS",
-            label = "Reprojection crs",
+            label = "Reprojection CRS",
             description = "T",
-            valueSet = {"EPSG:4326", "EPSG:9108", "EPSG:9122"},
+            //valueSet = {"EPSG:4326", "EPSG:9108", "EPSG:9122"},
             defaultValue = "EPSG:4326"
     )
     private String reprojectionCRS;
 
 
     @Parameter(alias = "bandsOlci",
-            label = "bands OLCI",
+            label = "Bands OLCI",
             description = "group of OLCI bands in output",
             valueSet = {"All", "Oa.._radiance", "FWHM_band_.*", "lambda0_band_.*"},
             defaultValue = "All"
@@ -78,7 +78,7 @@ public class L1cSynOp extends Operator {
     private String[] bandsOlci;
 
     @Parameter(alias = "bandsSlstr",
-            label = "bands SLSTR",
+            label = "Bands SLSTR",
             description = "group of SLSTR bands in output",
             valueSet = {"All", "F._BT_.*", "S._BT_.*"},
             defaultValue = "All"
@@ -86,7 +86,7 @@ public class L1cSynOp extends Operator {
     private String[] bandsSlstr;
 
     @Parameter(alias = "tiePointSelection",
-            label = "tie point selection",
+            label = "Tie_point selection",
             description = "which tie point should be written to SYN product",
             valueSet = {"All", "only OLCI", "only SLSTR", "None"},
             defaultValue = "All"
@@ -96,15 +96,17 @@ public class L1cSynOp extends Operator {
     @Parameter(label = "Shapefile", description = "Optional file which may be used for selecting subset. This has priority over WKT GeoRegion.")
     private File shapeFile;
 
-    @Parameter(label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
-    private File misrFile;
-
     @Parameter(alias = "geoRegion", label = "WKT region",
             description = "The subset region in geographical coordinates using WKT-format,\n" +
                     "e.g. POLYGON((<lon1> <lat1>, <lon2> <lat2>, ..., <lon1> <lat1>))\n" +
                     "(make sure to quote the option due to spaces in <geometry>).\n" +
                     "If not given, the entire scene is used.")
     private String geoRegion;
+
+    /* Commented for now, as it is not supported yet
+    @Parameter(label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
+    private File misrFile;
+    */
 
     @Override
     public void initialize() throws OperatorException {
@@ -128,6 +130,7 @@ public class L1cSynOp extends Operator {
 
         Product collocatedTarget;
 
+        File misrFile = null;  //temporary, while MISR parameter is commented
         if (misrFile != null) {
             String misrFormat = getMisrFormat(misrFile);
             try {
@@ -153,7 +156,11 @@ public class L1cSynOp extends Operator {
             collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
         }
 
-        l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
+        if (reprojectionCRS != null && !reprojectionCRS.toLowerCase().equals("none") && !reprojectionCRS.equals("")) {
+            l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
+        } else {
+            l1cTarget = collocatedTarget;
+        }
         Map<String, ProductData.UTC> startEndDateMap = getStartEndDate(slstrSource, olciSource);
         ProductData.UTC startDate = startEndDateMap.get("startDate");
         ProductData.UTC endDate = startEndDateMap.get("endDate");
