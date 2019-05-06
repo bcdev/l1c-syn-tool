@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
         copyright = "Brockmann Consult GmbH",
         description = "Sentinel-3 OLCI/SLSTR L1C SYN Tool",
         category = "Optical/Pre-Processing",
-        version = "1.0")
+        version = "2.0")
 public class L1cSynOp extends Operator {
 
     private long allowedTimeDiff = 200l;
