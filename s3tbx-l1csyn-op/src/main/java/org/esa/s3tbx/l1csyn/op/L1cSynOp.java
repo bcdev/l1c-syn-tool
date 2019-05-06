@@ -126,33 +126,26 @@ public class L1cSynOp extends Operator {
             geoRegion = readShapeFile(shapeFile);
         }
 
-        //todo: decide if it's better to do in the beginning or in the ened of processing.
-
-        if (!Arrays.stream(bandsSlstr).anyMatch("All"::equals)){
-            updateBands(slstrSource, bandsSlstr);}
-        if (!Arrays.stream(bandsOlci).anyMatch("All"::equals)) {
-            updateBands(olciSource, bandsOlci);
-        }
-
         Product collocatedTarget;
 
-        if (misrFile != null)
-        {
-            try{
-                SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource,slstrSource,misrFile);
+        if (misrFile != null) {
+            String misrFormat = getMisrFormat(misrFile);
+            try {
+                SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource, slstrSource, misrFile);
                 TreeMap mapOlciSlstr = misrTransform.getSlstrOlciMap();
                 HashMap<String, Product> misrSourceProductMap = new HashMap<>();
-                misrSourceProductMap.put("olciSourceProduct",olciSource);
-                misrSourceProductMap.put("slstrSourceProduct",slstrSource);
+                misrSourceProductMap.put("olciSourceProduct", olciSource);
+                misrSourceProductMap.put("slstrSourceProduct", slstrSource);
                 HashMap<String, Object> misrParams = new HashMap<>();
-                misrParams.put("pixelMap",mapOlciSlstr);
-                collocatedTarget = GPF.createProduct("Misregister",misrParams,misrSourceProductMap);
+                misrParams.put("pixelMap", mapOlciSlstr);
+                collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);
+            } catch (InvalidRangeException e1) {
+                throw new OperatorException("Misregistration failed. InvalidRangeException");
+            } catch (IOException e2) {
+                throw new OperatorException("Misregistration failes. I/O Exception ");
             }
-            catch (InvalidRangeException e1){throw  new OperatorException("Misregistration failed. InvalidRangeException");}
-            catch (IOException e2){throw new OperatorException("Misregistration failes. I/O Exception ");}
-        }
 
-        else {
+        } else {
             Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource, upsamplingMethod), slstrSource);
             HashMap<String, Product> sourceProductMap = new HashMap<>();
             sourceProductMap.put("masterProduct", olciSource);
@@ -182,23 +175,26 @@ public class L1cSynOp extends Operator {
         if (!tiePointSelection.equals("All")) {
             updateTiePointGrids(l1cTarget, tiePointSelection);
         }
+        if (!Arrays.stream(bandsSlstr).anyMatch("All"::equals)) {
+            updateBands(slstrSource, l1cTarget, bandsSlstr);
+        }
+        if (!Arrays.stream(bandsOlci).anyMatch("All"::equals)) {
+            updateBands(olciSource, l1cTarget, bandsOlci);
+        }
     }
 
 
-
-
-    private void updateBands(Product product, String[] bandsList){
-        if (! Arrays.asList(bandsList).contains("All")) {
-            Pattern pattern = Pattern.compile("\\b(" + String.join("|",bandsList) + ")\\b");
-            for (String bandName : product.getBandNames()){
+    private void updateBands(Product product, Product l1cTarget, String[] bandsList) {
+        if (!Arrays.asList(bandsList).contains("All")) {
+            Pattern pattern = Pattern.compile("\\b(" + String.join("|", bandsList) + ")\\b");
+            for (String bandName : product.getBandNames()) {
                 Matcher matcher = pattern.matcher(bandName);
-                if (! matcher.matches()){
-                    product.removeBand(product.getBand(bandName));
+                if (!matcher.matches()) {
+                    l1cTarget.removeBand(product.getBand(bandName));
                 }
             }
         }
     }
-
 
     private void updateTiePointGrids(Product l1cTarget, String tiePointSelection) {
         if (tiePointSelection.equals("only OLCI") || tiePointSelection.equals("None")) {
@@ -284,7 +280,6 @@ public class L1cSynOp extends Operator {
         } else {
             endDateUTC = olciSource.getEndTime();
         }
-
         dateMap.put("startDate", startDateUTC);
         dateMap.put("endDate", endDateUTC);
         return dateMap;
@@ -293,11 +288,12 @@ public class L1cSynOp extends Operator {
     private void fixSlstrProductType() {
         String filePath = slstrSource.getFileLocation().toString();
         File slstrFile = new File(filePath);
-        try{
-            this.slstrSource = ProductIO.readProduct(slstrFile, "Sen3"); }
-        catch (IOException e2){throw new OperatorException("Can not reopen SLSTR product.");}
+        try {
+            this.slstrSource = ProductIO.readProduct(slstrFile, "Sen3");
+        } catch (IOException e2) {
+            throw new OperatorException("Can not reopen SLSTR product.");
+        }
     }
-
 
     public static String getSynName(Product slstrSource, Product olciSource) throws OperatorException {
         // pattern is MMM_SS_L_TTTTTT_yyyymmddThhmmss_YYYYMMDDTHHMMSS_yyyyMMDDTHHMMSS_<instance ID>_GGG_<class ID>.<extension>
@@ -347,13 +343,17 @@ public class L1cSynOp extends Operator {
         return synName.toString();
     }
 
-    private int readDetectorIndex(int x,int y){
-        String indexString = olciSource.getBand("detector_index").getPixelString(x,y);
+    private int readDetectorIndex(int x, int y) {
+        String indexString = olciSource.getBand("detector_index").getPixelString(x, y);
         int pixelIndex = Integer.parseInt(indexString);
         return pixelIndex;
     }
 
-
+    private String getMisrFormat(File misrFile) {
+        String format = null;
+        format = "new";
+        return format;
+    }
 
     private String readShapeFile(File shapeFile) {
         try {
