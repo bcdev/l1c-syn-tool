@@ -88,6 +88,22 @@ public class L1cSynOp extends Operator {
     )
     private String[] bandsSlstr;
 
+    @Parameter(alias = "olciRegexp",
+              label = "regexp for OLCI bands",
+              description = "Regular expression to set up selection of OLCI bands. It has priority over OLCI raster data selection." +
+                      " Will not be considered if empty",
+              defaultValue = ""
+    )
+    private  String olciRegexp;
+
+    @Parameter(alias = "slstrRegexp",
+            label = "regexp for SLSTR bands",
+            description = "Regular expression to set up selection of SLSTR bands. It has priority over SLSTR raster data selection." +
+                    "Will not be considered if empty",
+            defaultValue = ""
+    )
+    private  String slstrRegexp;
+
     /*@Parameter(alias = "tiePointSelection",
             label = "Tie_point selection",
             description = "which tie point should be written to SYN product",
@@ -186,14 +202,25 @@ public class L1cSynOp extends Operator {
         /*if (!tiePointSelection.equals("All")) {
             updateTiePointGrids(l1cTarget, tiePointSelection);
         }*/
-        if (!Arrays.stream(bandsSlstr).anyMatch("All"::equals)) {
+        if (slstrRegexp==null) {
             updateBands(slstrSource, l1cTarget, bandsSlstr);
         }
-        if (!Arrays.stream(bandsOlci).anyMatch("All"::equals)) {
+        else {
+            updateBands(slstrSource,l1cTarget,readRegExp(slstrRegexp));
+        }
+        if (olciRegexp==null) {
             updateBands(olciSource, l1cTarget, bandsOlci);
+        }
+        else {
+            updateBands(olciSource,l1cTarget,readRegExp(olciRegexp));
         }
     }
 
+    private String[] readRegExp(String regExp){
+        regExp = regExp.replace(" ","");
+        String[] parsed = regExp.split(",");
+        return  parsed;
+    }
 
     private void updateBands(Product inputProduct, Product l1cTarget, String[] bandsList) {
         if (!Arrays.asList(bandsList).contains("All")) {
