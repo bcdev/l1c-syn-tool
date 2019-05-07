@@ -72,7 +72,7 @@ public class L1cSynOp extends Operator {
 
     @Parameter(alias = "bandsOlci",
             label = "OLCI raster data",
-            description = "group of OLCI bands in output",
+            description = "Predefined regular expressions for selection of OLCI bands in the output product. Multiple selection is possible.",
             valueSet = {"All", "Oa.._radiance", "FWHM_band_.*", "lambda0_band_.*","solar_flux_band_.*","quality_flags.*",
                     "atmospheric_temperature_profile_.*","TP_.*","horizontal_wind.*","total_.*","humidity","sea_level_pressure","O.*A","S.*A"},
             defaultValue = "All"
@@ -81,7 +81,7 @@ public class L1cSynOp extends Operator {
 
     @Parameter(alias = "bandsSlstr",
             label = "SLSTR raster data",
-            description = "group of SLSTR bands in output",
+            description = "Predefined regular expressions for selection of OLCI bands in the output product. Multiple selection is possible.",
             valueSet = {"All", "F._BT_.*", "S._BT_.*","S*._radiance_an",".*_an.*",".*_ao.*",".*_bn.*",".*_bo.*",".*_bn.*",".*_co.*",".*_cn.*",
                     ".*_tn.*",".*_tx.*"},
             defaultValue = "All"
