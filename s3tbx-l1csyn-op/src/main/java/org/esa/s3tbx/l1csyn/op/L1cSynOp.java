@@ -202,13 +202,13 @@ public class L1cSynOp extends Operator {
         /*if (!tiePointSelection.equals("All")) {
             updateTiePointGrids(l1cTarget, tiePointSelection);
         }*/
-        if (slstrRegexp==null) {
+        if (slstrRegexp==null || slstrRegexp.equals("")) {
             updateBands(slstrSource, l1cTarget, bandsSlstr);
         }
         else {
             updateBands(slstrSource,l1cTarget,readRegExp(slstrRegexp));
         }
-        if (olciRegexp==null) {
+        if (olciRegexp==null || olciRegexp.equals("")) {
             updateBands(olciSource, l1cTarget, bandsOlci);
         }
         else {
@@ -234,7 +234,9 @@ public class L1cSynOp extends Operator {
             for (String bandName : tiePointBandNames) {
                 Matcher matcher = pattern.matcher(bandName);
                 if (!matcher.matches()) {
-                    l1cTarget.removeBand(l1cTarget.getBand(bandName));
+                    if (l1cTarget.getBand(bandName)!= null) {
+                        l1cTarget.removeBand(l1cTarget.getBand(bandName));
+                    }
                 }
             }
             String[] maskNames = inputProduct.getMaskGroup().getNodeNames();
