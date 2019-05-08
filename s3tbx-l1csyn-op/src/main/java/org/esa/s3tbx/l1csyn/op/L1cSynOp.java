@@ -73,8 +73,8 @@ public class L1cSynOp extends Operator {
     @Parameter(alias = "bandsOlci",
             label = "OLCI raster data",
             description = "Predefined regular expressions for selection of OLCI bands in the output product. Multiple selection is possible.",
-            valueSet = {"All", "Oa.._radiance", "FWHM_band_.*", "lambda0_band_.*","solar_flux_band_.*","quality_flags.*",
-                    "atmospheric_temperature_profile_.*","TP_.*","horizontal_wind.*","total_.*","humidity","sea_level_pressure","O.*A","S.*A"},
+            valueSet = {"All", "Oa.._radiance", "FWHM_band_.*", "lambda0_band_.*", "solar_flux_band_.*", "quality_flags.*",
+                    "atmospheric_temperature_profile_.*", "TP_.*", "horizontal_wind.*", "total_.*", "humidity", "sea_level_pressure", "O.*A", "S.*A"},
             defaultValue = "All"
     )
     private String[] bandsOlci;
@@ -82,19 +82,19 @@ public class L1cSynOp extends Operator {
     @Parameter(alias = "bandsSlstr",
             label = "SLSTR raster data",
             description = "Predefined regular expressions for selection of OLCI bands in the output product. Multiple selection is possible.",
-            valueSet = {"All", "F._BT_.*", "S._BT_.*","S*._radiance_an",".*_an.*",".*_ao.*",".*_bn.*",".*_bo.*",".*_bn.*",".*_co.*",".*_cn.*",
-                    ".*_tn.*",".*_tx.*"},
+            valueSet = {"All", "F._BT_.*", "S._BT_.*", "S*._radiance_an", ".*_an.*", ".*_ao.*", ".*_bn.*", ".*_bo.*", ".*_bn.*", ".*_co.*", ".*_cn.*",
+                    ".*_tn.*", ".*_tx.*"},
             defaultValue = "All"
     )
     private String[] bandsSlstr;
 
     @Parameter(alias = "olciRegexp",
-              label = "regexp for OLCI bands",
-              description = "Regular expression to set up selection of OLCI bands. It has priority over OLCI raster data selection." +
-                      " Will not be considered if empty",
-              defaultValue = ""
+            label = "regexp for OLCI bands",
+            description = "Regular expression to set up selection of OLCI bands. It has priority over OLCI raster data selection." +
+                    " Will not be considered if empty",
+            defaultValue = ""
     )
-    private  String olciRegexp;
+    private String olciRegexp;
 
     @Parameter(alias = "slstrRegexp",
             label = "regexp for SLSTR bands",
@@ -102,7 +102,7 @@ public class L1cSynOp extends Operator {
                     "Will not be considered if empty",
             defaultValue = ""
     )
-    private  String slstrRegexp;
+    private String slstrRegexp;
 
     /*@Parameter(alias = "tiePointSelection",
             label = "Tie_point selection",
@@ -202,24 +202,22 @@ public class L1cSynOp extends Operator {
         /*if (!tiePointSelection.equals("All")) {
             updateTiePointGrids(l1cTarget, tiePointSelection);
         }*/
-        if (slstrRegexp==null || slstrRegexp.equals("")) {
+        if (slstrRegexp == null || slstrRegexp.equals("")) {
             updateBands(slstrSource, l1cTarget, bandsSlstr);
+        } else {
+            updateBands(slstrSource, l1cTarget, readRegExp(slstrRegexp));
         }
-        else {
-            updateBands(slstrSource,l1cTarget,readRegExp(slstrRegexp));
-        }
-        if (olciRegexp==null || olciRegexp.equals("")) {
+        if (olciRegexp == null || olciRegexp.equals("")) {
             updateBands(olciSource, l1cTarget, bandsOlci);
-        }
-        else {
-            updateBands(olciSource,l1cTarget,readRegExp(olciRegexp));
+        } else {
+            updateBands(olciSource, l1cTarget, readRegExp(olciRegexp));
         }
     }
 
-    private String[] readRegExp(String regExp){
-        regExp = regExp.replace(" ","");
+    private String[] readRegExp(String regExp) {
+        regExp = regExp.replace(" ", "");
         String[] parsed = regExp.split(",");
-        return  parsed;
+        return parsed;
     }
 
     private void updateBands(Product inputProduct, Product l1cTarget, String[] bandsList) {
@@ -234,8 +232,11 @@ public class L1cSynOp extends Operator {
             for (String bandName : tiePointBandNames) {
                 Matcher matcher = pattern.matcher(bandName);
                 if (!matcher.matches()) {
-                    if (l1cTarget.getBand(bandName)!= null) {
+                    if (l1cTarget.getBand(bandName) != null) {
                         l1cTarget.removeBand(l1cTarget.getBand(bandName));
+                    }
+                    if (l1cTarget.getTiePointGrid(bandName) != null) {
+                        l1cTarget.removeTiePointGrid(l1cTarget.getTiePointGrid(bandName));
                     }
                 }
             }
