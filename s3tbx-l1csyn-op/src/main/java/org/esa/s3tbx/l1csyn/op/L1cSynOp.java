@@ -89,7 +89,7 @@ public class L1cSynOp extends Operator {
     private String[] bandsSlstr;
 
     @Parameter(alias = "olciRegexp",
-            label = "regexp for OLCI bands",
+            label = "Regular expression for OLCI bands",
             description = "Regular expression to set up selection of OLCI bands. It has priority over OLCI raster data selection." +
                     " Will not be considered if empty",
             defaultValue = ""
@@ -97,21 +97,12 @@ public class L1cSynOp extends Operator {
     private String olciRegexp;
 
     @Parameter(alias = "slstrRegexp",
-            label = "regexp for SLSTR bands",
+            label = "Regular expression for SLSTR bands",
             description = "Regular expression to set up selection of SLSTR bands. It has priority over SLSTR raster data selection." +
                     "Will not be considered if empty",
             defaultValue = ""
     )
     private String slstrRegexp;
-
-    /*@Parameter(alias = "tiePointSelection",
-            label = "Tie_point selection",
-            description = "which tie point should be written to SYN product",
-            valueSet = {"All", "only OLCI", "only SLSTR", "None"},
-            defaultValue = "All"
-    )
-    private String tiePointSelection;
-    */
 
     @Parameter(label = "Shapefile", description = "Optional file which may be used for selecting subset. This has priority over WKT GeoRegion.")
     private File shapeFile;
@@ -138,9 +129,6 @@ public class L1cSynOp extends Operator {
         if (!isValidSlstrProduct(slstrSource)) {
             throw new OperatorException("SLSTR product is not valid");
         }
-
-        //todo : decide if it can be made it optional. Pull request addressing SLSTR product type was added to SNAP.
-        fixSlstrProductType();
 
         checkDate(slstrSource, olciSource);
 
@@ -199,9 +187,6 @@ public class L1cSynOp extends Operator {
         l1cTarget.setEndTime(endDate);
         l1cTarget.setName(getSynName(slstrSource, olciSource));
 
-        /*if (!tiePointSelection.equals("All")) {
-            updateTiePointGrids(l1cTarget, tiePointSelection);
-        }*/
         if (slstrRegexp == null || slstrRegexp.equals("")) {
             updateBands(slstrSource, l1cTarget, bandsSlstr);
         } else {
@@ -246,19 +231,6 @@ public class L1cSynOp extends Operator {
                 if (!matcher.matches()) {
                     l1cTarget.getMaskGroup().remove(l1cTarget.getMaskGroup().get(maskName));
                 }
-            }
-        }
-    }
-
-    private void updateTiePointGrids(Product l1cTarget, String tiePointSelection) {
-        if (tiePointSelection.equals("only OLCI") || tiePointSelection.equals("None")) {
-            for (TiePointGrid tiePointGrid : slstrSource.getTiePointGrids()) {
-                l1cTarget.removeBand(l1cTarget.getBand(tiePointGrid.getName()));
-            }
-        }
-        if (tiePointSelection.equals("only SLSTR") || tiePointSelection.equals("None")) {
-            for (TiePointGrid tiePointGrid : olciSource.getTiePointGrids()) {
-                l1cTarget.removeBand(l1cTarget.getBand(tiePointGrid.getName()));
             }
         }
     }
@@ -340,6 +312,7 @@ public class L1cSynOp extends Operator {
     }
 
     private void fixSlstrProductType() {
+        //This method was used before SNAP v.6.0.9 in order to ensure that SLSTR product is opened in correct format. 
         String filePath = slstrSource.getFileLocation().toString();
         File slstrFile = new File(filePath);
         try {

@@ -64,9 +64,35 @@ target product is not saved, it is opened in the Sentinel Toolbox automatically.
 
 <h3>Processing Parameters</h3>
 <p align="center"><img src="../images/ProcessingParameters.png"></p>
-<h5>Allowed time difference</h5>
-Specifies the allowed time difference between the sensing start time of OLCI and SLSTR. This will be removed in later
-versions when the maximum allowed time difference is known.
+<h5>Resampling upsampling method</h5>
+The method used for interpolation (upsampling to a finer resolution).
+
+<h5>Reprojection CRS</h5>
+Coordinate reference system to which L1C product will be reprojected. If set to "none", no reprojection will be made. Default value is EPSG:4326.
+
+<h5>OLCI raster data</h5>
+Predefined regular expressions for selection of OLCI bands in L1C product. Multiple values selection is possible.
+Values must be one of 'All', 'Oa.._radiance', 'FWHM_band_.*', 'lambda0_band_.*', 'solar_flux_band_.*', 'quality_flags.*', 'atmospheric_temperature_profile_.*', 'TP_.*', 'horizontal_wind.*', 'total_.*', 'humidity', 'sea_level_pressure', 'O.*A', 'S.*A'.
+If 'All' is selected then all OLCI bands will be written to L1C product. 'All' is the default value.
+
+<h5>SLSTR raster data</h5>
+Predefined regular expressions for selection of SLSTR bands in L1C product. Multiple values selection is possible.
+Values must be one of 'All', 'F._BT_.*', 'S._BT_.*', 'S*._radiance_an', '.*_an.*', '.*_ao.*', '.*_bn.*', '.*_bo.*', '.*_bn.*', '.*_co.*', '.*_cn.*', '.*_tn.*', '.*_tx.*'.
+If 'All' is selected then all SLSTR bands will be written to L1C product. 'All' is the default value.
+
+<h5>Regular expression for OLCI bands</h5>
+Regular expressions for selection of OLCI bands in L1C product. Values must follow JAVA rules for the regular expessions. Values must be separated by commas. If 'All' is specified then all OLCI bands will be written to L1C product.
+
+<h5>Regular expression for SLSTR bands</h5>
+Regular expressions for selection of SLSTR bands in L1C product. Values must follow JAVA rules for the regular expessions. Values must be separated by commas. If 'All' is specified then all SLSTR bands will be written to L1C product.
+
+
+<h5>Shapefile</h5>
+Optional shapefile with which user specify the region of subset. This option has priority over "WKT region" option.
+
+<h5>WKT region</h5>
+The subset region in geographical coordinates using WKT-format, e.g. POLYGON((&lt;lon1&gt; &lt;lat1&gt;, &lt;lon2&gt; &lt;lat2&gt;, ..., &lt;lon1&gt; &lt;lat1&gt;))
+(make sure to quote the option due to spaces in &lt;geometry&gt;). If not given, the entire scene is used. Shapefile option has priority over this option.
 
 
 <h3>Usage from the command line</h3>
@@ -135,7 +161,7 @@ Graph XML Format:
 A complete command line call (on windows) might look like the following:
 
 <pre>
-> gpt L1CSYN -PallowedTimeDiff=2 -t "c:\output\S3_L1C_SYN.nc" -SolciProduct="c:\input\S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.SEN3"
+> gpt L1CSYN -PbandsOlci="Oa.._radiance,FWHM_band_.*,lambda0_band_.*" -PbandsSlstr=".*_an.*,.*_tn.*,.*_tx.*" -t "c:\output\S3_L1C_SYN.nc" -SolciProduct="c:\input\S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.SEN3"
     -SslstrProduct="S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3"
 </pre>
 
