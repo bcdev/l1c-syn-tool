@@ -11,6 +11,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 
 public class L1cSynOpTest {
@@ -89,6 +90,32 @@ public class L1cSynOpTest {
         assertEquals("First", flagDownsampling);
         assertFalse(resampleOnPyramidLevels);
 
+    }
+
+    @Test
+    public  void testBandSelection() throws IOException {
+        String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
+        String olciFilePath = L1cSynOpTest.class.getResource("S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.nc").getFile();
+
+        Product slstrProduct = ProductIO.readProduct(slstrFilePath);
+        Product olciProduct = ProductIO.readProduct(olciFilePath);
+        Operator l1cSynOp = new L1cSynOp();
+        l1cSynOp.setParameterDefaultValues();
+        String[] bandsOlci = {"Oa.._radiance", "FWHM_band_.*", "solar_flux_band_.*", "quality_flags.*",
+                "atmospheric_temperature_profile_.*", "TP_.*"};
+        String[] bandsSlstr = {".*_an.*", ".*_ao.*"};
+        l1cSynOp.setParameter("bandsOlci", bandsOlci);
+        l1cSynOp.setParameter("bandsSlstr",bandsSlstr);
+        l1cSynOp.setSourceProduct("olciProduct", olciProduct);
+        l1cSynOp.setSourceProduct("slstrProduct", slstrProduct);
+        Product result = l1cSynOp.getTargetProduct();
+        assertTrue(result.containsBand("S1_radiance_an"));
+        assertTrue(result.containsBand("S3_radiance_ao"));
+        assertTrue(result.containsBand("Oa03_radiance"));
+        assertTrue(result.containsBand("FWHM_band_12"));
+        assertFalse(result.containsBand("S4_radiance_bo"));
+        assertFalse(result.containsBand("S5_radiance_cn"));
+        assertFalse(result.containsBand("lambda0_band_5"));
     }
 
 }
