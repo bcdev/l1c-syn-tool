@@ -53,6 +53,13 @@ public class L1cSynOp extends Operator {
     @TargetProduct(label = "L1C SYN Product", description = "L1C SYNERGY output product")
     private Product l1cTarget;
 
+    @Parameter(alias = "stayOnOlciGrid",
+            label = "Keep final project on OLCI image grid",
+            description = "If this parameter is set to true, the final product will be projected on OLCI image grid.",
+            defaultValue = "false"
+    )
+    private boolean stayOnOlciGrid;
+
     @Parameter(alias = "upsampling",
             label = "Resampling upsampling method",
             description = "The method used for interpolation (upsampling to a finer resolution).",
@@ -164,7 +171,7 @@ public class L1cSynOp extends Operator {
             collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
         }
 
-        if (reprojectionCRS != null && !reprojectionCRS.toLowerCase().equals("none") && !reprojectionCRS.equals("")) {
+        if (reprojectionCRS != null && !reprojectionCRS.toLowerCase().equals("none") && !reprojectionCRS.equals("") && stayOnOlciGrid == false) {
             l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
         } else {
             l1cTarget = collocatedTarget;
@@ -197,6 +204,8 @@ public class L1cSynOp extends Operator {
         } else {
             updateBands(olciSource, l1cTarget, readRegExp(olciRegexp));
         }
+
+        l1cTarget.setDescription("SENTINEL-3 SYN Level 1C Product");
     }
 
     private String[] readRegExp(String regExp) {
