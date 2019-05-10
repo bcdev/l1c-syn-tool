@@ -33,7 +33,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <snap.version>6.0.6</snap.version>
+        <snap.version>6.0.10</snap.version>
         <s3tbx.version>6.0.5</s3tbx.version>
         <javahelp.version>2.0.05</javahelp.version>
         <netbeans.version>RELEASE82</netbeans.version>
