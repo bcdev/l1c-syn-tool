@@ -8,7 +8,6 @@ import org.esa.snap.core.dataio.ProductIO;
 import org.esa.snap.core.datamodel.MetadataElement;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductData;
-import org.esa.snap.core.datamodel.TiePointGrid;
 import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
@@ -28,7 +27,14 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,7 +48,7 @@ import java.util.regex.Pattern;
         version = "2.0")
 public class L1cSynOp extends Operator {
 
-    private long allowedTimeDiff = 200l;
+    private long allowedTimeDiff = 200L;
 
     @SourceProduct(alias = "olciProduct", label = "OLCI Product", description = "OLCI source product")
     private Product olciSource;
@@ -416,7 +422,7 @@ public class L1cSynOp extends Operator {
             MultiPolygon combined = new MultiPolygon(polygonsArray, factory);
             return combined.toString();
         } catch (IOException e) {
-            throw new OperatorException("something is wrong with your shapefile");
+            throw new OperatorException("The provided shapefile could not be read", e);
         }
     }
 

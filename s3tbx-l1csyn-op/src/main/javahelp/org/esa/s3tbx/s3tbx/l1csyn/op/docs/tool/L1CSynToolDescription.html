@@ -79,10 +79,10 @@ Predefined regular expressions for selection of SLSTR bands in L1C product. Mult
 Values must be one of 'All', 'F._BT_.*', 'S._BT_.*', 'S*._radiance_an', '.*_an.*', '.*_ao.*', '.*_bn.*', '.*_bo.*', '.*_bn.*', '.*_co.*', '.*_cn.*', '.*_tn.*', '.*_tx.*'.
 If 'All' is selected then all SLSTR bands will be written to L1C product. 'All' is the default value.
 
-<h5>Regular expression for OLCI bands</h5>
+<h5>Regular expressions for OLCI bands</h5>
 Regular expressions for selection of OLCI bands in L1C product. Values must follow JAVA rules for the regular expessions. Values must be separated by commas. If 'All' is specified then all OLCI bands will be written to L1C product.
 
-<h5>Regular expression for SLSTR bands</h5>
+<h5>Regular expressions for SLSTR bands</h5>
 Regular expressions for selection of SLSTR bands in L1C product. Values must follow JAVA rules for the regular expessions. Values must be separated by commas. If 'All' is specified then all SLSTR bands will be written to L1C product.
 
 
@@ -125,12 +125,12 @@ Parameter Options:
                                              e.g. POLYGON((&lt;lon1&gt; &lt;lat1&gt;, &lt;lon2&gt; &lt;lat2&gt;, ..., &lt;lon1&gt; &lt;lat1&gt;))
                                              (make sure to quote the option due to spaces in &lt;geometry&gt;).
                                              If not given, the entire scene is used.
-  -PolciRegexp=&lt;string&gt;                      Regular expression to set up selection of OLCI bands. It has priority over OLCI raster data selection. Will not be considered if empty
-  -PstayOnOlciGrid=&lt;boolean&gt;                 If this parameter is set to true, the final product will be projected on OLCI image grid.
+  -PolciRegexp=&lt;string&gt;                      Regular expressions (comma-separated) to set up selection of OLCI bands. It has priority over OLCI raster data selection. Will not be considered if empty
+  -PstayOnOlciGrid=&lt;boolean&gt;                 If this parameter is set to true, the final product will be provided on the OLCI image grid. Default value is 'False'
   -PreprojectionCRS=&lt;string&gt;                 The CRS used for the reprojection. If set to None or left empty, no reprojection will be performed.
                                              Default value is 'EPSG:4326'.
   -PshapeFile=&lt;file&gt;                         Optional file which may be used for selecting subset. This has priority over WKT GeoRegion.
-  -PslstrRegexp=&lt;string&gt;                     Regular expression to set up selection of SLSTR bands. It has priority over SLSTR raster data selection.Will not be considered if empty
+  -PslstrRegexp=&lt;string&gt;                     Regular expressions (comma-separated) to set up selection of SLSTR bands. It has priority over SLSTR raster data selection. Will not be considered if empty
   -Pupsampling=&lt;string&gt;                      The method used for interpolation (upsampling to a finer resolution).
                                              Value must be one of 'Nearest', 'Bilinear', 'Bicubic'.
                                              Default value is 'Nearest'.
