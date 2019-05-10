@@ -66,14 +66,6 @@ public class L1cSynOp extends Operator {
     )
     private boolean stayOnOlciGrid;
 
-    @Parameter(alias = "upsampling",
-            label = "Resampling upsampling method",
-            description = "The method used for interpolation (upsampling to a finer resolution).",
-            valueSet = {"Nearest", "Bilinear", "Bicubic",},
-            defaultValue = "Nearest"
-    )
-    private String upsamplingMethod;
-
     @Parameter(alias = "reprojectionCRS",
             label = "Reprojection CRS",
             description = "The CRS used for the reprojection. If set to None or left empty, no reprojection will be performed.",
@@ -82,6 +74,13 @@ public class L1cSynOp extends Operator {
     )
     private String reprojectionCRS;
 
+    @Parameter(alias = "upsampling",
+            label = "Resampling upsampling method",
+            description = "The method used for interpolation (upsampling to a finer resolution).",
+            valueSet = {"Nearest", "Bilinear", "Bicubic",},
+            defaultValue = "Nearest"
+    )
+    private String upsamplingMethod;
 
     @Parameter(alias = "bandsOlci",
             label = "OLCI raster data",
