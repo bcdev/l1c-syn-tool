@@ -56,7 +56,7 @@ public class L1cSynOp extends Operator {
     @Parameter(alias = "upsampling",
             label = "Resampling upsampling method",
             description = "The method used for interpolation (upsampling to a finer resolution).",
-            valueSet = {"Nearest", "Bilinear", "Bicubic"},
+            valueSet = {"Nearest", "Bilinear", "Bicubic",},
             defaultValue = "Nearest"
     )
     private String upsamplingMethod;
@@ -89,17 +89,17 @@ public class L1cSynOp extends Operator {
     private String[] bandsSlstr;
 
     @Parameter(alias = "olciRegexp",
-            label = "Regular expression for OLCI bands",
-            description = "Regular expression to set up selection of OLCI bands. It has priority over OLCI raster data selection." +
-                    " Will not be considered if empty",
+            label = "Regular expressions for OLCI",
+            description = "Regular expressions (comma-separated) to set up selection of OLCI bands. " +
+                    "It has priority over OLCI raster data selection. Will not be considered if empty",
             defaultValue = ""
     )
     private String olciRegexp;
 
     @Parameter(alias = "slstrRegexp",
-            label = "Regular expression for SLSTR bands",
-            description = "Regular expression to set up selection of SLSTR bands. It has priority over SLSTR raster data selection." +
-                    "Will not be considered if empty",
+            label = "Regular expressions for SLSTR",
+            description = "Regular expressions (comma-separated) to set up selection of SLSTR bands. " +
+                    "It has priority over SLSTR raster data selection. Will not be considered if empty",
             defaultValue = ""
     )
     private String slstrRegexp;
@@ -201,8 +201,7 @@ public class L1cSynOp extends Operator {
 
     private String[] readRegExp(String regExp) {
         regExp = regExp.replace(" ", "");
-        String[] parsed = regExp.split(",");
-        return parsed;
+        return regExp.split(",");
     }
 
     private void updateBands(Product inputProduct, Product l1cTarget, String[] bandsList) {
