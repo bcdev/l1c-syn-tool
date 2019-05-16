@@ -175,6 +175,8 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         parametersPanel.setSize(3, 3);
         JScrollPane scrollPane = new JScrollPane(parametersPanel);
         form.add(title, scrollPane);
+        parametersPane.getBindingContext().bindEnabledState("reprojectionCRS",false,"stayOnOlciGrid",true);
+        parametersPane.getBindingContext().bindEnabledState("upsamplingMethod",false,"stayOnOlciGrid",true);
     }
 
     private void setSourceProductSelectorToolTipTexts() {
