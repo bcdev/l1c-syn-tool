@@ -132,8 +132,28 @@ public class L1cSynOpTest {
         Product result = l1cSynOp.getTargetProduct();
         assertTrue(result.getName().startsWith("S3A_SY_1_SYN____20170313T120342_20170313T120643"));
         assertTrue(result.getName().endsWith("0179_015_208_2520_LN2_O_NT____.SEN3"));
-
-
     }
 
+    @Test
+    public void testBandsRegExps() throws IOException {
+        String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
+        String olciFilePath = L1cSynOpTest.class.getResource("S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.nc").getFile();
+        Product slstrProduct = ProductIO.readProduct(slstrFilePath);
+        Product olciProduct = ProductIO.readProduct(olciFilePath);
+        Operator l1cSynOp = new L1cSynOp();
+        l1cSynOp.setParameterDefaultValues();
+        l1cSynOp.setSourceProduct("olciProduct", olciProduct);
+        l1cSynOp.setSourceProduct("slstrProduct", slstrProduct);
+        l1cSynOp.setParameter("olciRegexp","Oa.._radiance, lambda0_band_.*");
+        l1cSynOp.setParameter("slstrRegexp","S*._radiance_an, .*_an.*");
+        Product result = l1cSynOp.getTargetProduct();
+        assertTrue(result.containsBand("Oa01_radiance"));
+        assertTrue(result.containsBand("Oa11_radiance"));
+        assertTrue(result.containsBand("lambda0_band_3"));
+        assertTrue(result.containsBand("bayes_an"));
+        assertTrue(result.containsBand("S3_radiance_an"));
+        assertFalse(result.containsBand("bayes_bn"));
+        assertFalse(result.containsBand("solar_flux_band_4"));
+        assertEquals(69,result.getNumBands());
+    }
 }
