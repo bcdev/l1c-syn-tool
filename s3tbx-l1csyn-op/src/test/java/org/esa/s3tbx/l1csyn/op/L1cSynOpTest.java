@@ -172,4 +172,22 @@ public class L1cSynOpTest {
         assertEquals(7,result.getSceneRasterWidth());
         assertEquals(22,result.getSceneRasterHeight());
     }
+
+    @Test
+    public void testNoReprojection() throws IOException {
+        String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
+        String olciFilePath = L1cSynOpTest.class.getResource("S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.nc").getFile();
+        Product slstrProduct = ProductIO.readProduct(slstrFilePath);
+        Product olciProduct = ProductIO.readProduct(olciFilePath);
+        Operator l1cSynOp = new L1cSynOp();
+        l1cSynOp.setSourceProduct("olciProduct", olciProduct);
+        l1cSynOp.setSourceProduct("slstrProduct", slstrProduct);
+        l1cSynOp.setParameterDefaultValues();
+        l1cSynOp.setParameter("stayOnOlciGrid",true);
+        Product result = l1cSynOp.getTargetProduct();
+        assertEquals("WGS84(DD)",result.getSceneGeoCoding().getMapCRS().getName().toString());
+        assertEquals("Geodetic 2D",result.getSceneGeoCoding().getMapCRS().getCoordinateSystem().getName().toString());
+        assertEquals(41,result.getSceneRasterHeight());
+        assertEquals(49,result.getSceneRasterWidth());
+    }
 }
