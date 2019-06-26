@@ -126,10 +126,9 @@ public class L1cSynOp extends Operator {
                     "If not given, the entire scene is used.")
     private String geoRegion;
 
-    /* Commented for now, as it is not supported yet
+    /* Commented for now, as it is not supported yet */
     @Parameter(label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
     private File misrFile;
-    */
 
     @Override
     public void initialize() throws OperatorException {
@@ -150,7 +149,7 @@ public class L1cSynOp extends Operator {
 
         Product collocatedTarget;
 
-        File misrFile = null;  //temporary, while MISR parameter is commented
+        //File misrFile = null;  //temporary, while MISR parameter is commented
         if (misrFile != null) {
             String misrFormat = getMisrFormat(misrFile);
             try {
@@ -209,7 +208,6 @@ public class L1cSynOp extends Operator {
         } else {
             updateBands(olciSource, l1cTarget, readRegExp(olciRegexp));
         }
-
         l1cTarget.setDescription("SENTINEL-3 SYN Level 1C Product");
     }
 

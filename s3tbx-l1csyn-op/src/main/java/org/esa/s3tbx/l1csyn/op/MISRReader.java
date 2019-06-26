@@ -13,6 +13,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+/*
+**********************
+Currently this class is completely not used.
+Check if we need it in the future.
+Probably move functionality to the MisrOP
+**********************
+ */
+
+
 class MISRReader {
 
     final File misrFile;

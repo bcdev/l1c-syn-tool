@@ -71,16 +71,21 @@ public class SlstrMisrTransform {
                     //int row  = (int) Math.floor(((ArrayInt.D3) rowArray).get(k,i,j)*rowScaleFactor + rowOffset);
                     //int col  = (int) Math.floor(((ArrayInt.D3) colArray).get(k,i,j)*colScaleFactor + colOffset);
                     if (colVariableName.matches("L1b_col_.._an")) {
-                        row = ((ArrayInt.D3) rowArray).get(i, j, k) - minRow;
-                        col = ((ArrayShort.D3) colArray).get(i, j, k) - minCol;
+                        //row = ((ArrayInt.D3) rowArray).get(i, j, k) - minRow;
+                        row = ((ArrayInt.D3) rowArray).get(i, j, k) ;
+                        //col = ((ArrayShort.D3) colArray).get(i, j, k) - minCol;
+                        col = ((ArrayShort.D3) colArray).get(i, j, k) ;
                     } else if (colVariableName.matches("col_corresp_s._an")) {
                         //row  = (int) Math.floor( ( ((ArrayInt.D3) rowArray).get(i,j,k)  )*rowScaleFactor + rowOffset);
                         //col  = (int) Math.floor( ( ((ArrayInt.D3) colArray).get(i,j,k)  )*colScaleFactor + colOffset);
-                        row = (int) Math.floor(((ArrayInt.D3) rowArray).get(i, j, k) - minRow);
-                        col = (int) Math.floor(((ArrayInt.D3) colArray).get(i, j, k) - minCol);
+                        //row = (int) Math.floor(((ArrayInt.D3) rowArray).get(i, j, k) - minRow);
+                        row = (int) Math.floor(((ArrayInt.D3) rowArray).get(i, j, k) );
+                        //col = (int) Math.floor(((ArrayInt.D3) colArray).get(i, j, k) - minCol);
+                        col = (int) Math.floor(((ArrayInt.D3) colArray).get(i, j, k) );
                     }
 
-                    int[] rowColArray = {row, col};
+                    //int[] rowColArray = {row, col};
+                     int[] rowColArray = {col, row};
 
 
                     rowColMap.put(rowColArray, position);
@@ -126,10 +131,10 @@ public class SlstrMisrTransform {
                     int p = detectorValue;
                     int m = (int) Math.floor(p / nDetCam) + 1;
                     int j = p - (m - 1) * nDetCam;
-                    int k = f - df[p] + dfMin;
+                    int k = j1L1b - df[p] + dfMin;
                     int[] finalArray = new int[3];
-                    finalArray[0] = m;
-                    finalArray[1] = k;
+                    finalArray[0] = k;
+                    finalArray[1] = m;
                     finalArray[2] = j;
                     olciMap.put(finalArray, position);
                 }

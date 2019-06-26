@@ -48,6 +48,12 @@ public class MisrOp extends Operator {
     @Override
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRectangle, ProgressMonitor pm) throws OperatorException {
         Map<Band, Tile> internalTargetTiles = new HashMap<>(targetTiles);
+        /*for (Map.Entry<Band, Tile> entry : internalTargetTiles.entrySet()) {
+            if ( !entry.getKey().getName().contains("radiance")){
+                internalTargetTiles.remove(entry);
+            }
+        }*/
+
         Tile sourceTile;
         pm.beginTask("Performing Misregestration", internalTargetTiles.size());
         try {
@@ -65,18 +71,32 @@ public class MisrOp extends Operator {
                         }
                     }
                 } else if (slstrSourceProduct.containsBand(targetBand.getName())) {
+                    sourceTile = getSourceTile(slstrSourceProduct.getRasterDataNode(targetBand.getName()), targetRectangle);
+
                     for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                         for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                            int[] position = {x, y};
+                            //targetTile.setSample(x,y,10d);
+                            Double oldReflecValue = sourceTile.getSampleDouble(x, y);
+
+                            /*int[] position = {x, y};
                             int[] slstrGridPosition = (int[]) treeMap.get(position);
                             if (slstrGridPosition != null) {
-                                double reflecValue = slstrSourceProduct.getBand(targetBand.getName()).getPixelDouble(slstrGridPosition[0], slstrGridPosition[1]);
+                                double reflecValue = sourceTile.getSampleDouble(slstrGridPosition[0], slstrGridPosition[1]);
                                 targetTile.setSample(x, y, reflecValue);
                             } else {
-                                targetTile.setSample(x, y, Float.NaN);
-                            }
+                                Double oldReflecValue = sourceTile.getSampleDouble(x, y);
+                                if (oldReflecValue != null) {
+                                    targetTile.setSample(x, y, oldReflecValue);
+                                }
+                                else {
+                                    targetTile.setSample(x,y,0);
+                                }
+                            }*/
                         }
                     }
+                }
+                else {
+                    throw new OperatorException("Band copying errod");
                 }
             }
             pm.worked(1);
@@ -108,11 +128,13 @@ public class MisrOp extends Operator {
         ProductUtils.copyFlagBands(olciSourceProduct, targetProduct, true);
         ProductUtils.copyGeoCoding(olciSourceProduct, targetProduct);
 
-        ProductUtils.copyMetadata(slstrSourceProduct, targetProduct);
+        /*ProductUtils.copyMetadata(slstrSourceProduct, targetProduct);
         ProductUtils.copyTiePointGrids(slstrSourceProduct, targetProduct);
         ProductUtils.copyMasks(slstrSourceProduct, targetProduct);
         ProductUtils.copyFlagBands(slstrSourceProduct, targetProduct, false);
         ProductUtils.copyGeoCoding(slstrSourceProduct, targetProduct);
+        targetProduct.setAutoGrouping(olciSourceProduct.getAutoGrouping().toString()); */
+
     }
 
     public static class Spi extends OperatorSpi {
