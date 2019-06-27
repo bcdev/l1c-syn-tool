@@ -5,6 +5,7 @@ import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Polygon;
 import org.apache.commons.lang.ArrayUtils;
 import org.esa.snap.core.dataio.ProductIO;
+import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.MetadataElement;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductData;
@@ -153,11 +154,35 @@ public class L1cSynOp extends Operator {
         if (misrFile != null) {
             String misrFormat = getMisrFormat(misrFile);
             try {
+                //
+                for (Band band : slstrSource.getBands()){
+                    if (band.getRasterWidth()!= slstrSource.getBand("S5_radiance_an").getRasterWidth() ||
+                            band.getRasterHeight()!= slstrSource.getBand("S5_radiance_an").getRasterHeight() )
+                    {
+                        slstrSource.removeBand(band);
+                    }
+                }
+
+                //
+                HashMap<String, Product> collocationProductMap = new HashMap<>();
+                Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource, upsamplingMethod), slstrSource);
+                collocationProductMap.put("masterProduct", olciSource);
+                collocationProductMap.put("slaveProduct", slstrInput);
+                Product collocatedTemporary = GPF.createProduct("Collocate", getCollocateParams(),collocationProductMap);
+                for (Band band : collocatedTemporary.getBands()){
+                    if (olciSource.containsBand(band.getName()))
+                    {
+                        collocatedTemporary.removeBand(band);
+                    }
+                }
+                //
+
                 SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource, slstrSource, misrFile);
                 TreeMap mapOlciSlstr = misrTransform.getSlstrOlciMap();
                 HashMap<String, Product> misrSourceProductMap = new HashMap<>();
-                misrSourceProductMap.put("olciSourceProduct", olciSource);
-                misrSourceProductMap.put("slstrSourceProduct", slstrSource);
+                misrSourceProductMap.put("olciSource", olciSource);
+                misrSourceProductMap.put("slstrSource", slstrSource);
+                misrSourceProductMap.put("slstrCollocated", collocatedTemporary);
                 HashMap<String, Object> misrParams = new HashMap<>();
                 misrParams.put("pixelMap", mapOlciSlstr);
                 collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);
@@ -174,7 +199,6 @@ public class L1cSynOp extends Operator {
             sourceProductMap.put("slaveProduct", slstrInput);
             collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
         }
-
         if (reprojectionCRS != null && !reprojectionCRS.toLowerCase().equals("none") && !reprojectionCRS.equals("") && stayOnOlciGrid == false) {
             l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
         } else {

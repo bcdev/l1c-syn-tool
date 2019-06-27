@@ -3,6 +3,7 @@ package org.esa.s3tbx.l1csyn.op;
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
+import org.esa.snap.core.datamodel.TiePointGrid;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.core.gpf.OperatorSpi;
@@ -34,6 +35,9 @@ public class MisrOp extends Operator {
     @SourceProduct(alias = "slstrSource", description = "SLSTR source product")
     private Product slstrSourceProduct;
 
+    @SourceProduct(alias = "slstrCollocated", description = "SLSTR source product")
+    private Product slstrCollocated;
+
     @Parameter(alias = "pixelMap", description = "Map between SLSTR Image grid and OLCI Image grid")
     private TreeMap treeMap;
 
@@ -48,13 +52,9 @@ public class MisrOp extends Operator {
     @Override
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRectangle, ProgressMonitor pm) throws OperatorException {
         Map<Band, Tile> internalTargetTiles = new HashMap<>(targetTiles);
-        /*for (Map.Entry<Band, Tile> entry : internalTargetTiles.entrySet()) {
-            if ( !entry.getKey().getName().contains("radiance")){
-                internalTargetTiles.remove(entry);
-            }
-        }*/
 
         Tile sourceTile;
+        Tile sourceTileCollocated;
         pm.beginTask("Performing Misregestration", internalTargetTiles.size());
         try {
             for (Map.Entry<Band, Tile> entry : internalTargetTiles.entrySet()) {
@@ -71,17 +71,18 @@ public class MisrOp extends Operator {
                         }
                     }
                 } else if (slstrSourceProduct.containsBand(targetBand.getName())) {
-                    sourceTile = getSourceTile(slstrSourceProduct.getRasterDataNode(targetBand.getName()), targetRectangle);
+                    sourceTile = getSourceTile(slstrCollocated.getRasterDataNode(targetBand.getName()), targetRectangle);
 
                     for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                         for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                            //targetTile.setSample(x,y,10d);
-                            Double oldReflecValue = sourceTile.getSampleDouble(x, y);
+
+                            double reflecValue = sourceTile.getSampleDouble(x, y);
+                            targetTile.setSample(x, y, reflecValue);
 
                             /*int[] position = {x, y};
                             int[] slstrGridPosition = (int[]) treeMap.get(position);
                             if (slstrGridPosition != null) {
-                                double reflecValue = sourceTile.getSampleDouble(slstrGridPosition[0], slstrGridPosition[1]);
+                                double reflecValue = slstrSourceProduct.getBand(targetBand.getName()).getPixelDouble(slstrGridPosition[0],slstrGridPosition[1]);
                                 targetTile.setSample(x, y, reflecValue);
                             } else {
                                 Double oldReflecValue = sourceTile.getSampleDouble(x, y);
@@ -89,9 +90,12 @@ public class MisrOp extends Operator {
                                     targetTile.setSample(x, y, oldReflecValue);
                                 }
                                 else {
-                                    targetTile.setSample(x,y,0);
+                                    targetTile.setSample(x,y,-1);
+
                                 }
-                            }*/
+
+                            }
+                        */
                         }
                     }
                 }
@@ -115,10 +119,13 @@ public class MisrOp extends Operator {
             ProductUtils.copyBand(olciBand.getName(), olciSourceProduct, targetProduct, true);
         }
 
+        TiePointGrid sourceGrid = olciSourceProduct.getTiePointGridAt(0);
+
         for (Band slstrBand : slstrSourceProduct.getBands()) {
-            //ProductUtils.copyBand(slstrBand.getName(),olciSourceProduct,targetProduct,false);
-            if (!targetProduct.containsBand(slstrBand.getName())) {
-                targetProduct.addBand(slstrBand.getName(), slstrBand.getDataType());
+            if (slstrBand.getRasterWidth()== slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth() ||
+                    slstrBand.getRasterHeight()== slstrSourceProduct.getBand("S5_radiance_an").getRasterHeight()) {
+                        Band copiedBand = targetProduct.addBand(slstrBand.getName(), slstrBand.getDataType());
+                        copiedBand.setNoDataValue(-1);
             }
         }
 
