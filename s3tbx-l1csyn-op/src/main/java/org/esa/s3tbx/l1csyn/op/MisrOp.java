@@ -72,14 +72,27 @@ public class MisrOp extends Operator {
                     }
                 } else if (slstrSourceProduct.containsBand(targetBand.getName())) {
                     sourceTile = getSourceTile(slstrCollocated.getRasterDataNode(targetBand.getName()), targetRectangle);
-
                     for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
+                        for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+                            targetTile.setSample(x,y,sourceTile.getSampleDouble(x,y));
+                            int[] position = {x, y};
+                            int[] slstrGridPosition = (int[]) treeMap.get(position);
+                            if (slstrGridPosition != null) {
+                                //targetTile.setSample(x, y, 10d);
+                                //double reflecValue = slstrSourceProduct.getBand(targetBand.getName()).getPixelDouble(slstrGridPosition[0], slstrGridPosition[1]);
+                                double reflecValue = slstrCollocated.getBand(targetBand.getName()).getScalingFactor()* slstrCollocated.getRasterDataNode(targetBand.getName()).getSampleInt(slstrGridPosition[0],slstrGridPosition[1])+slstrCollocated.getBand(targetBand.getName()).getScalingOffset();
+                                targetTile.setSample(x, y, reflecValue);
+                            }
+                        }
+                    }
+
+                    /*for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                         for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
 
                             double reflecValue = sourceTile.getSampleDouble(x, y);
                             targetTile.setSample(x, y, reflecValue);
 
-                            /*int[] position = {x, y};
+                            int[] position = {x, y};
                             int[] slstrGridPosition = (int[]) treeMap.get(position);
                             if (slstrGridPosition != null) {
                                 double reflecValue = slstrSourceProduct.getBand(targetBand.getName()).getPixelDouble(slstrGridPosition[0],slstrGridPosition[1]);
@@ -95,9 +108,11 @@ public class MisrOp extends Operator {
                                 }
 
                             }
-                        */
+
+
                         }
-                    }
+
+                    }*/
                 }
                 else {
                     throw new OperatorException("Band copying errod");
@@ -124,8 +139,8 @@ public class MisrOp extends Operator {
         for (Band slstrBand : slstrSourceProduct.getBands()) {
             if (slstrBand.getRasterWidth()== slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth() ||
                     slstrBand.getRasterHeight()== slstrSourceProduct.getBand("S5_radiance_an").getRasterHeight()) {
-                        Band copiedBand = targetProduct.addBand(slstrBand.getName(), slstrBand.getDataType());
-                        copiedBand.setNoDataValue(-1);
+                Band copiedBand = targetProduct.addBand(slstrBand.getName(), slstrBand.getDataType());
+                copiedBand.setNoDataValue(-1);
             }
         }
 

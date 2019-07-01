@@ -11,9 +11,10 @@ import ucar.nc2.Variable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.*;
 
-public class SlstrMisrTransform {
+public class SlstrMisrTransform implements Serializable{
     private Product olciImageProduct;
     private Product slstrImageProduct;
     private String misrPath;
@@ -57,7 +58,9 @@ public class SlstrMisrTransform {
         // double colOffset = colVariable.findAttribute("add_offset").getNumericValue().doubleValue();
         int col = -1;
         int row = -1;
-        TreeMap<int[], int[]> rowColMap = new TreeMap<>(intArrayComparator());
+        //TreeMap<int[], int[]> rowColMap = new TreeMap<>(intArrayComparator());
+        TreeMap<int[], int[]> rowColMap = new TreeMap<>(new ComparatorIntArray());
+
         int minRow;
         int minCol;
         minRow = (int) MAMath.getMinimum(rowArray);
@@ -97,7 +100,9 @@ public class SlstrMisrTransform {
     }
 
     private TreeMap getOlciMisrMap() throws IOException {
-        TreeMap<int[], int[]> olciMap = new TreeMap<>(intArrayComparator());
+        //TreeMap<int[], int[]> olciMap = new TreeMap<>(intArrayComparator());
+        TreeMap<int[], int[]> olciMap = new TreeMap<>(new ComparatorIntArray());
+
         String bandName = "/misreg_Oref_Oa17";
         String path = this.misrPath;
         String misrBandFile = path + bandName;
@@ -111,7 +116,8 @@ public class SlstrMisrTransform {
     private TreeMap getOlciGridImageMap(int x, int y) throws IOException, InvalidRangeException {
         // Provides mapping between OLCI image grid(x,y) and OLCI instrument grid(m,j,k)
         //x and y are dimensions of OLCI L1B raster
-        TreeMap<int[], int[]> olciMap = new TreeMap<>(intArrayComparator());
+        //TreeMap<int[], int[]> olciMap = new TreeMap<>(intArrayComparator());
+        TreeMap<int[], int[]> olciMap = new TreeMap<>(new ComparatorIntArray());
 
         String path = olciImageProduct.getFileLocation().getParent();
         String instrumentDataPath = path + "/instrument_data.nc";
@@ -146,7 +152,9 @@ public class SlstrMisrTransform {
     private TreeMap getSlstrImageMap(int x, int y) throws IOException, InvalidRangeException {
         // Provides mapping between SLSTR image grid(x,y) and SLSTR instrument grid(scan,pixel,detector)
         //x and y are dimensions of SLSTR L1B raster
-        TreeMap<int[], int[]> slstrMap = new TreeMap<>(intArrayComparator());
+        //TreeMap<int[], int[]> slstrMap = new TreeMap<>(intArrayComparator());
+        TreeMap<int[], int[]> slstrMap = new TreeMap<>(new ComparatorIntArray());
+
         String path = slstrImageProduct.getFileLocation().getParent();
         String indexFilePath = path + "/indices_an.nc";
         NetcdfFile netcdfFile = NetcdfFileOpener.open(indexFilePath);
@@ -180,7 +188,10 @@ public class SlstrMisrTransform {
 
     private TreeMap getSlstrGridMisrMap(Map mapSlstr) {
         //provides map between SLSTR instrument grid (scan,pixel,detector) and MISR file (row,col)
-        TreeMap<int[], int[]> gridMap = new TreeMap<>(intArrayComparator());
+        //TreeMap<int[], int[]> gridMap = new TreeMap<>(intArrayComparator());
+        TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray());
+
+
         //test block to rescale row-col
         // todo: optimize
         int minRow = 99999999;
@@ -228,8 +239,8 @@ public class SlstrMisrTransform {
     TreeMap getSlstrOlciMap() throws InvalidRangeException, IOException {
         //Provides mapping between SLSTR image grid and OLCI image grid
         //todo: find faster way to implement it.
-        TreeMap<int[], int[]> gridMap = new TreeMap<>(intArrayComparator());
-
+        //TreeMap<int[], int[]> gridMap = new TreeMap<>(intArrayComparator() );
+        TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray() );
         TreeMap slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight());
         TreeMap slsrtMisrMap = getSlstrGridMisrMap(slstrImageMap);
         TreeMap misrOlciMap = getMisrOlciMap();
@@ -275,7 +286,28 @@ public class SlstrMisrTransform {
         throw new NullPointerException("Col variable not found");
     }
 
-    public static Comparator<int[]> intArrayComparator() {
+
+    public static class ComparatorIntArray implements java.util.Comparator<int[]>, Serializable{
+        @Override
+        public int compare(int[] left, int[] right) {
+            int comparedLength = Integer.compare(left.length, right.length);
+            if (comparedLength == 0) {
+                for (int i = 0; i < left.length; i++) {
+                    int comparedValue = Integer.compare(left[i], right[i]);
+                    if (comparedValue != 0) {
+                        return comparedValue;
+                    }
+                }
+                return 0;
+            } else {
+                return comparedLength;
+            }
+        }
+    }
+
+
+
+    /*public static Comparator<int[]>  intArrayComparator()  {
         return (left, right) -> {
             int comparedLength = Integer.compare(left.length, right.length);
             if (comparedLength == 0) {
@@ -290,5 +322,5 @@ public class SlstrMisrTransform {
                 return comparedLength;
             }
         };
-    }
+    }*/
 }

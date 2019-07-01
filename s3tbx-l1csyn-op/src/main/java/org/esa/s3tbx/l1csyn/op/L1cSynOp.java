@@ -24,18 +24,10 @@ import org.geotools.data.store.ContentFeatureSource;
 import org.opengis.feature.simple.SimpleFeature;
 import ucar.ma2.InvalidRangeException;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -131,6 +123,10 @@ public class L1cSynOp extends Operator {
     @Parameter(label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
     private File misrFile;
 
+    @Parameter(label = "saveMisrToInternal", description = "If set to true, and MISR file is provided in internal format, it will be saved" +
+            "to the directory of original fine in internal format.")
+    private boolean saveMisrFile;
+
     @Override
     public void initialize() throws OperatorException {
 
@@ -177,8 +173,26 @@ public class L1cSynOp extends Operator {
                 }
                 //
 
-                SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource, slstrSource, misrFile);
-                TreeMap mapOlciSlstr = misrTransform.getSlstrOlciMap();
+
+                //
+                TreeMap mapOlciSlstr;
+                if (misrFormat.equals("new")) {
+                    SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource, slstrSource, misrFile);
+                    mapOlciSlstr = misrTransform.getSlstrOlciMap();
+                }
+                else if (misrFormat.equals("internal")){
+                    mapOlciSlstr = readMisrMap(misrFile);
+                }
+                else {
+                    throw new OperatorException("MISR file information is not read correctly");
+                }
+                if (saveMisrFile){
+                    String misrDir = misrFile.getParent();
+                    saveMisrMap(mapOlciSlstr, misrDir);
+                }
+
+                //
+
                 HashMap<String, Product> misrSourceProductMap = new HashMap<>();
                 misrSourceProductMap.put("olciSource", olciSource);
                 misrSourceProductMap.put("slstrSource", slstrSource);
@@ -405,15 +419,62 @@ public class L1cSynOp extends Operator {
         return synName.toString();
     }
 
-    private int readDetectorIndex(int x, int y) {
-        String indexString = olciSource.getBand("detector_index").getPixelString(x, y);
-        int pixelIndex = Integer.parseInt(indexString);
-        return pixelIndex;
+    private void saveMisrMap(TreeMap misrMap,String misrPath) {
+        try {
+            HashMap<int[],int[]> clonedMap = new HashMap<int[],int[]>();
+            //
+            for (Iterator<Map.Entry<int[], int[]>> entries = misrMap.entrySet().iterator(); entries.hasNext(); ) {
+                Map.Entry<int[], int[]> entry = entries.next();
+                clonedMap.put(entry.getKey(),entry.getValue());
+            }
+            //
+
+                FileOutputStream fileOut = new FileOutputStream(misrPath+"/internalMisr.ser");
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(clonedMap);
+            out.close();
+            fileOut.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            throw new OperatorException("Map couldn't be written to a file");
+        }
+    }
+
+
+    private TreeMap readMisrMap(File misrFile){
+        HashMap<int[],int[]> hashMap = new HashMap<>();
+        TreeMap misrMap = new TreeMap(new SlstrMisrTransform.ComparatorIntArray());
+        try {
+            String path = misrFile.getAbsolutePath();
+            FileInputStream fileIn = new FileInputStream(path);
+            ObjectInputStream inputStream = new ObjectInputStream(fileIn);
+            hashMap = (HashMap<int[], int[]>) inputStream.readObject();
+
+
+            //misrMap = (TreeMap) inputStream.readObject();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        for (Map.Entry entry : hashMap.entrySet()) {
+        misrMap.put(entry.getKey(),entry.getValue());
+        }
+        return misrMap;
     }
 
     private String getMisrFormat(File misrFile) {
         String format = null;
-        format = "new";
+        if (misrFile.getAbsolutePath().endsWith("xfdumanifest.xml")) {
+            format = "new";
+        }
+        else if (misrFile.getAbsolutePath().endsWith("internalMisr.ser")){
+            format = "internal";
+        }
         return format;
     }
 
