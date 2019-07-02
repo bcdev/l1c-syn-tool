@@ -150,7 +150,7 @@ public class L1cSynOp extends Operator {
         if (misrFile != null) {
             String misrFormat = getMisrFormat(misrFile);
             try {
-                //
+                // removing not-nadir bands.
                 for (Band band : slstrSource.getBands()){
                     if (band.getRasterWidth()!= slstrSource.getBand("S5_radiance_an").getRasterWidth() ||
                             band.getRasterHeight()!= slstrSource.getBand("S5_radiance_an").getRasterHeight() )
@@ -158,7 +158,6 @@ public class L1cSynOp extends Operator {
                         slstrSource.removeBand(band);
                     }
                 }
-
                 //
                 HashMap<String, Product> collocationProductMap = new HashMap<>();
                 Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource, upsamplingMethod), slstrSource);
@@ -172,8 +171,6 @@ public class L1cSynOp extends Operator {
                     }
                 }
                 //
-
-
                 //
                 TreeMap mapOlciSlstr;
                 if (misrFormat.equals("new")) {

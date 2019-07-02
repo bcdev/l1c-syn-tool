@@ -58,7 +58,6 @@ public class SlstrMisrTransform implements Serializable{
         // double colOffset = colVariable.findAttribute("add_offset").getNumericValue().doubleValue();
         int col = -1;
         int row = -1;
-        //TreeMap<int[], int[]> rowColMap = new TreeMap<>(intArrayComparator());
         TreeMap<int[], int[]> rowColMap = new TreeMap<>(new ComparatorIntArray());
 
         int minRow;
@@ -100,23 +99,19 @@ public class SlstrMisrTransform implements Serializable{
     }
 
     private TreeMap getOlciMisrMap() throws IOException {
-        //TreeMap<int[], int[]> olciMap = new TreeMap<>(intArrayComparator());
         TreeMap<int[], int[]> olciMap = new TreeMap<>(new ComparatorIntArray());
-
         String bandName = "/misreg_Oref_Oa17";
         String path = this.misrPath;
         String misrBandFile = path + bandName;
         NetcdfFile netcdfFile = NetcdfFile.open(misrBandFile);
         String rowVariableName = "L1b_row_17";
         String colVariableName = "L1b_col_17";
-
         return olciMap;
     }
 
     private TreeMap getOlciGridImageMap(int x, int y) throws IOException, InvalidRangeException {
         // Provides mapping between OLCI image grid(x,y) and OLCI instrument grid(m,j,k)
         //x and y are dimensions of OLCI L1B raster
-        //TreeMap<int[], int[]> olciMap = new TreeMap<>(intArrayComparator());
         TreeMap<int[], int[]> olciMap = new TreeMap<>(new ComparatorIntArray());
 
         String path = olciImageProduct.getFileLocation().getParent();
@@ -128,7 +123,6 @@ public class SlstrMisrTransform implements Serializable{
         int nDetCam = N_DET_CAM; //todo: check where this parameter comes from?
         short[] df = getOlciFrameOffset(netcdfFile);
         Short dfMin = Collections.min(Arrays.asList(ArrayUtils.toObject(df)));
-        int[] shape = detectorArray.getShape();
         for (int f = 0; f < x; f++) {
             for (int j1L1b = 0; j1L1b < y; j1L1b++) {
                 int[] position = {j1L1b, f};
@@ -152,7 +146,6 @@ public class SlstrMisrTransform implements Serializable{
     private TreeMap getSlstrImageMap(int x, int y) throws IOException, InvalidRangeException {
         // Provides mapping between SLSTR image grid(x,y) and SLSTR instrument grid(scan,pixel,detector)
         //x and y are dimensions of SLSTR L1B raster
-        //TreeMap<int[], int[]> slstrMap = new TreeMap<>(intArrayComparator());
         TreeMap<int[], int[]> slstrMap = new TreeMap<>(new ComparatorIntArray());
 
         String path = slstrImageProduct.getFileLocation().getParent();
@@ -188,10 +181,7 @@ public class SlstrMisrTransform implements Serializable{
 
     private TreeMap getSlstrGridMisrMap(Map mapSlstr) {
         //provides map between SLSTR instrument grid (scan,pixel,detector) and MISR file (row,col)
-        //TreeMap<int[], int[]> gridMap = new TreeMap<>(intArrayComparator());
         TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray());
-
-
         //test block to rescale row-col
         // todo: optimize
         int minRow = 99999999;
@@ -239,7 +229,6 @@ public class SlstrMisrTransform implements Serializable{
     TreeMap getSlstrOlciMap() throws InvalidRangeException, IOException {
         //Provides mapping between SLSTR image grid and OLCI image grid
         //todo: find faster way to implement it.
-        //TreeMap<int[], int[]> gridMap = new TreeMap<>(intArrayComparator() );
         TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray() );
         TreeMap slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight());
         TreeMap slsrtMisrMap = getSlstrGridMisrMap(slstrImageMap);
@@ -256,14 +245,6 @@ public class SlstrMisrTransform implements Serializable{
             }
         }
         return gridMap;
-    }
-
-    private int[] getSlstrPosOnOlciGrid(int x, int y) throws InvalidRangeException, IOException {
-        // Provides a relation between SLSTR and OLCI image grids for a single SLSTR pixel(x,y) on OL
-        TreeMap<int[], int[]> gridMap = getSlstrOlciMap();
-        int[] key = {x, y};
-        int[] positionOnOlciGrid = gridMap.get(key);
-        return positionOnOlciGrid;
     }
 
     private String getRowVariableName(NetcdfFile netcdfFile) {
@@ -304,23 +285,4 @@ public class SlstrMisrTransform implements Serializable{
             }
         }
     }
-
-
-
-    /*public static Comparator<int[]>  intArrayComparator()  {
-        return (left, right) -> {
-            int comparedLength = Integer.compare(left.length, right.length);
-            if (comparedLength == 0) {
-                for (int i = 0; i < left.length; i++) {
-                    int comparedValue = Integer.compare(left[i], right[i]);
-                    if (comparedValue != 0) {
-                        return comparedValue;
-                    }
-                }
-                return 0;
-            } else {
-                return comparedLength;
-            }
-        };
-    }*/
 }

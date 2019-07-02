@@ -3,6 +3,7 @@ package org.esa.s3tbx.l1csyn.op;
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
+import org.esa.snap.core.datamodel.ProductData;
 import org.esa.snap.core.datamodel.TiePointGrid;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
@@ -52,9 +53,7 @@ public class MisrOp extends Operator {
     @Override
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRectangle, ProgressMonitor pm) throws OperatorException {
         Map<Band, Tile> internalTargetTiles = new HashMap<>(targetTiles);
-
         Tile sourceTile;
-        Tile sourceTileCollocated;
         pm.beginTask("Performing Misregestration", internalTargetTiles.size());
         try {
             for (Map.Entry<Band, Tile> entry : internalTargetTiles.entrySet()) {
@@ -80,39 +79,11 @@ public class MisrOp extends Operator {
                             if (slstrGridPosition != null) {
                                 //targetTile.setSample(x, y, 10d);
                                 //double reflecValue = slstrSourceProduct.getBand(targetBand.getName()).getPixelDouble(slstrGridPosition[0], slstrGridPosition[1]);
-                                double reflecValue = slstrCollocated.getBand(targetBand.getName()).getScalingFactor()* slstrCollocated.getRasterDataNode(targetBand.getName()).getSampleInt(slstrGridPosition[0],slstrGridPosition[1])+slstrCollocated.getBand(targetBand.getName()).getScalingOffset();
+                                double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0],slstrGridPosition[1]);
                                 targetTile.setSample(x, y, reflecValue);
                             }
                         }
                     }
-
-                    /*for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                        for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-
-                            double reflecValue = sourceTile.getSampleDouble(x, y);
-                            targetTile.setSample(x, y, reflecValue);
-
-                            int[] position = {x, y};
-                            int[] slstrGridPosition = (int[]) treeMap.get(position);
-                            if (slstrGridPosition != null) {
-                                double reflecValue = slstrSourceProduct.getBand(targetBand.getName()).getPixelDouble(slstrGridPosition[0],slstrGridPosition[1]);
-                                targetTile.setSample(x, y, reflecValue);
-                            } else {
-                                Double oldReflecValue = sourceTile.getSampleDouble(x, y);
-                                if (oldReflecValue != null) {
-                                    targetTile.setSample(x, y, oldReflecValue);
-                                }
-                                else {
-                                    targetTile.setSample(x,y,-1);
-
-                                }
-
-                            }
-
-
-                        }
-
-                    }*/
                 }
                 else {
                     throw new OperatorException("Band copying errod");
@@ -123,6 +94,38 @@ public class MisrOp extends Operator {
             pm.done();
         }
     }
+
+    @Override
+    public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm){
+        Tile sourceTile;
+        Rectangle targetRectangle = targetTile.getRectangle();
+        if (olciSourceProduct.containsBand(targetBand.getName())) {
+            sourceTile = getSourceTile(olciSourceProduct.getRasterDataNode(targetBand.getName()), targetRectangle);
+            for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
+                for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+                    double reflecValue = sourceTile.getSampleDouble(x, y);
+                    targetTile.setSample(x, y, reflecValue);
+                }
+            }
+        } else if (slstrSourceProduct.containsBand(targetBand.getName())) {
+            sourceTile = getSourceTile(slstrCollocated.getRasterDataNode(targetBand.getName()), targetRectangle);
+            //ProductData destBuffer = targetTile.getRawSamples();
+            //targetTile.setRawSamples(destBuffer);
+            for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
+                for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+                    targetTile.setSample(x, y, sourceTile.getSampleFloat(x, y));
+                    //targetTile.setSample(x, y, 1d);
+                    int[] position = {x, y};
+                    int[] slstrGridPosition = (int[]) treeMap.get(position);
+                    if (slstrGridPosition != null && slstrGridPosition[1]<slstrSourceProduct.getSceneRasterWidth() && slstrGridPosition[0]<slstrSourceProduct.getSceneRasterHeight()) {
+                        float reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
+                        targetTile.setSample(x, y, reflecValue);
+                    }
+                }
+            }
+        }
+    }
+
 
     private void createTargetProduct() {
         targetProduct = new Product(olciSourceProduct.getName(), olciSourceProduct.getProductType(),
@@ -139,7 +142,7 @@ public class MisrOp extends Operator {
         for (Band slstrBand : slstrSourceProduct.getBands()) {
             if (slstrBand.getRasterWidth()== slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth() ||
                     slstrBand.getRasterHeight()== slstrSourceProduct.getBand("S5_radiance_an").getRasterHeight()) {
-                Band copiedBand = targetProduct.addBand(slstrBand.getName(), slstrBand.getDataType());
+                Band copiedBand = targetProduct.addBand(slstrBand.getName(), ProductData.TYPE_FLOAT32);
                 copiedBand.setNoDataValue(-1);
             }
         }
