@@ -171,6 +171,8 @@ public class L1cSynOp extends Operator {
                     }
                 }
                 //
+
+
                 //
                 TreeMap mapOlciSlstr;
                 if (misrFormat.equals("new")) {
@@ -459,7 +461,9 @@ public class L1cSynOp extends Operator {
         }
 
         for (Map.Entry entry : hashMap.entrySet()) {
-        misrMap.put(entry.getKey(),entry.getValue());
+            if (entry.getKey()!=null && entry.getValue()!=null ) {
+                misrMap.put(entry.getKey(), entry.getValue());
+            }
         }
         return misrMap;
     }

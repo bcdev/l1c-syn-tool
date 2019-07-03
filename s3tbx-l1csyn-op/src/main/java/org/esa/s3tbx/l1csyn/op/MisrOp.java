@@ -109,17 +109,16 @@ public class MisrOp extends Operator {
             }
         } else if (slstrSourceProduct.containsBand(targetBand.getName())) {
             sourceTile = getSourceTile(slstrCollocated.getRasterDataNode(targetBand.getName()), targetRectangle);
-            //ProductData destBuffer = targetTile.getRawSamples();
-            //targetTile.setRawSamples(destBuffer);
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     targetTile.setSample(x, y, sourceTile.getSampleFloat(x, y));
-                    //targetTile.setSample(x, y, 1d);
+           
                     int[] position = {x, y};
                     int[] slstrGridPosition = (int[]) treeMap.get(position);
-                    if (slstrGridPosition != null && slstrGridPosition[1]<slstrSourceProduct.getSceneRasterWidth() && slstrGridPosition[0]<slstrSourceProduct.getSceneRasterHeight()) {
-                        float reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
-                        targetTile.setSample(x, y, reflecValue);
+                    if (slstrGridPosition != null && slstrGridPosition[0]<slstrSourceProduct.getSceneRasterWidth() && slstrGridPosition[1]<slstrSourceProduct.getSceneRasterHeight()) {
+                        double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]) / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
+                        targetTile.setSample(x, y,  reflecValue);
+                        targetTile.setSample(x, y, 100500d);
                     }
                 }
             }
@@ -143,7 +142,7 @@ public class MisrOp extends Operator {
             if (slstrBand.getRasterWidth()== slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth() ||
                     slstrBand.getRasterHeight()== slstrSourceProduct.getBand("S5_radiance_an").getRasterHeight()) {
                 Band copiedBand = targetProduct.addBand(slstrBand.getName(), ProductData.TYPE_FLOAT32);
-                copiedBand.setNoDataValue(-1);
+                copiedBand.setNoDataValue(slstrSourceProduct.getBand(slstrBand.getName()).getNoDataValue());
             }
         }
 
