@@ -1,10 +1,7 @@
 package org.esa.s3tbx.l1csyn.op;
 
 import com.bc.ceres.core.ProgressMonitor;
-import org.esa.snap.core.datamodel.Band;
-import org.esa.snap.core.datamodel.Product;
-import org.esa.snap.core.datamodel.ProductData;
-import org.esa.snap.core.datamodel.TiePointGrid;
+import org.esa.snap.core.datamodel.*;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.core.gpf.OperatorSpi;
@@ -112,16 +109,26 @@ public class MisrOp extends Operator {
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     targetTile.setSample(x, y, sourceTile.getSampleFloat(x, y));
-           
+
                     int[] position = {x, y};
                     int[] slstrGridPosition = (int[]) treeMap.get(position);
-                    if (slstrGridPosition != null && slstrGridPosition[0]<slstrSourceProduct.getSceneRasterWidth() && slstrGridPosition[1]<slstrSourceProduct.getSceneRasterHeight()) {
-                        double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]) / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
+                    if (slstrGridPosition != null ) {
+                        double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]) ; // / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
                         targetTile.setSample(x, y,  reflecValue);
-                        targetTile.setSample(x, y, 100500d);
                     }
                 }
             }
+        }
+        else if (targetBand.getName().equals("misr_flags")){
+            for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
+                for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+                    int[] position = {x, y};
+                    int[] slstrGridPosition = (int[]) treeMap.get(position);
+                    if (slstrGridPosition != null ) {
+                    targetTile.setSample(x,y,true);
+                    }
+                }
+                }
         }
     }
 
@@ -152,6 +159,18 @@ public class MisrOp extends Operator {
         ProductUtils.copyFlagBands(olciSourceProduct, targetProduct, true);
         ProductUtils.copyGeoCoding(olciSourceProduct, targetProduct);
 
+        final FlagCoding flagCoding = new FlagCoding("MISR_Applied");
+        flagCoding.setDescription("MISR processor flag");
+        targetProduct.getFlagCodingGroup().add(flagCoding);
+        Band misrFlags = new Band("misr_flags", ProductData.TYPE_UINT32,
+                olciSourceProduct.getSceneRasterWidth(),
+                olciSourceProduct.getSceneRasterHeight());
+        misrFlags.setSampleCoding(flagCoding);
+
+        targetProduct.addMask("MISR pixel applied",  "misr_flags",
+                "MISR information was used to get value of this pixel", Color.RED, 0.5);
+
+        targetProduct.addBand(misrFlags);
         /*ProductUtils.copyMetadata(slstrSourceProduct, targetProduct);
         ProductUtils.copyTiePointGrids(slstrSourceProduct, targetProduct);
         ProductUtils.copyMasks(slstrSourceProduct, targetProduct);
