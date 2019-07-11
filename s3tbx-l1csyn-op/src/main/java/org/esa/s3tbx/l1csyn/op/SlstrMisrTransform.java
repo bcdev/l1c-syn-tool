@@ -125,6 +125,7 @@ public class SlstrMisrTransform implements Serializable{
         return olciMap;
     }
 
+    // step 4.1??
     private TreeMap getOlciGridImageMap(int x, int y) throws IOException, InvalidRangeException {
         // Provides mapping between OLCI image grid(x,y) and OLCI instrument grid(m,j,k)
         //x and y are dimensions of OLCI L1B raster
@@ -176,12 +177,13 @@ public class SlstrMisrTransform implements Serializable{
         Array pixelArray = pixelVariable.read();
         Array detectorArray = detectorVariable.read();
 
-
+        Variable scanOffsetVariable = netcdfFile.findVariable("l0_scan_offset_an");
+        int scanOffset = scanOffsetVariable.readScalarInt();
 
         for (int i = 0; i < x; i++) {
             for (int j = 0; j < y; j++) {
                 int[] imagePosition = {i,j};
-                short scan = (short) (((ArrayShort.D2) scanArray).get(j,i));
+                short scan =  ((ArrayShort.D2) scanArray).get(j,i);
                 short pixel = ((ArrayShort.D2) pixelArray).get(j,i);
                 byte detector = ((ArrayByte.D2) detectorArray).get(j,i);
                 int[] gridPosition = {scan, pixel, detector};
@@ -257,7 +259,6 @@ public class SlstrMisrTransform implements Serializable{
             int[] mjk = (int[]) misrOlciMap.get(rowCol);
             if (mjk != null) {
                 int[] xy = (int[]) olciImageMap.get(mjk);
-                //gridMap.put(entry.getKey(), xy);
                 gridMap.put(xy,entry.getKey());
             }
         }

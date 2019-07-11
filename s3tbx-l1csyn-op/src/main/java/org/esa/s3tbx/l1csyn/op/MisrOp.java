@@ -110,11 +110,14 @@ public class MisrOp extends Operator {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     targetTile.setSample(x, y, sourceTile.getSampleFloat(x, y));
 
-                    int[] position = {x, y};
-                    int[] slstrGridPosition = (int[]) treeMap.get(position);
-                    if (slstrGridPosition != null ) {
-                        double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]) ; // / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
-                        targetTile.setSample(x, y,  reflecValue);
+                    if (slstrSourceProduct.getBand(targetBand.getName()).getRasterWidth() == slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth()) {
+
+                        int[] position = {x, y};
+                        int[] slstrGridPosition = (int[]) treeMap.get(position);
+                        if (slstrGridPosition != null) {
+                            float reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]); // / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
+                            targetTile.setSample(x, y, reflecValue);
+                        }
                     }
                 }
             }
@@ -125,7 +128,7 @@ public class MisrOp extends Operator {
                     int[] position = {x, y};
                     int[] slstrGridPosition = (int[]) treeMap.get(position);
                     if (slstrGridPosition != null ) {
-                    targetTile.setSample(x,y,true);
+                    targetTile.setSample(x,y,slstrGridPosition[0]+slstrGridPosition[1]);
                     }
                 }
                 }
@@ -165,7 +168,7 @@ public class MisrOp extends Operator {
         Band misrFlags = new Band("misr_flags", ProductData.TYPE_UINT32,
                 olciSourceProduct.getSceneRasterWidth(),
                 olciSourceProduct.getSceneRasterHeight());
-        misrFlags.setSampleCoding(flagCoding);
+        //misrFlags.setSampleCoding(flagCoding);
 
         targetProduct.addMask("MISR pixel applied",  "misr_flags",
                 "MISR information was used to get value of this pixel", Color.RED, 0.5);
