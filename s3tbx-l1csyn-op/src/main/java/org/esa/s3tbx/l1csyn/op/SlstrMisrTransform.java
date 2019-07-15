@@ -67,7 +67,6 @@ public class SlstrMisrTransform implements Serializable{
             for (int j = 0; j < nLineOlcLength; j++) {
                 for (int k = 0; k < nDetCamLength; k++) {
                     int[] position = {i, j, k};
-                    //todo: clarify how to do rounding if we get float at this point.
                     if (colVariableName.matches("L1b_col_.._an")) {
                        //row = ((ArrayInt.D3) rowArray).get(i, j, k) - minRow;
                         row = ((ArrayInt.D3) rowArray).get(i,j,k) ;
@@ -75,9 +74,9 @@ public class SlstrMisrTransform implements Serializable{
                         col = ((ArrayShort.D3) colArray).get(i,j,k) ;
                     } else if (colVariableName.matches("col_corresp_s._an")) {
                         //row = (int) Math.floor(((ArrayInt.D3) rowArray).get(i, j, k) - minRow);
-                        row = (int) Math.floor(((ArrayInt.D3) rowArray).get(i,j,k) );
+                        row = ((ArrayInt.D3) rowArray).get(i,j,k);
                         //col = (int) Math.floor(((ArrayInt.D3) colArray).get(i, j, k) - minCol);
-                        col = (int) Math.floor(((ArrayInt.D3) colArray).get(i,j,k) );
+                        col = ((ArrayInt.D3) colArray).get(i,j,k);
                     }
 
                     int[] colRowArray = {col, row};
@@ -110,6 +109,10 @@ public class SlstrMisrTransform implements Serializable{
         int nLineOlcLength = netcdfFile.findDimension("N_LINE_OLC").getLength();
         int nDetCamLength = netcdfFile.findDimension("N_DET_CAM").getLength();
 
+        int minRow = (int) MAMath.getMinimum(rowArray);
+        int minCol = (int) MAMath.getMinimum(colArray);
+
+
         for (int i=0; i<nCamLength ; i++){
             for (int j=0; j<nLineOlcLength ; j++){
                 for (int k=0; k<nDetCamLength ; k++){
@@ -125,7 +128,7 @@ public class SlstrMisrTransform implements Serializable{
         return olciMap;
     }
 
-    // step 4.1??
+    // step 4.1 (possibility) currently not used.
     private TreeMap getOlciGridImageMap(int x, int y) throws IOException, InvalidRangeException {
         // Provides mapping between OLCI image grid(x,y) and OLCI instrument grid(m,j,k)
         //x and y are dimensions of OLCI L1B raster

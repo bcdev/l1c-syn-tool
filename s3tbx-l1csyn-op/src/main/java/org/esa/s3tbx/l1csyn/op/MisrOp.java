@@ -74,8 +74,6 @@ public class MisrOp extends Operator {
                             int[] position = {x, y};
                             int[] slstrGridPosition = (int[]) treeMap.get(position);
                             if (slstrGridPosition != null) {
-                                //targetTile.setSample(x, y, 10d);
-                                //double reflecValue = slstrSourceProduct.getBand(targetBand.getName()).getPixelDouble(slstrGridPosition[0], slstrGridPosition[1]);
                                 double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0],slstrGridPosition[1]);
                                 targetTile.setSample(x, y, reflecValue);
                             }
@@ -108,15 +106,19 @@ public class MisrOp extends Operator {
             sourceTile = getSourceTile(slstrCollocated.getRasterDataNode(targetBand.getName()), targetRectangle);
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                    targetTile.setSample(x, y, sourceTile.getSampleFloat(x, y));
-
+                    if (sourceTile.getSampleFloat(x, y)>0) {
+                        targetTile.setSample(x, y, sourceTile.getSampleFloat(x, y));
+                    }
+                    else{
+                        targetTile.setSample(x,y,Float.NaN);
+                    }
                     if (slstrSourceProduct.getBand(targetBand.getName()).getRasterWidth() == slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth()) {
 
                         int[] position = {x, y};
                         int[] slstrGridPosition = (int[]) treeMap.get(position);
                         if (slstrGridPosition != null) {
                             float reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]); // / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
-                            targetTile.setSample(x, y, reflecValue);
+                            targetTile.setSample(x,y, reflecValue);
                         }
                     }
                 }
@@ -152,7 +154,7 @@ public class MisrOp extends Operator {
             if (slstrBand.getRasterWidth()== slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth() ||
                     slstrBand.getRasterHeight()== slstrSourceProduct.getBand("S5_radiance_an").getRasterHeight()) {
                 Band copiedBand = targetProduct.addBand(slstrBand.getName(), ProductData.TYPE_FLOAT32);
-                copiedBand.setNoDataValue(slstrSourceProduct.getBand(slstrBand.getName()).getNoDataValue());
+                targetProduct.getBand(slstrBand.getName()).setNoDataValue(slstrSourceProduct.getBand(slstrBand.getName()).getNoDataValue());
             }
         }
 
