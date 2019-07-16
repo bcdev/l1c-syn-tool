@@ -178,6 +178,7 @@ public class L1cSynOp extends Operator {
                 if (saveMisrFile){
                     String misrDir = misrFile.getParent();
                     saveMisrMap(mapOlciSlstr, misrDir);
+                    saveMisrMapTextFile(mapOlciSlstr, misrDir);
                 }
 
                 //
@@ -406,6 +407,31 @@ public class L1cSynOp extends Operator {
         synName.append(slstrBaseline);
         synName.append(".SEN3");
         return synName.toString();
+    }
+
+    private void saveMisrMapTextFile(TreeMap misrMap, String misrPath){
+        try {
+            HashMap<int[], int[]> clonedMap = new HashMap<int[], int[]>();
+            for (Iterator<Map.Entry<int[], int[]>> entries = misrMap.entrySet().iterator(); entries.hasNext(); ) {
+                Map.Entry<int[], int[]> entry = entries.next();
+                clonedMap.put(entry.getKey(), entry.getValue());
+            }
+            FileWriter fstream = new FileWriter(misrPath+"/values.txt");
+            BufferedWriter bufferedWriter = new BufferedWriter(fstream);
+            Iterator<Map.Entry<int[], int[]>> it = clonedMap.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<int[], int[]> pairs = it.next();
+                String toWrite = pairs.getKey()[0]+" "+pairs.getKey()[1]+"||"+pairs.getValue()[0]+" "+pairs.getValue()[1];
+                bufferedWriter.write(toWrite);
+                bufferedWriter.write("\n");
+            }
+            bufferedWriter.close();
+
+        }
+        catch (IOException e ) {
+            e.printStackTrace();
+            throw new OperatorException("Map couldn't be written to a text file");
+        }
     }
 
     private void saveMisrMap(TreeMap misrMap,String misrPath) {

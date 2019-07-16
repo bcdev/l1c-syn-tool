@@ -68,20 +68,20 @@ public class SlstrMisrTransform implements Serializable{
                 for (int k = 0; k < nDetCamLength; k++) {
                     int[] position = {i, j, k};
                     if (colVariableName.matches("L1b_col_.._an")) {
-                       //row = ((ArrayInt.D3) rowArray).get(i, j, k) - minRow;
-                        row = ((ArrayInt.D3) rowArray).get(i,j,k) ;
-                        //col = ((ArrayShort.D3) colArray).get(i, j, k) - minCol;
-                        col = ((ArrayShort.D3) colArray).get(i,j,k) ;
+                       row = ((ArrayInt.D3) rowArray).get(i, j, k) - minRow;
+                        //row = ((ArrayInt.D3) rowArray).get(i,j,k) ;
+                        col = ((ArrayShort.D3) colArray).get(i, j, k) - minCol;
+                        //col = ((ArrayShort.D3) colArray).get(i,j,k) ;
                     } else if (colVariableName.matches("col_corresp_s._an")) {
-                        //row = (int) Math.floor(((ArrayInt.D3) rowArray).get(i, j, k) - minRow);
-                        row = ((ArrayInt.D3) rowArray).get(i,j,k);
-                        //col = (int) Math.floor(((ArrayInt.D3) colArray).get(i, j, k) - minCol);
-                        col = ((ArrayInt.D3) colArray).get(i,j,k);
+                        row = (int) Math.floor(((ArrayInt.D3) rowArray).get(i, j, k) - minRow);
+                        //row = ((ArrayInt.D3) rowArray).get(i,j,k);
+                        col = (int) Math.floor(((ArrayInt.D3) colArray).get(i, j, k) - minCol);
+                        //col = ((ArrayInt.D3) colArray).get(i,j,k);
                     }
-
-                    int[] colRowArray = {col, row};
-
-                    colRowMap.put(colRowArray, position);
+                    if (col>0 && row>0) {
+                        int[] colRowArray = {col, row};
+                        colRowMap.put(colRowArray, position);
+                    }
                 }
             }
         }
@@ -103,6 +103,17 @@ public class SlstrMisrTransform implements Serializable{
         String colVariableName = "L1b_col_17";
         Variable rowVariable = netcdfFile.findVariable(rowVariableName);
         Variable colVariable = netcdfFile.findVariable(colVariableName);
+        //
+        if (rowVariable==null) {
+            rowVariableName = "delta_row_17";
+            rowVariable = netcdfFile.findVariable(rowVariableName);
+
+        }
+        if (colVariable==null){
+            colVariableName = "delta_col_17";
+            colVariable = netcdfFile.findVariable(colVariableName);
+        }
+        //
         ArrayShort.D3 rowArray = (ArrayShort.D3) rowVariable.read();
         ArrayShort.D3 colArray = (ArrayShort.D3) colVariable.read();
         int nCamLength = netcdfFile.findDimension("N_CAM").getLength();

@@ -103,15 +103,16 @@ public class MisrOp extends Operator {
                 }
             }
         } else if (slstrSourceProduct.containsBand(targetBand.getName())) {
-            sourceTile = getSourceTile(slstrCollocated.getRasterDataNode(targetBand.getName()), targetRectangle);
+            //sourceTile = getSourceTile(slstrCollocated.getRasterDataNode(targetBand.getName()), targetRectangle);
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                    if (sourceTile.getSampleFloat(x, y)>0) {
+                    /*if (sourceTile.getSampleFloat(x, y)>0) {
                         targetTile.setSample(x, y, sourceTile.getSampleFloat(x, y));
                     }
                     else{
                         targetTile.setSample(x,y,Float.NaN);
-                    }
+                    }*/
+                    targetTile.setSample(x,y,targetBand.getNoDataValue());
                     if (slstrSourceProduct.getBand(targetBand.getName()).getRasterWidth() == slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth()) {
 
                         int[] position = {x, y};
