@@ -155,18 +155,10 @@ public class L1cSynOp extends Operator {
                 slstrInput.setFileLocation(slstrSource.getFileLocation());
                 collocationProductMap.put("masterProduct", olciSource);
                 collocationProductMap.put("slaveProduct", slstrInput);
-                Product collocatedTemporary = GPF.createProduct("Collocate", getCollocateParams(),collocationProductMap);
-                for (Band band : collocatedTemporary.getBands()){
-                    if (olciSource.containsBand(band.getName()))
-                    {
-                        collocatedTemporary.removeBand(band);
-                    }
-                }
-
                 //
                 TreeMap mapOlciSlstr;
                 if (misrFormat.equals("new")) {
-                    SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource, slstrSource, misrFile);
+                    SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"bn");
                     mapOlciSlstr = misrTransform.getSlstrOlciMap();
                 }
                 else if (misrFormat.equals("internal")){
@@ -182,11 +174,9 @@ public class L1cSynOp extends Operator {
                 }
 
                 //
-
                 HashMap<String, Product> misrSourceProductMap = new HashMap<>();
                 misrSourceProductMap.put("olciSource", olciSource);
                 misrSourceProductMap.put("slstrSource", slstrSource);
-                misrSourceProductMap.put("slstrCollocated", collocatedTemporary);
                 HashMap<String, Object> misrParams = new HashMap<>();
                 misrParams.put("pixelMap", mapOlciSlstr);
                 collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);

@@ -18,13 +18,15 @@ public class SlstrMisrTransform implements Serializable{
     private Product olciImageProduct;
     private Product slstrImageProduct;
     private String misrPath;
+    private String viewType;
 
     private int N_DET_CAM = 740;
 
-    SlstrMisrTransform(Product olciImageProduct, Product slstrImageProduct, File misrManifest) {
+    SlstrMisrTransform(Product olciImageProduct, Product slstrImageProduct, File misrManifest, String viewType) {
         this.olciImageProduct = olciImageProduct;
         this.slstrImageProduct = slstrImageProduct;
         this.misrPath = misrManifest.getParent();
+        this.viewType = viewType;
     }
 
     private int[] getColRow(int scan, int pixel, int detector) {
@@ -37,143 +39,6 @@ public class SlstrMisrTransform implements Serializable{
         return colRow;
     }
 
-    // Step 3
-    private TreeMap<int[], int[]> getMisrOlciMap() throws IOException, InvalidRangeException {
-        // provides mapping between MISR (row/col) and OLCI instrument grid (N_LINE_OLC/N_DET_CAM/N_CAM) from MISR product
-        String bandName = "/misregist_Oref_S5.nc";
-        String path = this.misrPath;
-        String misrBandFile = path + bandName;
-        NetcdfFile netcdfFile = NetcdfFile.open(misrBandFile);
-        int nLineOlcLength = netcdfFile.findDimension("N_LINE_OLC").getLength();
-        int nDetCamLength = netcdfFile.findDimension("N_DET_CAM").getLength();
-        int nCamLength = netcdfFile.findDimension("N_CAM").getLength();
-        String rowVariableName = getRowVariableName(netcdfFile);
-        String colVariableName = getColVariableName(netcdfFile);
-        Variable rowVariable = netcdfFile.findVariable(rowVariableName);
-        Variable colVariable = netcdfFile.findVariable(colVariableName);
-        Array rowArray = rowVariable.read();
-        Array colArray = colVariable.read();
-
-        int col = -1;
-        int row = -1;
-        TreeMap<int[], int[]> colRowMap = new TreeMap<>(new ComparatorIntArray());
-
-        int minRow;
-        int minCol;
-        minRow = (int) MAMath.getMinimum(rowArray);
-        minCol = (int) MAMath.getMinimum(colArray);
-
-        for (int i = 0; i < nCamLength; i++) {
-            for (int j = 0; j < nLineOlcLength; j++) {
-                for (int k = 0; k < nDetCamLength; k++) {
-                    int[] position = {i, j, k};
-                    if (colVariableName.matches("L1b_col_.._an")) {
-                       row = ((ArrayInt.D3) rowArray).get(i, j, k) - minRow;
-                        //row = ((ArrayInt.D3) rowArray).get(i,j,k) ;
-                        col = ((ArrayShort.D3) colArray).get(i, j, k) - minCol;
-                        //col = ((ArrayShort.D3) colArray).get(i,j,k) ;
-                    } else if (colVariableName.matches("col_corresp_s._an")) {
-                        row = (int) Math.floor(((ArrayInt.D3) rowArray).get(i, j, k) - minRow);
-                        //row = ((ArrayInt.D3) rowArray).get(i,j,k);
-                        col = (int) Math.floor(((ArrayInt.D3) colArray).get(i, j, k) - minCol);
-                        //col = ((ArrayInt.D3) colArray).get(i,j,k);
-                    }
-                    if (col>0 && row>0) {
-                        int[] colRowArray = {col, row};
-                        colRowMap.put(colRowArray, position);
-                    }
-                }
-            }
-        }
-
-        return colRowMap;
-    }
-
-    // Step 4.2
-    private TreeMap getOlciMisrMap() throws IOException {
-        //should provide mapping between OLCI image grid and instrument grid
-        // todo: test
-
-        TreeMap<int[], int[]> olciMap = new TreeMap<>(new ComparatorIntArray());
-        String bandName = "/misreg_Oref_Oa17.nc";
-        String path = this.misrPath;
-        String misrBandFile = path + bandName;
-        NetcdfFile netcdfFile = NetcdfFile.open(misrBandFile);
-        String rowVariableName = "L1b_row_17";
-        String colVariableName = "L1b_col_17";
-        Variable rowVariable = netcdfFile.findVariable(rowVariableName);
-        Variable colVariable = netcdfFile.findVariable(colVariableName);
-        //
-        if (rowVariable==null) {
-            rowVariableName = "delta_row_17";
-            rowVariable = netcdfFile.findVariable(rowVariableName);
-
-        }
-        if (colVariable==null){
-            colVariableName = "delta_col_17";
-            colVariable = netcdfFile.findVariable(colVariableName);
-        }
-        //
-        ArrayShort.D3 rowArray = (ArrayShort.D3) rowVariable.read();
-        ArrayShort.D3 colArray = (ArrayShort.D3) colVariable.read();
-        int nCamLength = netcdfFile.findDimension("N_CAM").getLength();
-        int nLineOlcLength = netcdfFile.findDimension("N_LINE_OLC").getLength();
-        int nDetCamLength = netcdfFile.findDimension("N_DET_CAM").getLength();
-
-        int minRow = (int) MAMath.getMinimum(rowArray);
-        int minCol = (int) MAMath.getMinimum(colArray);
-
-
-        for (int i=0; i<nCamLength ; i++){
-            for (int j=0; j<nLineOlcLength ; j++){
-                for (int k=0; k<nDetCamLength ; k++){
-                    short row = rowArray.get(i,j,k);
-                    short col = colArray.get(i,j,k);
-                    int[] gridCoors = {i,j,k};
-                    int[] imageCoors = {col,row};
-                    olciMap.put(gridCoors,imageCoors);
-                }
-            }
-        }
-
-        return olciMap;
-    }
-
-    // step 4.1 (possibility) currently not used.
-    private TreeMap getOlciGridImageMap(int x, int y) throws IOException, InvalidRangeException {
-        // Provides mapping between OLCI image grid(x,y) and OLCI instrument grid(m,j,k)
-        //x and y are dimensions of OLCI L1B raster
-        TreeMap<int[], int[]> olciMap = new TreeMap<>(new ComparatorIntArray());
-
-        String path = olciImageProduct.getFileLocation().getParent();
-        String instrumentDataPath = path + "/instrument_data.nc";
-        NetcdfFile netcdfFile = NetcdfFileOpener.open(instrumentDataPath);
-
-        Variable detectorVariable = netcdfFile.findVariable("detector_index");
-        Array detectorArray = detectorVariable.read();
-        int nDetCam = N_DET_CAM; //todo: check where this parameter comes from?
-        short[] df = getOlciFrameOffset(netcdfFile);
-        Short dfMin = Collections.min(Arrays.asList(ArrayUtils.toObject(df)));
-        for (int f = 0; f < x; f++) {
-            for (int j1L1b = 0; j1L1b < y; j1L1b++) {
-                int[] position = {f, j1L1b};
-                short detectorValue = ((ArrayShort.D2) detectorArray).get(j1L1b, f);
-                if (detectorValue != -1) {
-                    int p = detectorValue;
-                    int m = (int) Math.floor(p / nDetCam) + 1;
-                    int j = p - (m - 1) * nDetCam;
-                    int k = j1L1b - df[p] + dfMin;
-                    int[] finalArray = new int[3];
-                    finalArray[0] = m;
-                    finalArray[1] = k;
-                    finalArray[2] = j;
-                    olciMap.put(finalArray, position);
-                }
-            }
-        }
-        return olciMap;
-    }
-
     //Step 1
     private TreeMap getSlstrImageMap(int x, int y) throws IOException, InvalidRangeException {
         // Provides mapping between SLSTR image grid(x,y) and SLSTR instrument grid(scan,pixel,detector)
@@ -181,18 +46,18 @@ public class SlstrMisrTransform implements Serializable{
         TreeMap<int[], int[]> slstrMap = new TreeMap<>(new ComparatorIntArray());
 
         String path = slstrImageProduct.getFileLocation().getParent();
-        String indexFilePath = path + "/indices_an.nc";
+        String indexFilePath = path + "/indices_"+viewType+".nc";
         NetcdfFile netcdfFile = NetcdfFileOpener.open(indexFilePath);
-        Variable scanVariable = netcdfFile.findVariable("scan_an");
-        Variable pixelVariable = netcdfFile.findVariable("pixel_an");
-        Variable detectorVariable = netcdfFile.findVariable("detector_an");
+        Variable scanVariable = netcdfFile.findVariable("scan_"+viewType);
+        Variable pixelVariable = netcdfFile.findVariable("pixel_"+viewType);
+        Variable detectorVariable = netcdfFile.findVariable("detector_"+viewType);
 
         Array scanArray = scanVariable.read();
         Array pixelArray = pixelVariable.read();
         Array detectorArray = detectorVariable.read();
 
-        Variable scanOffsetVariable = netcdfFile.findVariable("l0_scan_offset_an");
-        int scanOffset = scanOffsetVariable.readScalarInt();
+        //Variable scanOffsetVariable = netcdfFile.findVariable("l0_scan_offset_an");
+        //int scanOffset = scanOffsetVariable.readScalarInt();
 
         for (int i = 0; i < x; i++) {
             for (int j = 0; j < y; j++) {
@@ -244,6 +109,139 @@ public class SlstrMisrTransform implements Serializable{
         return gridMap;
     }
 
+    // Step 3
+    private TreeMap<int[], int[]> getMisrOlciMap() throws IOException, InvalidRangeException {
+        // provides mapping between MISR (row/col) and OLCI instrument grid (N_LINE_OLC/N_DET_CAM/N_CAM) from MISR product
+        String bandName = "/misregist_Oref_S5.nc";
+        String path = this.misrPath;
+        String misrBandFile = path + bandName;
+        NetcdfFile netcdfFile = NetcdfFile.open(misrBandFile);
+        int nLineOlcLength = netcdfFile.findDimension("N_LINE_OLC").getLength();
+        int nDetCamLength = netcdfFile.findDimension("N_DET_CAM").getLength();
+        int nCamLength = netcdfFile.findDimension("N_CAM").getLength();
+        String rowVariableName = getRowVariableName(netcdfFile);
+        String colVariableName = getColVariableName(netcdfFile);
+        Variable rowVariable = netcdfFile.findVariable(rowVariableName);
+        Variable colVariable = netcdfFile.findVariable(colVariableName);
+        Array rowArray = rowVariable.read();
+        Array colArray = colVariable.read();
+
+        int col = -1;
+        int row = -1;
+        TreeMap<int[], int[]> colRowMap = new TreeMap<>(new ComparatorIntArray());
+
+        int minRow;
+        int minCol;
+        minRow = (int) MAMath.getMinimum(rowArray);
+        minCol = (int) MAMath.getMinimum(colArray);
+
+        for (int i = 0; i < nCamLength; i++) {
+            for (int j = 0; j < nLineOlcLength; j++) {
+                for (int k = 0; k < nDetCamLength; k++) {
+                    int[] position = {i, j, k};
+                    if (colVariableName.matches("L1b_col_.._"+viewType)) {
+                       //row = ((ArrayInt.D3) rowArray).get(i, j, k) - minRow;
+                        row = ((ArrayInt.D3) rowArray).get(i,j,k) ;
+                        //col = ((ArrayShort.D3) colArray).get(i, j, k) - minCol;
+                        col = ((ArrayShort.D3) colArray).get(i,j,k) ;
+                    } else if (colVariableName.matches("col_corresp_s._"+viewType)) {
+                        //row = (int) Math.floor(((ArrayInt.D3) rowArray).get(i, j, k) - minRow);
+                        row = ((ArrayInt.D3) rowArray).get(i,j,k);
+                        //col = (int) Math.floor(((ArrayInt.D3) colArray).get(i, j, k) - minCol);
+                        col = ((ArrayInt.D3) colArray).get(i,j,k);
+                    }
+                    if (col>0 && row>0) {
+                        int[] colRowArray = {col, row};
+                        colRowMap.put(colRowArray, position);
+                    }
+                }
+            }
+        }
+
+        return colRowMap;
+    }
+
+    // Step 4.2
+    private TreeMap getOlciMisrMap() throws IOException {
+        //should provide mapping between OLCI image grid and instrument grid
+
+        TreeMap<int[], int[]> olciMap = new TreeMap<>(new ComparatorIntArray());
+        String bandName = "/misreg_Oref_Oa17.nc";
+        String path = this.misrPath;
+        String misrBandFile = path + bandName;
+        NetcdfFile netcdfFile = NetcdfFile.open(misrBandFile);
+        String rowVariableName = "L1b_row_17";
+        String colVariableName = "L1b_col_17";
+        Variable rowVariable = netcdfFile.findVariable(rowVariableName);
+        Variable colVariable = netcdfFile.findVariable(colVariableName);
+        //
+        if (rowVariable==null) {
+            rowVariableName = "delta_row_17";
+            rowVariable = netcdfFile.findVariable(rowVariableName);
+
+        }
+        if (colVariable==null){
+            colVariableName = "delta_col_17";
+            colVariable = netcdfFile.findVariable(colVariableName);
+        }
+        //
+        ArrayShort.D3 rowArray = (ArrayShort.D3) rowVariable.read();
+        ArrayShort.D3 colArray = (ArrayShort.D3) colVariable.read();
+        int nCamLength = netcdfFile.findDimension("N_CAM").getLength();
+        int nLineOlcLength = netcdfFile.findDimension("N_LINE_OLC").getLength();
+        int nDetCamLength = netcdfFile.findDimension("N_DET_CAM").getLength();
+
+        for (int i=0; i<nCamLength ; i++){
+            for (int j=0; j<nLineOlcLength ; j++){
+                for (int k=0; k<nDetCamLength ; k++){
+                    short row = rowArray.get(i,j,k);
+                    short col = colArray.get(i,j,k);
+                    int[] gridCoors = {i,j,k};
+                    int[] imageCoors = {col,row};
+                    olciMap.put(gridCoors,imageCoors);
+                }
+            }
+        }
+
+        return olciMap;
+    }
+
+    /*/ step 4.1 (possibility) currently not used.
+    private TreeMap getOlciGridImageMap(int x, int y) throws IOException, InvalidRangeException {
+        // Provides mapping between OLCI image grid(x,y) and OLCI instrument grid(m,j,k)
+        //x and y are dimensions of OLCI L1B raster
+        TreeMap<int[], int[]> olciMap = new TreeMap<>(new ComparatorIntArray());
+
+        String path = olciImageProduct.getFileLocation().getParent();
+        String instrumentDataPath = path + "/instrument_data.nc";
+        NetcdfFile netcdfFile = NetcdfFileOpener.open(instrumentDataPath);
+
+        Variable detectorVariable = netcdfFile.findVariable("detector_index");
+        Array detectorArray = detectorVariable.read();
+        int nDetCam = N_DET_CAM; //todo: check where this parameter comes from?
+        short[] df = getOlciFrameOffset(netcdfFile);
+        Short dfMin = Collections.min(Arrays.asList(ArrayUtils.toObject(df)));
+        for (int f = 0; f < x; f++) {
+            for (int j1L1b = 0; j1L1b < y; j1L1b++) {
+                int[] position = {f, j1L1b};
+                short detectorValue = ((ArrayShort.D2) detectorArray).get(j1L1b, f);
+                if (detectorValue != -1) {
+                    int p = detectorValue;
+                    int m = (int) Math.floor(p / nDetCam) + 1;
+                    int j = p - (m - 1) * nDetCam;
+                    int k = j1L1b - df[p] + dfMin;
+                    int[] finalArray = new int[3];
+                    finalArray[0] = m;
+                    finalArray[1] = k;
+                    finalArray[2] = j;
+                    olciMap.put(finalArray, position);
+                }
+            }
+        }
+        return olciMap;
+    }
+
+    //was used for step 4.1
     private short[] getOlciFrameOffset(NetcdfFile netcdfFile) throws IOException {
         Variable frameVariable = netcdfFile.findVariable("frame_offset");
         Dimension detectorDimenstion = netcdfFile.findDimension("detectors");
@@ -256,6 +254,7 @@ public class SlstrMisrTransform implements Serializable{
             throw new OperatorException("error while reading OLCI frame offset");
         }
     }
+    */
 
     TreeMap getSlstrOlciMap() throws InvalidRangeException, IOException {
         //Provides mapping between SLSTR image grid and OLCI image grid
@@ -282,7 +281,7 @@ public class SlstrMisrTransform implements Serializable{
     private String getRowVariableName(NetcdfFile netcdfFile) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getName().matches("L1b_row_.._an") || variable.getName().matches("row_corresp_s._an")) {
+            if (variable.getName().matches("L1b_row_.._"+viewType) || variable.getName().matches("row_corresp_s._"+viewType)) {
                 return variable.getName();
             }
         }
@@ -292,7 +291,7 @@ public class SlstrMisrTransform implements Serializable{
     private String getColVariableName(NetcdfFile netcdfFile) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getName().matches("L1b_col_.._an") || variable.getName().matches("col_corresp_s._an")) {
+            if (variable.getName().matches("L1b_col_.._"+viewType) || variable.getName().matches("col_corresp_s._"+viewType)) {
                 return variable.getName();
             }
         }

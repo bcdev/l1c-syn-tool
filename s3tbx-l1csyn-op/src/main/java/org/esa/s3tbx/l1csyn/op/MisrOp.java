@@ -33,9 +33,6 @@ public class MisrOp extends Operator {
     @SourceProduct(alias = "slstrSource", description = "SLSTR source product")
     private Product slstrSourceProduct;
 
-    @SourceProduct(alias = "slstrCollocated", description = "SLSTR source product")
-    private Product slstrCollocated;
-
     @Parameter(alias = "pixelMap", description = "Map between SLSTR Image grid and OLCI Image grid")
     private TreeMap treeMap;
 
@@ -67,10 +64,8 @@ public class MisrOp extends Operator {
                         }
                     }
                 } else if (slstrSourceProduct.containsBand(targetBand.getName())) {
-                    sourceTile = getSourceTile(slstrCollocated.getRasterDataNode(targetBand.getName()), targetRectangle);
                     for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                         for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                            targetTile.setSample(x,y,sourceTile.getSampleDouble(x,y));
                             int[] position = {x, y};
                             int[] slstrGridPosition = (int[]) treeMap.get(position);
                             if (slstrGridPosition != null) {
@@ -103,15 +98,8 @@ public class MisrOp extends Operator {
                 }
             }
         } else if (slstrSourceProduct.containsBand(targetBand.getName())) {
-            //sourceTile = getSourceTile(slstrCollocated.getRasterDataNode(targetBand.getName()), targetRectangle);
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                    /*if (sourceTile.getSampleFloat(x, y)>0) {
-                        targetTile.setSample(x, y, sourceTile.getSampleFloat(x, y));
-                    }
-                    else{
-                        targetTile.setSample(x,y,Float.NaN);
-                    }*/
                     targetTile.setSample(x,y,targetBand.getNoDataValue());
                     if (slstrSourceProduct.getBand(targetBand.getName()).getRasterWidth() == slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth()) {
 
