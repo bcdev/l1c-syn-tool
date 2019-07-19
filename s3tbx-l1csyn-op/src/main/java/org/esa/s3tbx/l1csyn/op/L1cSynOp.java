@@ -150,15 +150,9 @@ public class L1cSynOp extends Operator {
         if (misrFile != null) {
             String misrFormat = getMisrFormat(misrFile);
             try {
-                HashMap<String, Product> collocationProductMap = new HashMap<>();
-                Product slstrInput = GPF.createProduct("Resample", getSlstrResampleParams(slstrSource, upsamplingMethod), slstrSource);
-                slstrInput.setFileLocation(slstrSource.getFileLocation());
-                collocationProductMap.put("masterProduct", olciSource);
-                collocationProductMap.put("slaveProduct", slstrInput);
-                //
                 TreeMap mapOlciSlstr;
                 if (misrFormat.equals("new")) {
-                    SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"bn");
+                    SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"an");
                     mapOlciSlstr = misrTransform.getSlstrOlciMap();
                 }
                 else if (misrFormat.equals("internal")){
@@ -258,7 +252,9 @@ public class L1cSynOp extends Operator {
             for (String maskName : maskNames) {
                 Matcher matcher = pattern.matcher(maskName);
                 if (!matcher.matches()) {
-                    l1cTarget.getMaskGroup().remove(l1cTarget.getMaskGroup().get(maskName));
+                    if (l1cTarget.getMaskGroup().get(maskName)!=null) {
+                        l1cTarget.getMaskGroup().remove(l1cTarget.getMaskGroup().get(maskName));
+                    }
                 }
             }
         }

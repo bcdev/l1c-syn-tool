@@ -106,13 +106,25 @@ public class MisrOp extends Operator {
                         int[] position = {x, y};
                         int[] slstrGridPosition = (int[]) treeMap.get(position);
                         if (slstrGridPosition != null) {
-                            float reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]); // / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
+                            double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]); // / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
                             targetTile.setSample(x,y, reflecValue);
                         }
                     }
                 }
             }
-        }
+            double duplicate = targetBand.getNoDataValue();
+            for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
+                for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+                    if (targetTile.getSampleDouble(x,y)!=targetBand.getNoDataValue()){
+                        duplicate = targetTile.getSampleDouble(x,y);
+                    }
+                    else {
+                        targetTile.setSample(x,y,duplicate);
+                    }
+                }
+            }
+
+            }
         else if (targetBand.getName().equals("misr_flags")){
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
@@ -140,11 +152,12 @@ public class MisrOp extends Operator {
         TiePointGrid sourceGrid = olciSourceProduct.getTiePointGridAt(0);
 
         for (Band slstrBand : slstrSourceProduct.getBands()) {
-            if (slstrBand.getRasterWidth()== slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth() ||
-                    slstrBand.getRasterHeight()== slstrSourceProduct.getBand("S5_radiance_an").getRasterHeight()) {
+            //if (slstrBand.getRasterWidth()== slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth() ||
+             //       slstrBand.getRasterHeight()== slstrSourceProduct.getBand("S5_radiance_an").getRasterHeight()) {
                 Band copiedBand = targetProduct.addBand(slstrBand.getName(), ProductData.TYPE_FLOAT32);
                 targetProduct.getBand(slstrBand.getName()).setNoDataValue(slstrSourceProduct.getBand(slstrBand.getName()).getNoDataValue());
-            }
+                targetProduct.getBand(slstrBand.getName()).setNoDataValueUsed(true);
+           // }
         }
 
         ProductUtils.copyMetadata(olciSourceProduct, targetProduct);

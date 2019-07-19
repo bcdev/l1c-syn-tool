@@ -113,6 +113,14 @@ public class SlstrMisrTransform implements Serializable{
     private TreeMap<int[], int[]> getMisrOlciMap() throws IOException, InvalidRangeException {
         // provides mapping between MISR (row/col) and OLCI instrument grid (N_LINE_OLC/N_DET_CAM/N_CAM) from MISR product
         String bandName = "/misregist_Oref_S5.nc";
+
+        //for future MISR of oblique view
+        /*if (viewType.equals("an")) {
+            bandName = "/misregist_Oref_S5.nc";
+        }
+        else if (viewType.equals("ao")) {
+            bandName ="/misregist_Oref_ao.nc";
+        }*/
         String path = this.misrPath;
         String misrBandFile = path + bandName;
         NetcdfFile netcdfFile = NetcdfFile.open(misrBandFile);
@@ -260,7 +268,15 @@ public class SlstrMisrTransform implements Serializable{
         //Provides mapping between SLSTR image grid and OLCI image grid
         //todo: find faster way to implement it.
         TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray() );
-        TreeMap slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight());
+        TreeMap slstrImageMap;
+        slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight());
+        /*if (viewType.equals("an")) {
+            slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight());
+        }
+        else if (viewType.equals("ao")){
+            slstrImageMap = getSlstrImageMap(slstrImageProduct.getBand("S1_radiance_ao").getRasterWidth(), slstrImageProduct.getBand("S1_radiance_ao").getRasterHeight());
+        }
+        else {throw new OperatorException("error with viewtype");} */
         TreeMap slsrtMisrMap = getSlstrGridMisrMap(slstrImageMap);
         TreeMap misrOlciMap = getMisrOlciMap();
         //TreeMap olciImageMap = getOlciGridImageMap(olciImageProduct.getSceneRasterWidth(), olciImageProduct.getSceneRasterHeight());
@@ -281,7 +297,7 @@ public class SlstrMisrTransform implements Serializable{
     private String getRowVariableName(NetcdfFile netcdfFile) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getName().matches("L1b_row_.._"+viewType) || variable.getName().matches("row_corresp_s._"+viewType)) {
+            if (variable.getName().matches("L1b_row_.._"+viewType) || variable.getName().matches("row_corresp_s._"+viewType) || variable.getName().matches("L1b_row_"+viewType)) {
                 return variable.getName();
             }
         }
@@ -291,7 +307,7 @@ public class SlstrMisrTransform implements Serializable{
     private String getColVariableName(NetcdfFile netcdfFile) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getName().matches("L1b_col_.._"+viewType) || variable.getName().matches("col_corresp_s._"+viewType)) {
+            if (variable.getName().matches("L1b_col_.._"+viewType) || variable.getName().matches("col_corresp_s._"+viewType) || variable.getName().matches("L1b_col_"+viewType)) {
                 return variable.getName();
             }
         }
