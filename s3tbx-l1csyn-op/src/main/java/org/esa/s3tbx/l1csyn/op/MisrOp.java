@@ -124,17 +124,17 @@ public class MisrOp extends Operator {
                 }
             }
 
-            }
+        }
         else if (targetBand.getName().equals("misr_flags")){
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     int[] position = {x, y};
                     int[] slstrGridPosition = (int[]) treeMap.get(position);
                     if (slstrGridPosition != null ) {
-                    targetTile.setSample(x,y,slstrGridPosition[0]+slstrGridPosition[1]);
+                        targetTile.setSample(x,y,slstrGridPosition[0]+slstrGridPosition[1]);
                     }
                 }
-                }
+            }
         }
     }
 
@@ -153,11 +153,11 @@ public class MisrOp extends Operator {
 
         for (Band slstrBand : slstrSourceProduct.getBands()) {
             //if (slstrBand.getRasterWidth()== slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth() ||
-             //       slstrBand.getRasterHeight()== slstrSourceProduct.getBand("S5_radiance_an").getRasterHeight()) {
-                Band copiedBand = targetProduct.addBand(slstrBand.getName(), ProductData.TYPE_FLOAT32);
-                targetProduct.getBand(slstrBand.getName()).setNoDataValue(slstrSourceProduct.getBand(slstrBand.getName()).getNoDataValue());
-                targetProduct.getBand(slstrBand.getName()).setNoDataValueUsed(true);
-           // }
+            //       slstrBand.getRasterHeight()== slstrSourceProduct.getBand("S5_radiance_an").getRasterHeight()) {
+            Band copiedBand = targetProduct.addBand(slstrBand.getName(), ProductData.TYPE_FLOAT32);
+            targetProduct.getBand(slstrBand.getName()).setNoDataValue(slstrSourceProduct.getBand(slstrBand.getName()).getNoDataValue());
+            targetProduct.getBand(slstrBand.getName()).setNoDataValueUsed(true);
+            // }
         }
 
         ProductUtils.copyMetadata(olciSourceProduct, targetProduct);

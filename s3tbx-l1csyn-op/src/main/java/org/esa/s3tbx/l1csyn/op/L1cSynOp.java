@@ -233,8 +233,6 @@ public class L1cSynOp extends Operator {
             Pattern pattern = Pattern.compile("\\b(" + String.join("|", bandsList) + ")\\b");
             String[] bandNames = inputProduct.getBandNames();
             String[] tiePointGridNames = inputProduct.getTiePointGridNames();
-
-
             String[] tiePointBandNames = (String[]) ArrayUtils.addAll(bandNames, tiePointGridNames);
 
             for (String bandName : tiePointBandNames) {
@@ -430,7 +428,7 @@ public class L1cSynOp extends Operator {
             }
             //
 
-                FileOutputStream fileOut = new FileOutputStream(misrPath+"/internalMisr.ser");
+            FileOutputStream fileOut = new FileOutputStream(misrPath+"/internalMisr.ser");
             ObjectOutputStream out = new ObjectOutputStream(fileOut);
             out.writeObject(clonedMap);
             out.close();

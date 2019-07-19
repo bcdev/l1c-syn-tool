@@ -1,18 +1,18 @@
 package org.esa.s3tbx.l1csyn.op;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.esa.snap.core.datamodel.Product;
-import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.dataio.netcdf.util.NetcdfFileOpener;
 import ucar.ma2.*;
-import ucar.nc2.Dimension;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class SlstrMisrTransform implements Serializable{
     private Product olciImageProduct;
@@ -148,7 +148,7 @@ public class SlstrMisrTransform implements Serializable{
                 for (int k = 0; k < nDetCamLength; k++) {
                     int[] position = {i, j, k};
                     if (colVariableName.matches("L1b_col_.._"+viewType)) {
-                       //row = ((ArrayInt.D3) rowArray).get(i, j, k) - minRow;
+                        //row = ((ArrayInt.D3) rowArray).get(i, j, k) - minRow;
                         row = ((ArrayInt.D3) rowArray).get(i,j,k) ;
                         //col = ((ArrayShort.D3) colArray).get(i, j, k) - minCol;
                         col = ((ArrayShort.D3) colArray).get(i,j,k) ;
