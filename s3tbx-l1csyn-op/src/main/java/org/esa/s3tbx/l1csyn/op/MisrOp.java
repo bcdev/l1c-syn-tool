@@ -1,7 +1,10 @@
 package org.esa.s3tbx.l1csyn.op;
 
 import com.bc.ceres.core.ProgressMonitor;
-import org.esa.snap.core.datamodel.*;
+import org.esa.snap.core.datamodel.Band;
+import org.esa.snap.core.datamodel.FlagCoding;
+import org.esa.snap.core.datamodel.Product;
+import org.esa.snap.core.datamodel.ProductData;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.core.gpf.OperatorSpi;
@@ -23,7 +26,7 @@ import java.util.TreeMap;
         version = "1.0",
         authors = "Roman Shevchuk, Marco Peters",
         copyright = "(c) 2019 by Brockmann Consult",
-        description = "Coregister OLCI and SLSTR L1 Products with TreeMap."
+        description = "Coregister OLCI and SLSTR L1 Products using TreeMap from MISR product."
 )
 public class MisrOp extends Operator {
 
@@ -85,6 +88,72 @@ public class MisrOp extends Operator {
         }
     }
 
+    /*
+    @Override
+    public void doExecute(ProgressMonitor pm){
+        //use in order to create duplicates
+
+        for (Band targetBand : targetProduct.getBands()){
+            if (slstrSourceProduct.getBand(targetBand.getName())!= null){
+                targetBand.ensureRasterData();
+
+                Band slstrBand = slstrSourceProduct.getBand(targetBand.getName());
+
+                //targetBand.setPixelDouble(1,1,100);
+                MultiLevelImage targetImage =  targetBand.getSourceImage();
+
+
+                 Dimension tileSize = ImageManager.getPreferredTileSize(targetProduct);
+
+                final int numXTiles = MathUtils.ceilInt(targetProduct.getSceneRasterWidth() / (double) tileSize.width);
+                final int numYTiles = MathUtils.ceilInt(targetProduct.getSceneRasterHeight() / (double) tileSize.height);
+
+
+                //final int numXTiles = targetImage.getNumXTiles();
+                //final int numYTiles = targetImage.getNumYTiles();
+                //final int tileWidth = targetImage.getTileWidth();
+                //final int tileHeight = targetImage.getTileHeight();
+
+                for (int tileX = 0; tileX < numXTiles; tileX++) {
+                    for (int tileY = 0; tileY < numYTiles; tileY++) {
+                        //Tile targetTile = (Tile) targetImage.getTile(tileX,tileY);
+                        //computeTile(targetBand,targetTile,null);
+                    }
+                }
+
+
+                // working but has memory issues //
+                /*
+                for (int y = 0 ; y< targetBand.getRasterHeight() ; y++ ){
+                    for (int x = 0 ; x< targetBand.getRasterWidth() ; x++ ) {
+                        int[] position = {x, y};
+                        int[] slstrGridPosition = (int[]) treeMap.get(position);
+                        if (slstrGridPosition != null) {
+                            double reflecValue = slstrBand.getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
+                            targetBand.setPixelDouble(x,y,reflecValue);
+                        }
+                    }
+                }
+                double duplicate = targetBand.getNoDataValue();
+                for (int y = 0 ; y< targetBand.getRasterHeight() ; y++ ) {
+                    for (int x = 0 ; x< targetBand.getRasterWidth() ; x++) {
+                        if (targetBand.getPixelDouble(x,y)!=targetBand.getNoDataValue()){
+                            duplicate = targetBand.getPixelDouble(x,y);
+                        }
+                        else {
+                            targetBand.setPixelDouble(x,y,duplicate);
+                        }
+                    }
+                    duplicate = targetBand.getNoDataValue();
+                }
+
+
+            }
+
+        }
+
+    }*/
+
     @Override
     public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm){
         Tile sourceTile;
@@ -112,8 +181,8 @@ public class MisrOp extends Operator {
                     }
                 }
             }
-            double duplicate = targetBand.getNoDataValue();
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
+                double duplicate = targetBand.getNoDataValue();
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     if (targetTile.getSampleDouble(x,y)!=targetBand.getNoDataValue()){
                         duplicate = targetTile.getSampleDouble(x,y);
@@ -136,6 +205,19 @@ public class MisrOp extends Operator {
                 }
             }
         }
+        else if (targetBand.getName().equals("duplicate_flags")){
+            for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
+                for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+                    int[] position = {x, y};
+                    int[] slstrGridPosition = (int[]) treeMap.get(position);
+                    if (slstrGridPosition== null) {
+                        targetTile.setSample(x,y,1);
+
+                    }
+                }
+            }
+        }
+
     }
 
 
@@ -149,7 +231,7 @@ public class MisrOp extends Operator {
             ProductUtils.copyBand(olciBand.getName(), olciSourceProduct, targetProduct, true);
         }
 
-        TiePointGrid sourceGrid = olciSourceProduct.getTiePointGridAt(0);
+        //TiePointGrid sourceGrid = olciSourceProduct.getTiePointGridAt(0);
 
         for (Band slstrBand : slstrSourceProduct.getBands()) {
             //if (slstrBand.getRasterWidth()== slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth() ||
@@ -166,18 +248,32 @@ public class MisrOp extends Operator {
         ProductUtils.copyFlagBands(olciSourceProduct, targetProduct, true);
         ProductUtils.copyGeoCoding(olciSourceProduct, targetProduct);
 
-        final FlagCoding flagCoding = new FlagCoding("MISR_Applied");
-        flagCoding.setDescription("MISR processor flag");
-        targetProduct.getFlagCodingGroup().add(flagCoding);
+        final FlagCoding misrFlagCoding = new FlagCoding("MISR_Applied");
+        misrFlagCoding.setDescription("MISR processor flag");
+        targetProduct.getFlagCodingGroup().add(misrFlagCoding);
         Band misrFlags = new Band("misr_flags", ProductData.TYPE_UINT32,
                 olciSourceProduct.getSceneRasterWidth(),
                 olciSourceProduct.getSceneRasterHeight());
-        //misrFlags.setSampleCoding(flagCoding);
+        misrFlags.setSampleCoding(misrFlagCoding);
 
         targetProduct.addMask("MISR pixel applied",  "misr_flags",
                 "MISR information was used to get value of this pixel", Color.RED, 0.5);
 
         targetProduct.addBand(misrFlags);
+
+
+        final FlagCoding duplicateFlagCoding = new FlagCoding("Duplicated pixel after MISR");
+        duplicateFlagCoding.setDescription("Duplicate pixels");
+        targetProduct.getFlagCodingGroup().add(duplicateFlagCoding);
+        Band duplicateFlags = new Band("duplicate_flags", ProductData.TYPE_UINT32,
+                olciSourceProduct.getSceneRasterWidth(),
+                olciSourceProduct.getSceneRasterHeight());
+        duplicateFlags.setSampleCoding(duplicateFlagCoding);
+
+        targetProduct.addMask("Duplicated pixel after MISR",  "duplicate_flags",
+                "After applying misregistration, this pixel is a duplicate of its neighbour", Color.BLUE, 0.5);
+
+        targetProduct.addBand(duplicateFlags);
         /*ProductUtils.copyMetadata(slstrSourceProduct, targetProduct);
         ProductUtils.copyTiePointGrids(slstrSourceProduct, targetProduct);
         ProductUtils.copyMasks(slstrSourceProduct, targetProduct);
