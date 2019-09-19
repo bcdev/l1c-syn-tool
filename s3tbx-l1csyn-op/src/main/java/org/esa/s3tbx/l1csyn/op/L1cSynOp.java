@@ -173,6 +173,7 @@ public class L1cSynOp extends Operator {
                 misrSourceProductMap.put("slstrSource", slstrSource);
                 HashMap<String, Object> misrParams = new HashMap<>();
                 misrParams.put("pixelMap", mapOlciSlstr);
+                misrParams.put("duplicate",false);
                 collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);
             } catch (InvalidRangeException e1) {
                 throw new OperatorException("Misregistration failed. InvalidRangeException");

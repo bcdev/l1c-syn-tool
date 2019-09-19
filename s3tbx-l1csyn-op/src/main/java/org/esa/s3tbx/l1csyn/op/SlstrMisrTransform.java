@@ -74,6 +74,39 @@ public class SlstrMisrTransform implements Serializable{
         return slstrMap;
     }
 
+    //step 1 for orphan pixel
+    private TreeMap getSlstrOrphanImageMap() throws IOException{
+        TreeMap<int[], int[]> orphanMap = new TreeMap<>(new ComparatorIntArray());
+
+        String path = slstrImageProduct.getFileLocation().getParent();
+        String indexFilePath = path + "/indices_"+viewType+".nc";
+        NetcdfFile netcdfFile = NetcdfFileOpener.open(indexFilePath);
+        Variable scanVariable = netcdfFile.findVariable("scan_orphan_"+viewType);
+        Variable pixelVariable = netcdfFile.findVariable("pixel_orphan_"+viewType);
+        Variable detectorVariable = netcdfFile.findVariable("detector_orphan_"+viewType);
+
+        Array scanArray = scanVariable.read();
+        Array pixelArray = pixelVariable.read();
+        Array detectorArray = detectorVariable.read();
+        int orphanPixelsLenght = netcdfFile.findDimension("orphan_pixels").getLength();
+        int rowLenght = netcdfFile.findDimension("rows").getLength();
+
+        for (int i = 0; i < orphanPixelsLenght; i++) {
+            for (int j = 0; j < rowLenght; j++) {
+                int[] imagePosition = {i,j};
+                short scan =  ((ArrayShort.D2) scanArray).get(j,i);
+                short pixel = ((ArrayShort.D2) pixelArray).get(j,i);
+                byte detector = ((ArrayByte.D2) detectorArray).get(j,i);
+                int[] gridPosition = {scan, pixel, detector};
+                if (scan != -1 && pixel != -1 && detector != -1) {
+                    orphanMap.put(imagePosition, gridPosition);
+                }
+            }
+        }
+
+        return orphanMap;
+    }
+
     //step 2
     private TreeMap getSlstrGridMisrMap(Map mapSlstr) {
         //provides map between SLSTR instrument grid (scan,pixel,detector) and MISR file (row,col)
@@ -114,13 +147,6 @@ public class SlstrMisrTransform implements Serializable{
         // provides mapping between MISR (row/col) and OLCI instrument grid (N_LINE_OLC/N_DET_CAM/N_CAM) from MISR product
         String bandName = "/misregist_Oref_S5.nc";
 
-        //for future MISR of oblique view
-        /*if (viewType.equals("an")) {
-            bandName = "/misregist_Oref_S5.nc";
-        }
-        else if (viewType.equals("ao")) {
-            bandName ="/misregist_Oref_ao.nc";
-        }*/
         String path = this.misrPath;
         String misrBandFile = path + bandName;
         NetcdfFile netcdfFile = NetcdfFile.open(misrBandFile);
@@ -168,6 +194,52 @@ public class SlstrMisrTransform implements Serializable{
 
         return colRowMap;
     }
+
+    //step 3 for orphan pixels
+    private TreeMap<int[], int[]> getMisrOlciOrphanMap() throws IOException, InvalidRangeException {
+        // provides mapping between MISR (row/orphan) and OLCI instrument grid (N_LINE_OLC/N_DET_CAM/N_CAM) from MISR product
+        String bandName = "/misregist_Oref_S5.nc";
+
+        String path = this.misrPath;
+        String misrBandFile = path + bandName;
+        NetcdfFile netcdfFile = NetcdfFile.open(misrBandFile);
+        int nLineOlcLength = netcdfFile.findDimension("N_LINE_OLC").getLength();
+        int nDetCamLength = netcdfFile.findDimension("N_DET_CAM").getLength();
+        int nCamLength = netcdfFile.findDimension("N_CAM").getLength();
+        String rowVariableName = getRowVariableName(netcdfFile);
+        String orphanVariableName = getOrphanVariableName(netcdfFile);
+        Variable rowVariable = netcdfFile.findVariable(rowVariableName);
+        Variable orphanVariable = netcdfFile.findVariable(orphanVariableName);
+        Array rowArray = rowVariable.read();
+        Array orphanArray = orphanVariable.read();
+
+        int orphan = -1;
+        int row = -1;
+        TreeMap<int[], int[]> orphanRowMap = new TreeMap<>(new ComparatorIntArray());
+
+
+        for (int i = 0; i < nCamLength; i++) {
+            for (int j = 0; j < nLineOlcLength; j++) {
+                for (int k = 0; k < nDetCamLength; k++) {
+                    int[] position = {i, j, k};
+                    if (orphanVariableName.matches("L1b_orphan_.._"+viewType)) {
+                        row = ((ArrayInt.D3) rowArray).get(i,j,k) ;
+                        orphan = ((ArrayShort.D3) orphanArray).get(i,j,k) ;
+                    } else if (orphanVariableName.matches("orphan_corresp_s._"+viewType)) {
+                        row = ((ArrayInt.D3) rowArray).get(i,j,k);
+                        orphan = ((ArrayInt.D3) orphanArray).get(i,j,k);
+                    }
+                    if (orphan>0 && row>0) {
+                        int[] orphanRowArray = {orphan, row};
+                        orphanRowMap.put(orphanRowArray, position);
+                    }
+                }
+            }
+        }
+
+        return orphanRowMap;
+    }
+
 
     // Step 4.2
     private TreeMap getOlciMisrMap() throws IOException {
@@ -267,30 +339,40 @@ public class SlstrMisrTransform implements Serializable{
     TreeMap getSlstrOlciMap() throws InvalidRangeException, IOException {
         //Provides mapping between SLSTR image grid and OLCI image grid
         //todo: find faster way to implement it.
-        TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray() );
-        TreeMap slstrImageMap;
-        slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight());
-        /*if (viewType.equals("an")) {
-            slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight());
-        }
-        else if (viewType.equals("ao")){
-            slstrImageMap = getSlstrImageMap(slstrImageProduct.getBand("S1_radiance_ao").getRasterWidth(), slstrImageProduct.getBand("S1_radiance_ao").getRasterHeight());
-        }
-        else {throw new OperatorException("error with viewtype");} */
-        TreeMap slsrtMisrMap = getSlstrGridMisrMap(slstrImageMap);
-        TreeMap misrOlciMap = getMisrOlciMap();
+        TreeMap<int[], int[]> gridMapPixel = new TreeMap<>(new ComparatorIntArray() );
+        TreeMap<int[], int[]> gridMapOrphan = new TreeMap<>(new ComparatorIntArray() );
+        TreeMap slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight()); //1
+        TreeMap slstrOrphanMap = getSlstrOrphanImageMap();
+        TreeMap slstrMisrMap = getSlstrGridMisrMap(slstrImageMap); //2
+        TreeMap slstrOrphanMisrMap = getSlstrGridMisrMap(slstrOrphanMap);
+        TreeMap misrOlciMap = getMisrOlciMap(); //3
+        TreeMap misrOrphanOlciMap = getMisrOlciOrphanMap();
         //TreeMap olciImageMap = getOlciGridImageMap(olciImageProduct.getSceneRasterWidth(), olciImageProduct.getSceneRasterHeight());
-        TreeMap olciImageMap = getOlciMisrMap(); //check
+        TreeMap olciImageMap = getOlciMisrMap(); // 4
+        TreeMap olciImageOrphanMap = getOlciMisrMap(); // 4
         for (Iterator<Map.Entry<int[], int[]>> entries = slstrImageMap.entrySet().iterator(); entries.hasNext(); ) {
             Map.Entry<int[], int[]> entry = entries.next();
             int[] slstrScanPixDet = entry.getValue();
-            int[] rowCol = (int[]) slsrtMisrMap.get(slstrScanPixDet);
+            int[] rowCol = (int[]) slstrMisrMap.get(slstrScanPixDet);
             int[] mjk = (int[]) misrOlciMap.get(rowCol);
             if (mjk != null) {
                 int[] xy = (int[]) olciImageMap.get(mjk);
-                gridMap.put(xy,entry.getKey());
+                gridMapPixel.put(xy,entry.getKey());
             }
         }
+        for (Iterator<Map.Entry<int[], int[]>> entries = slstrOrphanMap.entrySet().iterator(); entries.hasNext(); ) {
+            Map.Entry<int[], int[]> entry = entries.next();
+            int[] slstrScanPixDet = entry.getValue();
+            int[] rowOrphan = (int[]) slstrOrphanMisrMap.get(slstrScanPixDet);
+            int[] mjk = (int[]) misrOrphanOlciMap.get(rowOrphan);
+            if (mjk != null) {
+                int[] xy = (int[]) olciImageOrphanMap.get(mjk);
+                gridMapOrphan.put(xy,entry.getKey());
+            }
+        }
+        TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray() );
+        gridMap.putAll(gridMapOrphan);
+        gridMap.putAll(gridMapPixel);
         return gridMap;
     }
 
@@ -314,6 +396,15 @@ public class SlstrMisrTransform implements Serializable{
         throw new NullPointerException("Col variable not found");
     }
 
+    private String getOrphanVariableName(NetcdfFile netcdfFile) {
+        List<Variable> variables = netcdfFile.getVariables();
+        for (Variable variable : variables) {
+            if (variable.getName().matches("L1b_orphan_.._"+viewType) || variable.getName().matches("orphan_corresp_s._"+viewType) || variable.getName().matches("L1b_orphan_"+viewType)) {
+                return variable.getName();
+            }
+        }
+        throw new NullPointerException("Orphan variable not found");
+    }
 
     public static class ComparatorIntArray implements java.util.Comparator<int[]>, Serializable{
         @Override

@@ -39,6 +39,9 @@ public class MisrOp extends Operator {
     @Parameter(alias = "pixelMap", description = "Map between SLSTR Image grid and OLCI Image grid")
     private TreeMap treeMap;
 
+    @Parameter(alias = "duplicate", description = "If true empty pixels after MISR will be filled with neighboring values")
+    private boolean duplicate;
+
     @TargetProduct
     private Product targetProduct;
 
@@ -134,17 +137,19 @@ public class MisrOp extends Operator {
                         }
                     }
                 }
-                double duplicate = targetBand.getNoDataValue();
+                if (duplicate == true) {
+                double duplicatePixel = targetBand.getNoDataValue();
                 for (int y = 0 ; y< targetBand.getRasterHeight() ; y++ ) {
                     for (int x = 0 ; x< targetBand.getRasterWidth() ; x++) {
                         if (targetBand.getPixelDouble(x,y)!=targetBand.getNoDataValue()){
-                            duplicate = targetBand.getPixelDouble(x,y);
+                            duplicatePixel = targetBand.getPixelDouble(x,y);
                         }
                         else {
-                            targetBand.setPixelDouble(x,y,duplicate);
+                            targetBand.setPixelDouble(x,y,duplicatePixel);
                         }
                     }
-                    duplicate = targetBand.getNoDataValue();
+                    duplicatePixel = targetBand.getNoDataValue();
+                }
                 }
 
 
@@ -181,14 +186,15 @@ public class MisrOp extends Operator {
                     }
                 }
             }
-            for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                double duplicate = targetBand.getNoDataValue();
-                for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                    if (targetTile.getSampleDouble(x,y)!=targetBand.getNoDataValue()){
-                        duplicate = targetTile.getSampleDouble(x,y);
-                    }
-                    else {
-                        targetTile.setSample(x,y,duplicate);
+            if (duplicate) {
+                for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
+                    double duplicatePixel = targetBand.getNoDataValue();
+                    for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+                        if (targetTile.getSampleDouble(x, y) != targetBand.getNoDataValue()) {
+                            duplicatePixel = targetTile.getSampleDouble(x, y);
+                        } else {
+                            targetTile.setSample(x, y, duplicatePixel);
+                        }
                     }
                 }
             }
@@ -261,19 +267,20 @@ public class MisrOp extends Operator {
 
         targetProduct.addBand(misrFlags);
 
+        if (duplicate) {
+            final FlagCoding duplicateFlagCoding = new FlagCoding("Duplicated pixel after MISR");
+            duplicateFlagCoding.setDescription("Duplicate pixels");
+            targetProduct.getFlagCodingGroup().add(duplicateFlagCoding);
+            Band duplicateFlags = new Band("duplicate_flags", ProductData.TYPE_UINT32,
+                    olciSourceProduct.getSceneRasterWidth(),
+                    olciSourceProduct.getSceneRasterHeight());
+            duplicateFlags.setSampleCoding(duplicateFlagCoding);
 
-        final FlagCoding duplicateFlagCoding = new FlagCoding("Duplicated pixel after MISR");
-        duplicateFlagCoding.setDescription("Duplicate pixels");
-        targetProduct.getFlagCodingGroup().add(duplicateFlagCoding);
-        Band duplicateFlags = new Band("duplicate_flags", ProductData.TYPE_UINT32,
-                olciSourceProduct.getSceneRasterWidth(),
-                olciSourceProduct.getSceneRasterHeight());
-        duplicateFlags.setSampleCoding(duplicateFlagCoding);
+            targetProduct.addMask("Duplicated pixel after MISR", "duplicate_flags",
+                    "After applying misregistration, this pixel is a duplicate of its neighbour", Color.BLUE, 0.5);
 
-        targetProduct.addMask("Duplicated pixel after MISR",  "duplicate_flags",
-                "After applying misregistration, this pixel is a duplicate of its neighbour", Color.BLUE, 0.5);
-
-        targetProduct.addBand(duplicateFlags);
+            targetProduct.addBand(duplicateFlags);
+        }
         /*ProductUtils.copyMetadata(slstrSourceProduct, targetProduct);
         ProductUtils.copyTiePointGrids(slstrSourceProduct, targetProduct);
         ProductUtils.copyMasks(slstrSourceProduct, targetProduct);
