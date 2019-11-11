@@ -108,24 +108,26 @@ public class SlstrMisrTransform implements Serializable{
     }
 
     //step 2
-    private TreeMap getSlstrGridMisrMap(Map mapSlstr) {
+    private TreeMap getSlstrGridMisrMap(Map mapSlstr, boolean minimize) {
         //provides map between SLSTR instrument grid (scan,pixel,detector) and MISR file (row,col)
         TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray());
         //test block to rescale col-row
         // todo: optimize
         int minRow = 99999999;
         int minCol = 99999999;
-        for (Object value : mapSlstr.values()) {
-            int[] scanPixelDetector = (int[]) value;
-            int scan = scanPixelDetector[0];
-            int pixel = scanPixelDetector[1];
-            int detector = scanPixelDetector[2];
-            int[] colRow = getColRow(scan, pixel, detector);
-            if (colRow[0] < minCol) {
-                minCol = colRow[0];
-            }
-            if (colRow[1] < minRow) {
-                minRow = colRow[1];
+        if (minimize) {
+            for (Object value : mapSlstr.values()) {
+                int[] scanPixelDetector = (int[]) value;
+                int scan = scanPixelDetector[0];
+                int pixel = scanPixelDetector[1];
+                int detector = scanPixelDetector[2];
+                int[] colRow = getColRow(scan, pixel, detector);
+                if (colRow[0] < minCol) {
+                    minCol = colRow[0];
+                }
+                if (colRow[1] < minRow) {
+                    minRow = colRow[1];
+                }
             }
         }
 
@@ -135,8 +137,10 @@ public class SlstrMisrTransform implements Serializable{
             int pixel = scanPixelDetector[1];
             int detector = scanPixelDetector[2];
             int[] colRow = getColRow(scan, pixel, detector);
-            colRow[0] = colRow[0] - minCol;
-            colRow[1] = colRow[1] - minRow;
+            if (minimize) {
+                colRow[0] = colRow[0] - minCol;
+                colRow[1] = colRow[1] - minRow;
+            }
             gridMap.put(scanPixelDetector, colRow);
         }
         return gridMap;
@@ -340,16 +344,11 @@ public class SlstrMisrTransform implements Serializable{
         //Provides mapping between SLSTR image grid and OLCI image grid
         //todo: find faster way to implement it.
         TreeMap<int[], int[]> gridMapPixel = new TreeMap<>(new ComparatorIntArray() );
-        TreeMap<int[], int[]> gridMapOrphan = new TreeMap<>(new ComparatorIntArray() );
         TreeMap slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight()); //1
-        TreeMap slstrOrphanMap = getSlstrOrphanImageMap();
-        TreeMap slstrMisrMap = getSlstrGridMisrMap(slstrImageMap); //2
-        TreeMap slstrOrphanMisrMap = getSlstrGridMisrMap(slstrOrphanMap);
+        TreeMap slstrMisrMap = getSlstrGridMisrMap(slstrImageMap, true); //2
         TreeMap misrOlciMap = getMisrOlciMap(); //3
-        TreeMap misrOrphanOlciMap = getMisrOlciOrphanMap();
         //TreeMap olciImageMap = getOlciGridImageMap(olciImageProduct.getSceneRasterWidth(), olciImageProduct.getSceneRasterHeight());
         TreeMap olciImageMap = getOlciMisrMap(); // 4
-        TreeMap olciImageOrphanMap = getOlciMisrMap(); // 4
         for (Iterator<Map.Entry<int[], int[]>> entries = slstrImageMap.entrySet().iterator(); entries.hasNext(); ) {
             Map.Entry<int[], int[]> entry = entries.next();
             int[] slstrScanPixDet = entry.getValue();
@@ -360,6 +359,14 @@ public class SlstrMisrTransform implements Serializable{
                 gridMapPixel.put(xy,entry.getKey());
             }
         }
+
+
+        /*TreeMap<int[], int[]> gridMapOrphan = new TreeMap<>(new ComparatorIntArray() );
+        TreeMap slstrOrphanMap = getSlstrOrphanImageMap();
+        TreeMap slstrOrphanMisrMap = getSlstrGridMisrMap(slstrOrphanMap, true);
+        TreeMap misrOrphanOlciMap = getMisrOlciOrphanMap();
+        TreeMap olciImageOrphanMap = getOlciMisrMap(); // 4
+
         for (Iterator<Map.Entry<int[], int[]>> entries = slstrOrphanMap.entrySet().iterator(); entries.hasNext(); ) {
             Map.Entry<int[], int[]> entry = entries.next();
             int[] slstrScanPixDet = entry.getValue();
@@ -369,9 +376,9 @@ public class SlstrMisrTransform implements Serializable{
                 int[] xy = (int[]) olciImageOrphanMap.get(mjk);
                 gridMapOrphan.put(xy,entry.getKey());
             }
-        }
+        }*/
         TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray() );
-        gridMap.putAll(gridMapOrphan);
+        //gridMap.putAll(gridMapOrphan);
         gridMap.putAll(gridMapPixel);
         return gridMap;
     }
