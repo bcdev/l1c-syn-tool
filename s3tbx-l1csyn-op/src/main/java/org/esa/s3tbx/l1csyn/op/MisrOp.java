@@ -206,7 +206,10 @@ public class MisrOp extends Operator {
                     int[] position = {x, y};
                     int[] slstrGridPosition = (int[]) treeMap.get(position);
                     if (slstrGridPosition != null ) {
-                        targetTile.setSample(x,y,slstrGridPosition[0]+slstrGridPosition[1]);
+                        targetTile.setSample(x,y,1);
+                    }
+                    else {
+                        targetTile.setSample(x,y,0);
                     }
                 }
             }
@@ -216,9 +219,8 @@ public class MisrOp extends Operator {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     int[] position = {x, y};
                     int[] slstrGridPosition = (int[]) treeMap.get(position);
-                    if (slstrGridPosition== null) {
+                    if (slstrGridPosition == null) {
                         targetTile.setSample(x,y,1);
-
                     }
                 }
             }
@@ -260,9 +262,11 @@ public class MisrOp extends Operator {
         Band misrFlags = new Band("misr_flags", ProductData.TYPE_UINT32,
                 olciSourceProduct.getSceneRasterWidth(),
                 olciSourceProduct.getSceneRasterHeight());
+        misrFlagCoding.addFlag("MISR not applied", 0, "MISR not Applied");
+        misrFlagCoding.addFlag("MISR applied", 1, "MISR applied");
         misrFlags.setSampleCoding(misrFlagCoding);
 
-        targetProduct.addMask("MISR pixel applied",  "misr_flags",
+        targetProduct.addMask("MISR pixel applied",  "misr_flags == 1",
                 "MISR information was used to get value of this pixel", Color.RED, 0.5);
 
         targetProduct.addBand(misrFlags);
@@ -274,9 +278,11 @@ public class MisrOp extends Operator {
             Band duplicateFlags = new Band("duplicate_flags", ProductData.TYPE_UINT32,
                     olciSourceProduct.getSceneRasterWidth(),
                     olciSourceProduct.getSceneRasterHeight());
+            duplicateFlagCoding.addFlag("pixel not duplicated", 0, "pixel not duplicated");
+            duplicateFlagCoding.addFlag("pixel duplicated", 1, "pixel duplicated");
             duplicateFlags.setSampleCoding(duplicateFlagCoding);
 
-            targetProduct.addMask("Duplicated pixel after MISR", "duplicate_flags",
+            targetProduct.addMask("Duplicated pixel after MISR", "duplicate_flags == 1",
                     "After applying misregistration, this pixel is a duplicate of its neighbour", Color.BLUE, 0.5);
 
             targetProduct.addBand(duplicateFlags);

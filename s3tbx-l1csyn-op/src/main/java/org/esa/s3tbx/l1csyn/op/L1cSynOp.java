@@ -127,6 +127,10 @@ public class L1cSynOp extends Operator {
             "to the directory of original fine in internal format.")
     private boolean saveMisrFile;
 
+    @Parameter(label = "duplicateMisr", description = "If set to true, during MISR geocoding, empty pixels will be filled with duplicates.",
+            defaultValue = "false")
+    private boolean duplicate;
+
     @Override
     public void initialize() throws OperatorException {
 
@@ -173,7 +177,7 @@ public class L1cSynOp extends Operator {
                 misrSourceProductMap.put("slstrSource", slstrSource);
                 HashMap<String, Object> misrParams = new HashMap<>();
                 misrParams.put("pixelMap", mapOlciSlstr);
-                misrParams.put("duplicate",false);
+                misrParams.put("duplicate",duplicate);
                 collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);
             } catch (InvalidRangeException e1) {
                 throw new OperatorException("Misregistration failed. InvalidRangeException");
