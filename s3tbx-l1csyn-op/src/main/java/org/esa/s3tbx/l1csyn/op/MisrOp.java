@@ -61,7 +61,7 @@ public class MisrOp extends Operator {
                 Band targetBand = entry.getKey();
                 Tile targetTile = entry.getValue();
 
-                if (olciSourceProduct.containsBand(targetBand.getName())) {
+                /*if (olciSourceProduct.containsBand(targetBand.getName())) {
                     sourceTile = getSourceTile(olciSourceProduct.getRasterDataNode(targetBand.getName()), targetRectangle);
                     for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                         for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
@@ -69,7 +69,7 @@ public class MisrOp extends Operator {
                             targetTile.setSample(x, y, reflecValue);
                         }
                     }
-                } else if (slstrSourceProduct.containsBand(targetBand.getName())) {
+                } else */if (slstrSourceProduct.containsBand(targetBand.getName())) {
                     for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                         for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                             int[] position = {x, y};
@@ -163,7 +163,7 @@ public class MisrOp extends Operator {
     public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm){
         Tile sourceTile;
         Rectangle targetRectangle = targetTile.getRectangle();
-        if (olciSourceProduct.containsBand(targetBand.getName())) {
+        /*if (olciSourceProduct.containsBand(targetBand.getName())) {
             sourceTile = getSourceTile(olciSourceProduct.getRasterDataNode(targetBand.getName()), targetRectangle);
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
@@ -171,7 +171,7 @@ public class MisrOp extends Operator {
                     targetTile.setSample(x, y, reflecValue);
                 }
             }
-        } else if (slstrSourceProduct.containsBand(targetBand.getName())) {
+        } else*/ if (slstrSourceProduct.containsBand(targetBand.getName())) {
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     targetTile.setSample(x,y,targetBand.getNoDataValue());
@@ -239,15 +239,11 @@ public class MisrOp extends Operator {
             ProductUtils.copyBand(olciBand.getName(), olciSourceProduct, targetProduct, true);
         }
 
-        //TiePointGrid sourceGrid = olciSourceProduct.getTiePointGridAt(0);
-
         for (Band slstrBand : slstrSourceProduct.getBands()) {
-            //if (slstrBand.getRasterWidth()== slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth() ||
-            //       slstrBand.getRasterHeight()== slstrSourceProduct.getBand("S5_radiance_an").getRasterHeight()) {
             Band copiedBand = targetProduct.addBand(slstrBand.getName(), ProductData.TYPE_FLOAT32);
             targetProduct.getBand(slstrBand.getName()).setNoDataValue(slstrSourceProduct.getBand(slstrBand.getName()).getNoDataValue());
             targetProduct.getBand(slstrBand.getName()).setNoDataValueUsed(true);
-            // }
+
         }
 
         ProductUtils.copyMetadata(olciSourceProduct, targetProduct);

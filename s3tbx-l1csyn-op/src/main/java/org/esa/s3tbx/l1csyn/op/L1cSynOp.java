@@ -119,7 +119,6 @@ public class L1cSynOp extends Operator {
                     "If not given, the entire scene is used.")
     private String geoRegion;
 
-    /* Commented for now, as it is not supported yet */
     @Parameter(label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
     private File misrFile;
 
@@ -150,7 +149,6 @@ public class L1cSynOp extends Operator {
 
         Product collocatedTarget;
 
-        //File misrFile = null;  //temporary, while MISR parameter is commented
         if (misrFile != null) {
             String misrFormat = getMisrFormat(misrFile);
             try {
@@ -204,13 +202,9 @@ public class L1cSynOp extends Operator {
         if (geoRegion != null) {
             l1cTarget = GPF.createProduct("Subset", getSubsetParameters(geoRegion), l1cTarget);
         }
-        //
         MetadataElement slstrMetadata = slstrSource.getMetadataRoot();
-        //MetadataElement olciMetadata = olciSource.getMetadataRoot();
         slstrMetadata.setName("SLSTRmetadata");
         l1cTarget.getMetadataRoot().addElement(slstrMetadata);
-        //l1cTarget.getMetadataRoot().addElement(olciMetadata);
-        //
         l1cTarget.setStartTime(startDate);
         l1cTarget.setEndTime(endDate);
         l1cTarget.setName(getSynName(slstrSource, olciSource));
@@ -454,9 +448,6 @@ public class L1cSynOp extends Operator {
             FileInputStream fileIn = new FileInputStream(path);
             ObjectInputStream inputStream = new ObjectInputStream(fileIn);
             hashMap = (HashMap<int[], int[]>) inputStream.readObject();
-
-
-            //misrMap = (TreeMap) inputStream.readObject();
         }
         catch (IOException e) {
             e.printStackTrace();
