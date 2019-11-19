@@ -46,11 +46,11 @@ public class SlstrMisrTransform implements Serializable{
         TreeMap<int[], int[]> slstrMap = new TreeMap<>(new ComparatorIntArray());
 
         String path = slstrImageProduct.getFileLocation().getParent();
-        String indexFilePath = path + "/indices_"+viewType+".nc";
+        String indexFilePath = path + "/indices_"+"an"+".nc";
         NetcdfFile netcdfFile = NetcdfFileOpener.open(indexFilePath);
-        Variable scanVariable = netcdfFile.findVariable("scan_"+viewType);
-        Variable pixelVariable = netcdfFile.findVariable("pixel_"+viewType);
-        Variable detectorVariable = netcdfFile.findVariable("detector_"+viewType);
+        Variable scanVariable = netcdfFile.findVariable("scan_"+"an");
+        Variable pixelVariable = netcdfFile.findVariable("pixel_"+"an");
+        Variable detectorVariable = netcdfFile.findVariable("detector_"+"an");
 
         Array scanArray = scanVariable.read();
         Array pixelArray = pixelVariable.read();
@@ -137,10 +137,10 @@ public class SlstrMisrTransform implements Serializable{
             for (int j = 0; j < nLineOlcLength; j++) {
                 for (int k = 0; k < nDetCamLength; k++) {
                     int[] position = {i, j, k};
-                    if (colVariableName.matches("L1b_col_.._"+viewType)) {
+                    if (colVariableName.matches("L1b_col_.._"+"an")) {
                         row = ((ArrayInt.D3) rowArray).get(i,j,k) ;
                         col = ((ArrayShort.D3) colArray).get(i,j,k) ;
-                    } else if (colVariableName.matches("col_corresp_s._"+viewType)) {
+                    } else if (colVariableName.matches("col_corresp_s._"+"an")) {
                         row = ((ArrayInt.D3) rowArray).get(i,j,k);
                         col = ((ArrayInt.D3) colArray).get(i,j,k);
                     }
@@ -201,15 +201,28 @@ public class SlstrMisrTransform implements Serializable{
         return olciMap;
     }
 
+
+
+
+
     TreeMap getSlstrOlciMap() throws InvalidRangeException, IOException {
         //Provides mapping between SLSTR image grid and OLCI image grid
         //todo: find faster way to implement it.
         TreeMap<int[], int[]> gridMapPixel = new TreeMap<>(new ComparatorIntArray() );
-        TreeMap slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight()); //1
-        TreeMap slstrMisrMap = getSlstrGridMisrMap(slstrImageMap, true); //2
+        //TreeMap slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight()); //1
+        //TreeMap slstrMisrMap = getSlstrGridMisrMap(slstrImageMap, true); //2
         TreeMap misrOlciMap = getMisrOlciMap(); //3
-        TreeMap olciImageMap = getOlciMisrMap(); // 4
-        for (Iterator<Map.Entry<int[], int[]>> entries = slstrImageMap.entrySet().iterator(); entries.hasNext(); ) {
+        TreeMap olciImageMap = getOlciMisrMap(); // 4.2
+        for (Iterator<Map.Entry<int[], int[]>> entries = misrOlciMap.entrySet().iterator(); entries.hasNext(); ) {
+            Map.Entry<int[], int[]> entry = entries.next();
+            int[] mjk = entry.getValue();
+            if (mjk != null) {
+                int[] xy = (int[]) olciImageMap.get(mjk);
+                gridMapPixel.put(xy,entry.getKey());
+            }
+        }
+
+        /*for (Iterator<Map.Entry<int[], int[]>> entries = slstrImageMap.entrySet().iterator(); entries.hasNext(); ) {
             Map.Entry<int[], int[]> entry = entries.next();
             int[] slstrScanPixDet = entry.getValue();
             int[] rowCol = (int[]) slstrMisrMap.get(slstrScanPixDet);
@@ -218,7 +231,7 @@ public class SlstrMisrTransform implements Serializable{
                 int[] xy = (int[]) olciImageMap.get(mjk);
                 gridMapPixel.put(xy,entry.getKey());
             }
-        }
+        }*/
 
         return gridMapPixel;
     }
@@ -226,7 +239,7 @@ public class SlstrMisrTransform implements Serializable{
     private String getRowVariableName(NetcdfFile netcdfFile) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getName().matches("L1b_row_.._"+viewType) || variable.getName().matches("row_corresp_s._"+viewType) || variable.getName().matches("L1b_row_"+viewType)) {
+            if (variable.getName().matches("L1b_row_.._"+"an") || variable.getName().matches("row_corresp_s._"+"an") || variable.getName().matches("L1b_row_"+"an")) {
                 return variable.getName();
             }
         }
@@ -236,7 +249,7 @@ public class SlstrMisrTransform implements Serializable{
     private String getColVariableName(NetcdfFile netcdfFile) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getName().matches("L1b_col_.._"+viewType) || variable.getName().matches("col_corresp_s._"+viewType) || variable.getName().matches("L1b_col_"+viewType)) {
+            if (variable.getName().matches("L1b_col_.._"+"an") || variable.getName().matches("col_corresp_s._"+"an") || variable.getName().matches("L1b_col_"+"an")) {
                 return variable.getName();
             }
         }
@@ -246,7 +259,7 @@ public class SlstrMisrTransform implements Serializable{
     private String getOrphanVariableName(NetcdfFile netcdfFile) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getName().matches("L1b_orphan_.._"+viewType) || variable.getName().matches("orphan_corresp_s._"+viewType) || variable.getName().matches("L1b_orphan_"+viewType)) {
+            if (variable.getName().matches("L1b_orphan_.._"+"an") || variable.getName().matches("orphan_corresp_s._"+"an") || variable.getName().matches("L1b_orphan_"+"an")) {
                 return variable.getName();
             }
         }
