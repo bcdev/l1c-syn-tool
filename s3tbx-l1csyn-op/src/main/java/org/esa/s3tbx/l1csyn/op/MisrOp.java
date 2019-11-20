@@ -61,15 +61,7 @@ public class MisrOp extends Operator {
                 Band targetBand = entry.getKey();
                 Tile targetTile = entry.getValue();
 
-                /*if (olciSourceProduct.containsBand(targetBand.getName())) {
-                    sourceTile = getSourceTile(olciSourceProduct.getRasterDataNode(targetBand.getName()), targetRectangle);
-                    for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                        for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                            double reflecValue = sourceTile.getSampleDouble(x, y);
-                            targetTile.setSample(x, y, reflecValue);
-                        }
-                    }
-                } else */if (slstrSourceProduct.containsBand(targetBand.getName())) {
+                if (slstrSourceProduct.containsBand(targetBand.getName())) {
                     for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                         for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                             int[] position = {x, y};
@@ -163,15 +155,7 @@ public class MisrOp extends Operator {
     public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm){
         Tile sourceTile;
         Rectangle targetRectangle = targetTile.getRectangle();
-        /*if (olciSourceProduct.containsBand(targetBand.getName())) {
-            sourceTile = getSourceTile(olciSourceProduct.getRasterDataNode(targetBand.getName()), targetRectangle);
-            for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                    double reflecValue = sourceTile.getSampleDouble(x, y);
-                    targetTile.setSample(x, y, reflecValue);
-                }
-            }
-        } else*/ if (slstrSourceProduct.containsBand(targetBand.getName())) {
+         if (slstrSourceProduct.containsBand(targetBand.getName())) {
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     targetTile.setSample(x,y,targetBand.getNoDataValue());
@@ -188,7 +172,8 @@ public class MisrOp extends Operator {
             }
             if (duplicate) {
                 for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                    double duplicatePixel = targetBand.getNoDataValue();
+                    //double duplicatePixel = targetBand.getNoDataValue();
+                    double duplicatePixel = getDuplicatedPixel(targetRectangle.x, y, targetBand);
                     for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                         if (targetTile.getSampleDouble(x, y) != targetBand.getNoDataValue()) {
                             duplicatePixel = targetTile.getSampleDouble(x, y);
@@ -227,6 +212,30 @@ public class MisrOp extends Operator {
         }
 
     }
+
+    private double getDuplicatedPixel(int x, int y, Band targetBand){
+        double duplicatePixel;
+        int [] position = {x, y};
+        int[] slstrGridPosition = (int[]) treeMap.get(position);
+        if (slstrGridPosition != null) {
+            duplicatePixel = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
+        }
+        else {
+            while (slstrGridPosition == null && x > 0) {
+                x = x - 1;
+                int[] tempPosition = {x, y};
+                slstrGridPosition = (int[]) treeMap.get(tempPosition);
+            }
+            if (slstrGridPosition != null) {
+                duplicatePixel = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
+            }
+            else {
+                duplicatePixel = targetBand.getNoDataValue();
+            }
+        }
+        return duplicatePixel;
+    }
+
 
 
     private void createTargetProduct() {
