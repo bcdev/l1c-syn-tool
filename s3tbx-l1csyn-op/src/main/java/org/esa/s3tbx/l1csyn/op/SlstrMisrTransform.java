@@ -114,7 +114,7 @@ public class SlstrMisrTransform implements Serializable{
     // Step 3
     private TreeMap<int[], int[]> getMisrOlciMap() throws IOException, InvalidRangeException {
         // provides mapping between MISR (row/col) and OLCI instrument grid (N_LINE_OLC/N_DET_CAM/N_CAM) from MISR product
-        String bandName = "/misregist_Oref_S5.nc";
+        String bandName = "/misregist_Oref_S3.nc";
 
         String path = this.misrPath;
         String misrBandFile = path + bandName;
@@ -151,7 +151,7 @@ public class SlstrMisrTransform implements Serializable{
                 }
             }
         }
-
+        netcdfFile.close();
         return colRowMap;
     }
 
@@ -191,13 +191,15 @@ public class SlstrMisrTransform implements Serializable{
                 for (int k=0; k<nDetCamLength ; k++){
                     short row = rowArray.get(i,j,k);
                     short col = colArray.get(i,j,k);
-                    int[] gridCoors = {i,j,k};
-                    int[] imageCoors = {col,row};
-                    olciMap.put(gridCoors,imageCoors);
+                    if (row>0 && col>0) {
+                        int[] gridCoors = {i, j, k};
+                        int[] imageCoors = {col, row};
+                        olciMap.put(gridCoors, imageCoors);
+                    }
                 }
             }
         }
-
+        netcdfFile.close();
         return olciMap;
     }
 
@@ -218,7 +220,9 @@ public class SlstrMisrTransform implements Serializable{
             int[] mjk = entry.getValue();
             if (mjk != null) {
                 int[] xy = (int[]) olciImageMap.get(mjk);
-                gridMapPixel.put(xy,entry.getKey());
+                if (xy != null) {
+                    gridMapPixel.put(xy, entry.getKey());
+                }
             }
         }
 
