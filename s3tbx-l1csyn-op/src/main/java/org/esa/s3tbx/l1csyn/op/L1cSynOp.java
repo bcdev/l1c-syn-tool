@@ -61,7 +61,7 @@ public class L1cSynOp extends Operator {
 
     @Parameter(alias = "reprojectionCRS",
             label = "Reprojection CRS",
-            description = "The CRS used for the reprojection. If set to None or left empty, no reprojection will be performed.",
+            description = "The CRS used for the reprojection. If set to None or left empty, no reprojection will be performed. If MISR file is specified this setting will be neglected.",
             //valueSet = {"EPSG:4326", "EPSG:9108", "EPSG:9122"},
             defaultValue = "EPSG:4326"
     )
@@ -190,7 +190,7 @@ public class L1cSynOp extends Operator {
             sourceProductMap.put("slaveProduct", slstrInput);
             collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
         }
-        if (reprojectionCRS != null && !reprojectionCRS.toLowerCase().equals("none") && !reprojectionCRS.equals("") && stayOnOlciGrid == false) {
+        if (reprojectionCRS != null && !reprojectionCRS.toLowerCase().equals("none") && !reprojectionCRS.equals("") && stayOnOlciGrid == false && misrFile == null) {
             l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
         } else {
             l1cTarget = collocatedTarget;

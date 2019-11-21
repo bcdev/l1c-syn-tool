@@ -74,7 +74,7 @@ public class MisrOp extends Operator {
                     }
                 }
                 else {
-                    throw new OperatorException("Band copying errod");
+                    throw new OperatorException("Band copying error");
                 }
             }
             pm.worked(1);
@@ -87,7 +87,7 @@ public class MisrOp extends Operator {
     public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm){
         Tile sourceTile;
         Rectangle targetRectangle = targetTile.getRectangle();
-         if (slstrSourceProduct.containsBand(targetBand.getName())) {
+         if (slstrSourceProduct.containsBand(targetBand.getName()) && targetBand.getName().contains("_an")) {
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     targetTile.setSample(x,y,targetBand.getNoDataValue());
@@ -142,7 +142,6 @@ public class MisrOp extends Operator {
                 }
             }
         }
-
     }
 
     private double getDuplicatedPixel(int x, int y, Band targetBand){
@@ -181,10 +180,14 @@ public class MisrOp extends Operator {
         }
 
         for (Band slstrBand : slstrSourceProduct.getBands()) {
-            Band copiedBand = targetProduct.addBand(slstrBand.getName(), ProductData.TYPE_FLOAT32);
-            targetProduct.getBand(slstrBand.getName()).setNoDataValue(slstrSourceProduct.getBand(slstrBand.getName()).getNoDataValue());
-            targetProduct.getBand(slstrBand.getName()).setNoDataValueUsed(true);
-
+            if (slstrBand.getName().contains("_an") ) {
+                Band copiedBand = targetProduct.addBand(slstrBand.getName(), ProductData.TYPE_FLOAT32);
+                targetProduct.getBand(slstrBand.getName()).setNoDataValue(slstrSourceProduct.getBand(slstrBand.getName()).getNoDataValue());
+                targetProduct.getBand(slstrBand.getName()).setNoDataValueUsed(true);
+            }
+            else {
+                ProductUtils.copyBand(slstrBand.getName(), slstrSourceProduct, targetProduct, true);
+            }
         }
 
         ProductUtils.copyMetadata(olciSourceProduct, targetProduct);
