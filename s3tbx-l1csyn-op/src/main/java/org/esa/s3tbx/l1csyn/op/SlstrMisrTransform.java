@@ -186,6 +186,9 @@ public class SlstrMisrTransform implements Serializable{
         int nLineOlcLength = netcdfFile.findDimension("N_LINE_OLC").getLength();
         int nDetCamLength = netcdfFile.findDimension("N_DET_CAM").getLength();
 
+        Variable rowOffsetVariable = netcdfFile.findVariable("input_products_row_offset");
+        int rowOffset = (int) rowOffsetVariable.readScalarInt();
+
         for (int i=0; i<nCamLength ; i++){
             for (int j=0; j<nLineOlcLength ; j++){
                 for (int k=0; k<nDetCamLength ; k++){
@@ -193,7 +196,7 @@ public class SlstrMisrTransform implements Serializable{
                     short col = colArray.get(i,j,k);
                     if (row>0 && col>0) {
                         int[] gridCoors = {i, j, k};
-                        int[] imageCoors = {col, row};
+                        int[] imageCoors = {col, row - rowOffset};
                         olciMap.put(gridCoors, imageCoors);
                     }
                 }
