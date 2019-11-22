@@ -42,52 +42,87 @@ public class MisrOp extends Operator {
     @Parameter(alias = "duplicate", description = "If true empty pixels after MISR will be filled with neighboring values")
     private boolean duplicate;
 
+    @Parameter(alias = "singlePixelMap", description = "If set to true, than single pixel map will be used for coregistering all SLSTR bands. Otherwise user shall provide all maps separately",
+    defaultValue = "true")
+    private boolean singlePixelMap;
+
+    @Parameter(alias = "S1PixelMap", description = "Pixel map for S1 nadir view")
+    private TreeMap S1PixelMap;
+
+    @Parameter(alias = "S2PixelMap", description = "Pixel map for S2 nadir view")
+    private TreeMap S2PixelMap;
+
+    @Parameter(alias = "S3PixelMap", description = "Pixel map for S3 nadir view")
+    private TreeMap S3PixelMap;
+
+    @Parameter(alias = "S4PixelMap", description = "Pixel map for S4 nadir view")
+    private TreeMap S4PixelMap;
+
+    @Parameter(alias = "S5PixelMap", description = "Pixel map for S5 nadir view")
+    private TreeMap S5PixelMap;
+
+    @Parameter(alias = "S6PixelMap", description = "Pixel map for S6 nadir view")
+    private TreeMap S6PixelMap;
+
+    @Parameter(alias = "aoPixelMap", description = "Pixel map for ao oblique view")
+    private TreeMap aoPixelMap;
+
+    @Parameter(alias = "boPixelMap", description = "Pixel map for bo oblique view")
+    private TreeMap boPixelMap;
+
+    @Parameter(alias = "coPixelMap", description = "Pixel map for co oblique view")
+    private TreeMap coPixelMap;
+
+
     @TargetProduct
     private Product targetProduct;
 
     @Override
     public void initialize() throws OperatorException {
-        createTargetProduct();
-    }
-
-    @Override
-    public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRectangle, ProgressMonitor pm) throws OperatorException {
-        Map<Band, Tile> internalTargetTiles = new HashMap<>(targetTiles);
-        Tile sourceTile;
-        pm.beginTask("Performing Misregestration", internalTargetTiles.size());
-        try {
-            for (Map.Entry<Band, Tile> entry : internalTargetTiles.entrySet()) {
-                checkForCancellation();
-                Band targetBand = entry.getKey();
-                Tile targetTile = entry.getValue();
-
-                if (slstrSourceProduct.containsBand(targetBand.getName())) {
-                    for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                        for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                            int[] position = {x, y};
-                            int[] slstrGridPosition = (int[]) treeMap.get(position);
-                            if (slstrGridPosition != null) {
-                                double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0],slstrGridPosition[1]);
-                                targetTile.setSample(x, y, reflecValue);
-                            }
-                        }
-                    }
-                }
-                else {
-                    throw new OperatorException("Band copying error");
-                }
-            }
-            pm.worked(1);
-        } finally {
-            pm.done();
+        if (singlePixelMap == true) {
+            this.treeMap = treeMap;
         }
+        else {
+            this.treeMap = S1PixelMap;
+        }
+        createTargetProduct();
     }
 
     @Override
     public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm){
         Tile sourceTile;
         Rectangle targetRectangle = targetTile.getRectangle();
-         if (slstrSourceProduct.containsBand(targetBand.getName()) && ( targetBand.getName().contains("_an") || targetBand.getName().contains("_bn") || targetBand.getName().contains("_cn")) ) {
+
+
+        if (  targetBand.getName().contains("_ao") ) {
+            treeMap = aoPixelMap;
+        }
+        else if ( targetBand.getName().contains("_bo") ){
+            treeMap = boPixelMap;
+        }
+        else if (targetBand.getName().contains("_co")) {
+            treeMap = coPixelMap;
+        }
+        else if (targetBand.getName().contains("_S1")) {
+            treeMap = S1PixelMap;
+        }
+        else if (targetBand.getName().contains("_S2")) {
+            treeMap = S2PixelMap;
+        }
+        else if (targetBand.getName().contains("_S3")) {
+            treeMap = S3PixelMap;
+        }
+        else if (targetBand.getName().contains("_S4")) {
+            treeMap = S4PixelMap;
+        }
+        else if (targetBand.getName().contains("_S5")) {
+            treeMap = S5PixelMap;
+        }
+        else if (targetBand.getName().contains("_S6")) {
+            treeMap = S6PixelMap;
+        }
+
+         if (slstrSourceProduct.containsBand(targetBand.getName())) {
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     targetTile.setSample(x,y,targetBand.getNoDataValue());
@@ -118,6 +153,7 @@ public class MisrOp extends Operator {
 
         }
         else if (targetBand.getName().equals("misr_flags")){
+            treeMap = S1PixelMap;
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     int[] position = {x, y};
@@ -132,6 +168,7 @@ public class MisrOp extends Operator {
             }
         }
         else if (targetBand.getName().equals("duplicate_flags")){
+            treeMap = S1PixelMap;
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     int[] position = {x, y};

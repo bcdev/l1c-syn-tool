@@ -18,15 +18,15 @@ public class SlstrMisrTransform implements Serializable{
     private Product olciImageProduct;
     private Product slstrImageProduct;
     private String misrPath;
-    private String viewType;
+    private String bandType;
 
     private int N_DET_CAM = 740;
 
-    SlstrMisrTransform(Product olciImageProduct, Product slstrImageProduct, File misrManifest, String viewType) {
+    SlstrMisrTransform(Product olciImageProduct, Product slstrImageProduct, File misrManifest, String bandType) {
         this.olciImageProduct = olciImageProduct;
         this.slstrImageProduct = slstrImageProduct;
         this.misrPath = misrManifest.getParent();
-        this.viewType = viewType;
+        this.bandType = bandType;
     }
 
     private int[] getColRow(int scan, int pixel, int detector) {
@@ -40,6 +40,7 @@ public class SlstrMisrTransform implements Serializable{
     }
 
     //Step 1
+    /*
     private TreeMap getSlstrImageMap(int x, int y) throws IOException, InvalidRangeException {
         // Provides mapping between SLSTR image grid(x,y) and SLSTR instrument grid(scan,pixel,detector)
         //x and y are dimensions of SLSTR L1B raster
@@ -110,11 +111,13 @@ public class SlstrMisrTransform implements Serializable{
         }
         return gridMap;
     }
+    */
 
     // Step 3
     private TreeMap<int[], int[]> getMisrOlciMap() throws IOException, InvalidRangeException {
         // provides mapping between MISR (row/col) and OLCI instrument grid (N_LINE_OLC/N_DET_CAM/N_CAM) from MISR product
-        String bandName = "/misregist_Oref_S3.nc";
+        //String bandName = "/misregist_Oref_S3.nc";
+        String bandName = "/misregist_Oref_"+bandType+".nc";
 
         String path = this.misrPath;
         String misrBandFile = path + bandName;
@@ -246,7 +249,7 @@ public class SlstrMisrTransform implements Serializable{
     private String getRowVariableName(NetcdfFile netcdfFile) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getName().matches("L1b_row_.._"+"an") || variable.getName().matches("row_corresp_s._"+"an") || variable.getName().matches("L1b_row_"+"an")) {
+            if (variable.getName().matches("L1b_row_.._"+"..") || variable.getName().matches("row_corresp_s._"+"..") || variable.getName().matches("L1b_row_"+"..")) {
                 return variable.getName();
             }
         }
@@ -256,7 +259,7 @@ public class SlstrMisrTransform implements Serializable{
     private String getColVariableName(NetcdfFile netcdfFile) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getName().matches("L1b_col_.._"+"an") || variable.getName().matches("col_corresp_s._"+"an") || variable.getName().matches("L1b_col_"+"an")) {
+            if (variable.getName().matches("L1b_col_.._"+"..") || variable.getName().matches("col_corresp_s._"+"..") || variable.getName().matches("L1b_col_"+"..")) {
                 return variable.getName();
             }
         }

@@ -130,6 +130,10 @@ public class L1cSynOp extends Operator {
             defaultValue = "false")
     private boolean duplicate;
 
+    @Parameter(label = "fullMisr", description = "If set to true, during MISR geocoding, every SLSTR band geocoding will be calculated separately.",
+            defaultValue =  "false")
+    private  boolean fullMisr;
+
     @Override
     public void initialize() throws OperatorException {
 
@@ -152,31 +156,49 @@ public class L1cSynOp extends Operator {
         if (misrFile != null) {
             String misrFormat = getMisrFormat(misrFile);
             try {
-                TreeMap mapOlciSlstr;
-                if (misrFormat.equals("new")) {
-                    SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"an");
-                    mapOlciSlstr = misrTransform.getSlstrOlciMap();
+                //TreeMap mapOlciSlstr;
+                if (misrFormat.equals("new") && fullMisr == false) {
+                    SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3");
+                    TreeMap mapOlciSlstr = misrTransform.getSlstrOlciMap();
+                    HashMap misrParams = getMisrParams(mapOlciSlstr, null, null, null, null , null,null, null, null , null);
+                    HashMap<String, Product> misrSourceProductMap = new HashMap<>();
+                    misrSourceProductMap.put("olciSource", olciSource);
+                    misrSourceProductMap.put("slstrSource", slstrSource);
+                    collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);
                 }
-                else if (misrFormat.equals("internal")){
+                else if (misrFormat.equals("new") && fullMisr == true) {
+                    TreeMap mapOlciSlstrS1 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S1").getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS2 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S2").getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS3 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3").getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS4 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S4").getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS5 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S5").getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS6 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S6").getSlstrOlciMap();
+                    TreeMap mapOlciSlstrao = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao").getSlstrOlciMap();
+                    TreeMap mapOlciSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"bo").getSlstrOlciMap();
+                    TreeMap mapOlciSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"co").getSlstrOlciMap();
+
+                    HashMap misrParams = getMisrParams(null, mapOlciSlstrS1, mapOlciSlstrS2, mapOlciSlstrS3, mapOlciSlstrS4 , mapOlciSlstrS5,mapOlciSlstrS6, mapOlciSlstrao, mapOlciSlstrbo, mapOlciSlstrco );
+
+                    HashMap<String, Product> misrSourceProductMap = new HashMap<>();
+                    misrSourceProductMap.put("olciSource", olciSource);
+                    misrSourceProductMap.put("slstrSource", slstrSource);
+
+                    collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);
+                }
+                /*else if (misrFormat.equals("internal")){
                     mapOlciSlstr = readMisrMap(misrFile);
-                }
+                }*/
                 else {
                     throw new OperatorException("MISR file information is not read correctly");
                 }
-                if (saveMisrFile){
+                /*if (saveMisrFile){
                     String misrDir = misrFile.getParent();
-                    saveMisrMap(mapOlciSlstr, misrDir);
-                    saveMisrMapTextFile(mapOlciSlstr, misrDir);
-                }
+                    //saveMisrMap(mapOlciSlstr, misrDir);
+                    //saveMisrMapTextFile(mapOlciSlstr, misrDir);
+                }*/
 
                 //
-                HashMap<String, Product> misrSourceProductMap = new HashMap<>();
-                misrSourceProductMap.put("olciSource", olciSource);
-                misrSourceProductMap.put("slstrSource", slstrSource);
-                HashMap<String, Object> misrParams = new HashMap<>();
-                misrParams.put("pixelMap", mapOlciSlstr);
-                misrParams.put("duplicate",duplicate);
-                collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);
+
             } catch (InvalidRangeException e1) {
                 throw new OperatorException("Misregistration failed. InvalidRangeException");
             } catch (IOException e2) {
@@ -220,6 +242,24 @@ public class L1cSynOp extends Operator {
             updateBands(olciSource, l1cTarget, readRegExp(olciRegexp));
         }
         l1cTarget.setDescription("SENTINEL-3 SYN Level 1C Product");
+    }
+
+    private HashMap getMisrParams(TreeMap mapOlciSlstr, TreeMap S1PixelMap, TreeMap S2PixelMap, TreeMap S3PixelMap, TreeMap S4PixelMap, TreeMap S5PixelMap, TreeMap S6PixelMap,TreeMap aoPixelMap, TreeMap boPixelMap, TreeMap coPixelMap) {
+        HashMap<String, Object> misrParams = new HashMap<>();
+        misrParams.put("pixelMap", mapOlciSlstr);
+        misrParams.put("duplicate",duplicate);
+        misrParams.put("singlePixelMap",!fullMisr);
+
+        misrParams.put("S1PixelMap",S1PixelMap);
+        misrParams.put("S2PixelMap",S2PixelMap);
+        misrParams.put("S3PixelMap",S3PixelMap);
+        misrParams.put("S4PixelMap",S4PixelMap);
+        misrParams.put("S5PixelMap",S5PixelMap);
+        misrParams.put("S6PixelMap",S6PixelMap);
+        misrParams.put("aoPixelMap",aoPixelMap);
+        misrParams.put("boPixelMap",boPixelMap);
+        misrParams.put("coPixelMap",coPixelMap);
+        return misrParams;
     }
 
     private String[] readRegExp(String regExp) {
