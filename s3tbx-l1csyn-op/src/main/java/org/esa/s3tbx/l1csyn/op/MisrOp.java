@@ -125,6 +125,9 @@ public class MisrOp extends Operator {
         else if ((targetBand.getName().contains("S6") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S6") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S6") && targetBand.getName().contains("_cn")) ) {
             treeMap = S6PixelMap;
         }
+        else if ((targetBand.getName().contains("_an") || targetBand.getName().contains("_bn") || targetBand.getName().contains("_cn"))) {
+            treeMap = S3PixelMap;
+        }
 
         if (slstrSourceProduct.containsBand(targetBand.getName())) {
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
