@@ -140,10 +140,10 @@ public class SlstrMisrTransform implements Serializable{
             for (int j = 0; j < nLineOlcLength; j++) {
                 for (int k = 0; k < nDetCamLength; k++) {
                     int[] position = {i, j, k};
-                    if (colVariableName.matches("L1b_col_.._"+"an")) {
+                    if (colVariableName.matches("L1b_col_.._"+"..") || colVariableName.matches("L1b_col_..") ) {
                         row = ((ArrayInt.D3) rowArray).get(i,j,k) ;
                         col = ((ArrayShort.D3) colArray).get(i,j,k) ;
-                    } else if (colVariableName.matches("col_corresp_s._"+"an")) {
+                    } else if (colVariableName.matches("col_corresp_s._"+"..")) {
                         row = ((ArrayInt.D3) rowArray).get(i,j,k);
                         col = ((ArrayInt.D3) colArray).get(i,j,k);
                     }

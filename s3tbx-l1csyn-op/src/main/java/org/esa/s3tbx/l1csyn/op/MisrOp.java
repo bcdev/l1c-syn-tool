@@ -16,8 +16,6 @@ import org.esa.snap.core.gpf.annotations.TargetProduct;
 import org.esa.snap.core.util.ProductUtils;
 
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.TreeMap;
 
 
@@ -36,14 +34,14 @@ public class MisrOp extends Operator {
     @SourceProduct(alias = "slstrSource", description = "SLSTR source product")
     private Product slstrSourceProduct;
 
-    @Parameter(alias = "pixelMap", description = "Map between SLSTR Image grid and OLCI Image grid")
-    private TreeMap treeMap;
+    //@Parameter(alias = "pixelMap", description = "Map between SLSTR Image grid and OLCI Image grid")
+    //private TreeMap treeMap;
 
     @Parameter(alias = "duplicate", description = "If true empty pixels after MISR will be filled with neighboring values")
     private boolean duplicate;
 
     @Parameter(alias = "singlePixelMap", description = "If set to true, than single pixel map will be used for coregistering all SLSTR bands. Otherwise user shall provide all maps separately",
-    defaultValue = "true")
+            defaultValue = "true")
     private boolean singlePixelMap;
 
     @Parameter(alias = "S1PixelMap", description = "Pixel map for S1 nadir view")
@@ -80,10 +78,15 @@ public class MisrOp extends Operator {
     @Override
     public void initialize() throws OperatorException {
         if (singlePixelMap == true) {
-            this.treeMap = treeMap;
-        }
-        else {
-            this.treeMap = S1PixelMap;
+            this.S1PixelMap = S3PixelMap;
+            this.S2PixelMap = S3PixelMap;
+            this.S3PixelMap = S3PixelMap;
+            this.S4PixelMap = S3PixelMap;
+            this.S5PixelMap = S3PixelMap;
+            this.S6PixelMap = S3PixelMap;
+            this.aoPixelMap = aoPixelMap;
+            this.boPixelMap = aoPixelMap;
+            this.coPixelMap = aoPixelMap;
         }
         createTargetProduct();
     }
@@ -91,6 +94,7 @@ public class MisrOp extends Operator {
     @Override
     public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm){
         Tile sourceTile;
+        TreeMap treeMap = new TreeMap();
         Rectangle targetRectangle = targetTile.getRectangle();
 
 
@@ -103,30 +107,30 @@ public class MisrOp extends Operator {
         else if (targetBand.getName().contains("_co")) {
             treeMap = coPixelMap;
         }
-        else if (targetBand.getName().contains("_S1")) {
+        else if ((targetBand.getName().contains("S1") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S1") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S1") && targetBand.getName().contains("_cn"))  ) {
             treeMap = S1PixelMap;
         }
-        else if (targetBand.getName().contains("_S2")) {
+        else if ((targetBand.getName().contains("S2") && targetBand.getName().contains("_an"))  || (targetBand.getName().contains("S2") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S2") && targetBand.getName().contains("_cn")) ) {
             treeMap = S2PixelMap;
         }
-        else if (targetBand.getName().contains("_S3")) {
+        else if ((targetBand.getName().contains("S3") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S3") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S3") && targetBand.getName().contains("_cn"))  ) {
             treeMap = S3PixelMap;
         }
-        else if (targetBand.getName().contains("_S4")) {
+        else if ((targetBand.getName().contains("S4") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S4") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S4") && targetBand.getName().contains("_cn")) ) {
             treeMap = S4PixelMap;
         }
-        else if (targetBand.getName().contains("_S5")) {
+        else if ((targetBand.getName().contains("S5") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S5") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S5") && targetBand.getName().contains("_cn")) ) {
             treeMap = S5PixelMap;
         }
-        else if (targetBand.getName().contains("_S6")) {
+        else if ((targetBand.getName().contains("S6") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S6") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S6") && targetBand.getName().contains("_cn")) ) {
             treeMap = S6PixelMap;
         }
 
-         if (slstrSourceProduct.containsBand(targetBand.getName())) {
+        if (slstrSourceProduct.containsBand(targetBand.getName())) {
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     targetTile.setSample(x,y,targetBand.getNoDataValue());
-                    if (slstrSourceProduct.getBand(targetBand.getName()).getRasterWidth() == slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth()) {
+                    //if (slstrSourceProduct.getBand(targetBand.getName()).getRasterWidth() == slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth()) {
 
                         int[] position = {x, y};
                         int[] slstrGridPosition = (int[]) treeMap.get(position);
@@ -134,13 +138,13 @@ public class MisrOp extends Operator {
                             double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]); // / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
                             targetTile.setSample(x,y, reflecValue);
                         }
-                    }
+                    //}
                 }
             }
             if (duplicate) {
                 for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                     //double duplicatePixel = targetBand.getNoDataValue();
-                    double duplicatePixel = getDuplicatedPixel(targetRectangle.x, y, targetBand);
+                    double duplicatePixel = getDuplicatedPixel(targetRectangle.x, y, targetBand, treeMap);
                     for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                         if (targetTile.getSampleDouble(x, y) != targetBand.getNoDataValue()) {
                             duplicatePixel = targetTile.getSampleDouble(x, y);
@@ -181,7 +185,7 @@ public class MisrOp extends Operator {
         }
     }
 
-    private double getDuplicatedPixel(int x, int y, Band targetBand){
+    private double getDuplicatedPixel(int x, int y, Band targetBand, TreeMap treeMap){
         double duplicatePixel;
         int [] position = {x, y};
         int[] slstrGridPosition = (int[]) treeMap.get(position);
@@ -217,7 +221,8 @@ public class MisrOp extends Operator {
         }
 
         for (Band slstrBand : slstrSourceProduct.getBands()) {
-            if (slstrBand.getName().contains("_an") || slstrBand.getName().contains("_bn") || slstrBand.getName().contains("_cn") ) {
+            if (slstrBand.getName().contains("_an") || slstrBand.getName().contains("_bn") || slstrBand.getName().contains("_cn")
+                    || slstrBand.getName().contains("_ao") || slstrBand.getName().contains("_bo") || slstrBand.getName().contains("_co")) {
                 Band copiedBand = targetProduct.addBand(slstrBand.getName(), ProductData.TYPE_FLOAT32);
                 targetProduct.getBand(slstrBand.getName()).setNoDataValue(slstrSourceProduct.getBand(slstrBand.getName()).getNoDataValue());
                 targetProduct.getBand(slstrBand.getName()).setNoDataValueUsed(true);

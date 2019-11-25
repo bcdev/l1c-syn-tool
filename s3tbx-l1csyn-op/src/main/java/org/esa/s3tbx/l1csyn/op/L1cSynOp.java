@@ -158,9 +158,11 @@ public class L1cSynOp extends Operator {
             try {
                 //TreeMap mapOlciSlstr;
                 if (misrFormat.equals("new") && fullMisr == false) {
-                    SlstrMisrTransform misrTransform = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3");
-                    TreeMap mapOlciSlstr = misrTransform.getSlstrOlciMap();
-                    HashMap misrParams = getMisrParams(mapOlciSlstr, null, null, null, null , null,null, null, null , null);
+                    SlstrMisrTransform misrTransformNadir = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3");
+                    SlstrMisrTransform misrTransformOblique = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao");
+                    TreeMap mapNadirS3 = misrTransformNadir.getSlstrOlciMap();
+                    TreeMap mapObliqueAo = misrTransformOblique.getSlstrOlciMap();
+                    HashMap misrParams = getMisrParams( null, null, mapNadirS3, null , null,null, mapObliqueAo, null , null);
                     HashMap<String, Product> misrSourceProductMap = new HashMap<>();
                     misrSourceProductMap.put("olciSource", olciSource);
                     misrSourceProductMap.put("slstrSource", slstrSource);
@@ -177,7 +179,7 @@ public class L1cSynOp extends Operator {
                     TreeMap mapOlciSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"bo").getSlstrOlciMap();
                     TreeMap mapOlciSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"co").getSlstrOlciMap();
 
-                    HashMap misrParams = getMisrParams(null, mapOlciSlstrS1, mapOlciSlstrS2, mapOlciSlstrS3, mapOlciSlstrS4 , mapOlciSlstrS5,mapOlciSlstrS6, mapOlciSlstrao, mapOlciSlstrbo, mapOlciSlstrco );
+                    HashMap misrParams = getMisrParams( mapOlciSlstrS1, mapOlciSlstrS2, mapOlciSlstrS3, mapOlciSlstrS4 , mapOlciSlstrS5,mapOlciSlstrS6, mapOlciSlstrao, mapOlciSlstrbo, mapOlciSlstrco );
 
                     HashMap<String, Product> misrSourceProductMap = new HashMap<>();
                     misrSourceProductMap.put("olciSource", olciSource);
@@ -244,9 +246,9 @@ public class L1cSynOp extends Operator {
         l1cTarget.setDescription("SENTINEL-3 SYN Level 1C Product");
     }
 
-    private HashMap getMisrParams(TreeMap mapOlciSlstr, TreeMap S1PixelMap, TreeMap S2PixelMap, TreeMap S3PixelMap, TreeMap S4PixelMap, TreeMap S5PixelMap, TreeMap S6PixelMap,TreeMap aoPixelMap, TreeMap boPixelMap, TreeMap coPixelMap) {
+    private HashMap getMisrParams(TreeMap S1PixelMap, TreeMap S2PixelMap, TreeMap S3PixelMap, TreeMap S4PixelMap, TreeMap S5PixelMap, TreeMap S6PixelMap,TreeMap aoPixelMap, TreeMap boPixelMap, TreeMap coPixelMap) {
         HashMap<String, Object> misrParams = new HashMap<>();
-        misrParams.put("pixelMap", mapOlciSlstr);
+        //misrParams.put("pixelMap", mapOlciSlstr);
         misrParams.put("duplicate",duplicate);
         misrParams.put("singlePixelMap",!fullMisr);
 
