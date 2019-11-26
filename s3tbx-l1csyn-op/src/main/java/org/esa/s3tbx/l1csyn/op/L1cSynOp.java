@@ -187,20 +187,9 @@ public class L1cSynOp extends Operator {
 
                     collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);
                 }
-                /*else if (misrFormat.equals("internal")){
-                    mapOlciSlstr = readMisrMap(misrFile);
-                }*/
                 else {
                     throw new OperatorException("MISR file information is not read correctly");
                 }
-                /*if (saveMisrFile){
-                    String misrDir = misrFile.getParent();
-                    //saveMisrMap(mapOlciSlstr, misrDir);
-                    //saveMisrMapTextFile(mapOlciSlstr, misrDir);
-                }*/
-
-                //
-
             } catch (InvalidRangeException e1) {
                 throw new OperatorException("Misregistration failed. InvalidRangeException");
             } catch (IOException e2) {

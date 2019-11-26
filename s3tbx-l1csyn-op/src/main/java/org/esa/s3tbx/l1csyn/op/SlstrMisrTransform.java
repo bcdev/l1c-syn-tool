@@ -140,13 +140,13 @@ public class SlstrMisrTransform implements Serializable{
             for (int j = 0; j < nLineOlcLength; j++) {
                 for (int k = 0; k < nDetCamLength; k++) {
                     int[] position = {i, j, k};
-                    if (colVariableName.matches("L1b_col_.._"+"..") || colVariableName.matches("L1b_col_..") ) {
+                    //if (colVariableName.matches("L1b_col_.._"+"..") || colVariableName.matches("L1b_col_..") ) {
                         row = ((ArrayInt.D3) rowArray).get(i,j,k) ;
                         col = ((ArrayShort.D3) colArray).get(i,j,k) ;
-                    } else if (colVariableName.matches("col_corresp_s._"+"..")) {
+                    /*} else if (colVariableName.matches("col_corresp_s._"+"..")) {
                         row = ((ArrayInt.D3) rowArray).get(i,j,k);
                         col = ((ArrayInt.D3) colArray).get(i,j,k);
-                    }
+                    }*/
                     if (col>0 && row>0) {
                         int[] colRowArray = {col, row};
                         colRowMap.put(colRowArray, position);
@@ -224,12 +224,10 @@ public class SlstrMisrTransform implements Serializable{
         for (Iterator<Map.Entry<int[], int[]>> entries = misrOlciMap.entrySet().iterator(); entries.hasNext(); ) {
             Map.Entry<int[], int[]> entry = entries.next();
             int[] mjk = entry.getValue();
-            if (mjk != null) {
                 int[] xy = (int[]) olciImageMap.get(mjk);
                 if (xy != null) {
                     gridMapPixel.put(xy, entry.getKey());
                 }
-            }
         }
 
         /*for (Iterator<Map.Entry<int[], int[]>> entries = slstrImageMap.entrySet().iterator(); entries.hasNext(); ) {
