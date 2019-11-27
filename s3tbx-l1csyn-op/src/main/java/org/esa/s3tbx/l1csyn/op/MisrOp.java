@@ -231,7 +231,9 @@ public class MisrOp extends Operator {
                 targetProduct.getBand(slstrBand.getName()).setNoDataValueUsed(true);
             }
             else {
-                ProductUtils.copyBand(slstrBand.getName(), slstrSourceProduct, targetProduct, true);
+                if (!slstrBand.getName().contains("_in") && !slstrBand.getName().contains("io")) {
+                    ProductUtils.copyBand(slstrBand.getName(), slstrSourceProduct, targetProduct, true);
+                }
             }
         }
 
