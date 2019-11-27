@@ -5,7 +5,6 @@ import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Polygon;
 import org.apache.commons.lang.ArrayUtils;
 import org.esa.snap.core.dataio.ProductIO;
-import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.MetadataElement;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductData;
@@ -121,10 +120,6 @@ public class L1cSynOp extends Operator {
 
     @Parameter(label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
     private File misrFile;
-
-    @Parameter(label = "saveMisrToInternal", description = "If set to true, and MISR file is provided in internal format, it will be saved" +
-            "to the directory of original fine in internal format.")
-    private boolean saveMisrFile;
 
     @Parameter(label = "duplicateMisr", description = "If set to true, during MISR geocoding, empty pixels will be filled with duplicates.",
             defaultValue = "false")
@@ -423,54 +418,6 @@ public class L1cSynOp extends Operator {
         return synName.toString();
     }
 
-    private void saveMisrMapTextFile(TreeMap misrMap, String misrPath){
-        try {
-            HashMap<int[], int[]> clonedMap = new HashMap<int[], int[]>();
-            for (Iterator<Map.Entry<int[], int[]>> entries = misrMap.entrySet().iterator(); entries.hasNext(); ) {
-                Map.Entry<int[], int[]> entry = entries.next();
-                clonedMap.put(entry.getKey(), entry.getValue());
-            }
-            FileWriter fstream = new FileWriter(misrPath+"/values.txt");
-            BufferedWriter bufferedWriter = new BufferedWriter(fstream);
-            Iterator<Map.Entry<int[], int[]>> it = clonedMap.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry<int[], int[]> pairs = it.next();
-                String toWrite = pairs.getKey()[0]+" "+pairs.getKey()[1]+"||"+pairs.getValue()[0]+" "+pairs.getValue()[1];
-                bufferedWriter.write(toWrite);
-                bufferedWriter.write("\n");
-            }
-            bufferedWriter.close();
-
-        }
-        catch (IOException e ) {
-            e.printStackTrace();
-            throw new OperatorException("Map couldn't be written to a text file");
-        }
-    }
-
-    private void saveMisrMap(TreeMap misrMap,String misrPath) {
-        try {
-            HashMap<int[],int[]> clonedMap = new HashMap<int[],int[]>();
-            //
-            for (Iterator<Map.Entry<int[], int[]>> entries = misrMap.entrySet().iterator(); entries.hasNext(); ) {
-                Map.Entry<int[], int[]> entry = entries.next();
-                clonedMap.put(entry.getKey(),entry.getValue());
-            }
-            //
-
-            FileOutputStream fileOut = new FileOutputStream(misrPath+"/internalMisr.ser");
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
-            out.writeObject(clonedMap);
-            out.close();
-            fileOut.close();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-            throw new OperatorException("Map couldn't be written to a file");
-        }
-    }
-
-
     private TreeMap readMisrMap(File misrFile){
         HashMap<int[],int[]> hashMap = new HashMap<>();
         TreeMap misrMap = new TreeMap(new SlstrMisrTransform.ComparatorIntArray());
@@ -500,8 +447,8 @@ public class L1cSynOp extends Operator {
         if (misrFile.getAbsolutePath().endsWith("xfdumanifest.xml")) {
             format = "new";
         }
-        else if (misrFile.getAbsolutePath().endsWith("internalMisr.ser")){
-            format = "internal";
+        if (format == null) {
+            throw new OperatorException("Wrong MISR file format. Please specify path to xfdumanifest.xml of MISR product.");
         }
         return format;
     }

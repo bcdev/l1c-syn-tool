@@ -132,21 +132,17 @@ public class SlstrMisrTransform implements Serializable{
         Array rowArray = rowVariable.read();
         Array colArray = colVariable.read();
 
-        int col = -1;
-        int row = -1;
+        int col;
+        int row;
         TreeMap<int[], int[]> colRowMap = new TreeMap<>(new ComparatorIntArray());
 
         for (int i = 0; i < nCamLength; i++) {
             for (int j = 0; j < nLineOlcLength; j++) {
                 for (int k = 0; k < nDetCamLength; k++) {
                     int[] position = {i, j, k};
-                    //if (colVariableName.matches("L1b_col_.._"+"..") || colVariableName.matches("L1b_col_..") ) {
-                        row = ((ArrayInt.D3) rowArray).get(i,j,k) ;
-                        col = ((ArrayShort.D3) colArray).get(i,j,k) ;
-                    /*} else if (colVariableName.matches("col_corresp_s._"+"..")) {
-                        row = ((ArrayInt.D3) rowArray).get(i,j,k);
-                        col = ((ArrayInt.D3) colArray).get(i,j,k);
-                    }*/
+                    // Type of variable of (row,col) might change with change of MISR format. Be careful here.
+                    row = ((ArrayInt.D3) rowArray).get(i,j,k) ;
+                    col = ((ArrayShort.D3) colArray).get(i,j,k) ;
                     if (col>0 && row>0) {
                         int[] colRowArray = {col, row};
                         colRowMap.put(colRowArray, position);

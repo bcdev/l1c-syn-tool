@@ -34,10 +34,7 @@ public class MisrOp extends Operator {
     @SourceProduct(alias = "slstrSource", description = "SLSTR source product")
     private Product slstrSourceProduct;
 
-    //@Parameter(alias = "pixelMap", description = "Map between SLSTR Image grid and OLCI Image grid")
-    //private TreeMap treeMap;
-
-    @Parameter(alias = "duplicate", description = "If true empty pixels after MISR will be filled with neighboring values")
+    @Parameter(alias = "duplicate", description = "If set to true empty pixels after MISR will be filled with neighboring values")
     private boolean duplicate;
 
     @Parameter(alias = "singlePixelMap", description = "If set to true, than single pixel map will be used for coregistering all SLSTR bands. Otherwise user shall provide all maps separately",
@@ -133,20 +130,17 @@ public class MisrOp extends Operator {
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     targetTile.setSample(x,y,targetBand.getNoDataValue());
-                    //if (slstrSourceProduct.getBand(targetBand.getName()).getRasterWidth() == slstrSourceProduct.getBand("S5_radiance_an").getRasterWidth()) {
+                    int[] position = {x, y};
+                    int[] slstrGridPosition = (int[]) treeMap.get(position);
+                    if (slstrGridPosition != null) {
+                        double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]); // / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
+                        targetTile.setSample(x,y, reflecValue);
+                    }
 
-                        int[] position = {x, y};
-                        int[] slstrGridPosition = (int[]) treeMap.get(position);
-                        if (slstrGridPosition != null) {
-                            double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]); // / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
-                            targetTile.setSample(x,y, reflecValue);
-                        }
-                    //}
                 }
             }
             if (duplicate) {
                 for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                    //double duplicatePixel = targetBand.getNoDataValue();
                     double duplicatePixel = getDuplicatedPixel(targetRectangle.x, y, targetBand, treeMap);
                     for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                         if (targetTile.getSampleDouble(x, y) != targetBand.getNoDataValue()) {
@@ -160,7 +154,7 @@ public class MisrOp extends Operator {
 
         }
         else if (targetBand.getName().equals("misr_flags")){
-            treeMap = S1PixelMap;
+            treeMap = S3PixelMap;
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     int[] position = {x, y};
@@ -175,7 +169,7 @@ public class MisrOp extends Operator {
             }
         }
         else if (targetBand.getName().equals("duplicate_flags")){
-            treeMap = S1PixelMap;
+            treeMap = S3PixelMap;
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     int[] position = {x, y};
@@ -274,13 +268,6 @@ public class MisrOp extends Operator {
 
             targetProduct.addBand(duplicateFlags);
         }
-        /*ProductUtils.copyMetadata(slstrSourceProduct, targetProduct);
-        ProductUtils.copyTiePointGrids(slstrSourceProduct, targetProduct);
-        ProductUtils.copyMasks(slstrSourceProduct, targetProduct);
-        ProductUtils.copyFlagBands(slstrSourceProduct, targetProduct, false);
-        ProductUtils.copyGeoCoding(slstrSourceProduct, targetProduct);
-        targetProduct.setAutoGrouping(olciSourceProduct.getAutoGrouping().toString()); */
-
     }
 
     public static class Spi extends OperatorSpi {
