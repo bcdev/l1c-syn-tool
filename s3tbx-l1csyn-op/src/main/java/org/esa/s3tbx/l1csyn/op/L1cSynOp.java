@@ -121,11 +121,11 @@ public class L1cSynOp extends Operator {
     @Parameter(label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
     private File misrFile;
 
-    @Parameter(label = "duplicateMisr", description = "If set to true, during MISR geocoding, empty pixels will be filled with duplicates.",
+    @Parameter(label = "duplicate pixel using MISR", description = "If set to true, during MISR geocoding, empty pixels will be filled with duplicates.",
             defaultValue = "false")
     private boolean duplicate;
 
-    @Parameter(label = "fullMisr", description = "If set to true, during MISR geocoding, every SLSTR band geocoding will be calculated separately.",
+    @Parameter(label = "use MISR for each band separately", description = "If set to true, during MISR geocoding, every SLSTR band geocoding will be calculated separately.",
             defaultValue =  "false")
     private  boolean fullMisr;
 
