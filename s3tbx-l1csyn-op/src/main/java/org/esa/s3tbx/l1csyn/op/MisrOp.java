@@ -20,11 +20,12 @@ import java.util.TreeMap;
 
 
 @OperatorMetadata(alias = "Misregister",
+        internal = true,
         category = "Raster/Geometric",
         version = "1.0",
         authors = "Roman Shevchuk, Marco Peters",
         copyright = "(c) 2019 by Brockmann Consult",
-        description = "Coregister OLCI and SLSTR L1 Products using TreeMap from MISR product."
+        description = "Coregister OLCI and SLSTR L1 Products using TreeMaps from MISR product. At minimum one Treemap for oblique and one for nadir view must be provided."
 )
 public class MisrOp extends Operator {
 
@@ -134,6 +135,9 @@ public class MisrOp extends Operator {
                     int[] slstrGridPosition = (int[]) treeMap.get(position);
                     if (slstrGridPosition != null) {
                         double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]); // / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
+                        if (reflecValue  < 0 ) {
+                            reflecValue = targetBand.getNoDataValue();
+                        }
                         targetTile.setSample(x,y, reflecValue);
                     }
 
@@ -201,6 +205,9 @@ public class MisrOp extends Operator {
             else {
                 duplicatePixel = targetBand.getNoDataValue();
             }
+        }
+        if (duplicatePixel < 0) {
+            return targetBand.getNoDataValue();
         }
         return duplicatePixel;
     }

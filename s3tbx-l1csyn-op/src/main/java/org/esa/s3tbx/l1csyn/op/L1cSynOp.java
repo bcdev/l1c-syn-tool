@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
         copyright = "Brockmann Consult GmbH",
         description = "Sentinel-3 OLCI/SLSTR L1C SYN Tool",
         category = "Optical/Pre-Processing",
-        version = "2.0")
+        version = "2.5")
 public class L1cSynOp extends Operator {
 
     private long allowedTimeDiff = 200L;
@@ -151,7 +151,6 @@ public class L1cSynOp extends Operator {
         if (misrFile != null) {
             String misrFormat = getMisrFormat(misrFile);
             try {
-                //TreeMap mapOlciSlstr;
                 if (misrFormat.equals("new") && fullMisr == false) {
                     SlstrMisrTransform misrTransformNadir = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3");
                     SlstrMisrTransform misrTransformOblique = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao");
@@ -232,7 +231,6 @@ public class L1cSynOp extends Operator {
 
     private HashMap getMisrParams(TreeMap S1PixelMap, TreeMap S2PixelMap, TreeMap S3PixelMap, TreeMap S4PixelMap, TreeMap S5PixelMap, TreeMap S6PixelMap,TreeMap aoPixelMap, TreeMap boPixelMap, TreeMap coPixelMap) {
         HashMap<String, Object> misrParams = new HashMap<>();
-        //misrParams.put("pixelMap", mapOlciSlstr);
         misrParams.put("duplicate",duplicate);
         misrParams.put("singlePixelMap",!fullMisr);
 
@@ -416,30 +414,6 @@ public class L1cSynOp extends Operator {
         synName.append(slstrBaseline);
         synName.append(".SEN3");
         return synName.toString();
-    }
-
-    private TreeMap readMisrMap(File misrFile){
-        HashMap<int[],int[]> hashMap = new HashMap<>();
-        TreeMap misrMap = new TreeMap(new SlstrMisrTransform.ComparatorIntArray());
-        try {
-            String path = misrFile.getAbsolutePath();
-            FileInputStream fileIn = new FileInputStream(path);
-            ObjectInputStream inputStream = new ObjectInputStream(fileIn);
-            hashMap = (HashMap<int[], int[]>) inputStream.readObject();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        for (Map.Entry entry : hashMap.entrySet()) {
-            if (entry.getKey()!=null && entry.getValue()!=null ) {
-                misrMap.put(entry.getKey(), entry.getValue());
-            }
-        }
-        return misrMap;
     }
 
     private String getMisrFormat(File misrFile) {
