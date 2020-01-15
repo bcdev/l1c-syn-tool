@@ -118,14 +118,14 @@ public class L1cSynOp extends Operator {
                     "If not given, the entire scene is used.")
     private String geoRegion;
 
-    @Parameter(label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
+    @Parameter(alias = "MISRFile",label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
     private File misrFile;
 
-    @Parameter(label = "duplicate pixel using MISR", description = "If set to true, during MISR geocoding, empty pixels will be filled with duplicates.",
+    @Parameter(alias = "duplicate", label = "duplicate pixel using MISR", description = "If set to true, during MISR geocoding, empty pixels will be filled with duplicates.",
             defaultValue = "false")
     private boolean duplicate;
 
-    @Parameter(label = "use MISR for each band separately", description = "If set to true, during MISR geocoding, every SLSTR band geocoding will be calculated separately.",
+    @Parameter(alias = "fullMISR",label = "use MISR for each band separately", description = "If set to true, during MISR geocoding, every SLSTR band geocoding will be calculated separately.",
             defaultValue =  "false")
     private  boolean fullMisr;
 

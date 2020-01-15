@@ -134,6 +134,11 @@ Parameter Options:
   -Pupsampling=&lt;string&gt;                      The method used for interpolation (upsampling to a finer resolution).
                                              Value must be one of 'Nearest', 'Bilinear', 'Bicubic'.
                                              Default value is 'Nearest'.
+  -PMISRFile=&lt;file&gt;                          Optional MISR product, which is used to collocate SLSTR and OLCI bands.
+  -Pduplicate=&lt;boolean&gt;                      If set to true, after collocation using MISR product, all empty pixels will be filled with the values of its nearest left non-zero neighboring pixel.
+                                             This option will work only with MISR product.
+  -PfullMISR=&lt;boolean&gt;                       If set to true, collocation of every SLSTR band will be calculated separately, using correspoing MISR bands.
+                                             This option will work only with MISR product.
 
 Graph XML Format:
   &lt;graph id="someGraphId"&gt;
@@ -154,6 +159,9 @@ Graph XML Format:
         &lt;slstrRegexp&gt;string&lt;/slstrRegexp&gt;
         &lt;shapeFile&gt;file&lt;/shapeFile&gt;
         &lt;geoRegion&gt;string&lt;/geoRegion&gt;
+        &lt;MISRFile&gt;file&lt;/MISRFile&gt;
+        &lt;duplicate&gt;false&lt;/duplicate&gt;
+        &lt;fullMISR&gt;false&lt;/fullMISR&gt;
       &lt;/parameters&gt;
     &lt;/node&gt;
   &lt;/graph&gt;
