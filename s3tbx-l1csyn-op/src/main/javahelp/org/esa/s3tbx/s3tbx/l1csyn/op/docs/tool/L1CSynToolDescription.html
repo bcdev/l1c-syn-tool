@@ -93,6 +93,16 @@ Optional shapefile with which user specify the region of subset. This option has
 The subset region in geographical coordinates using WKT-format, e.g. POLYGON((&lt;lon1&gt; &lt;lat1&gt;, &lt;lon2&gt; &lt;lat2&gt;, ..., &lt;lon1&gt; &lt;lat1&gt;))
 (make sure to quote the option due to spaces in &lt;geometry&gt;). If not given, the entire scene is used. Shapefile option has priority over this option.
 
+<h5>MISR file</h5>
+Optional MISR product, which contains information for the pixelwise collocation of OLCI and SLSTR bands. If not given, default collocation will be performed.
+
+<h5>Duplication</h5>
+After applying collocation using MISR product some pixels of SLSTR bands in L1C product does not have defined value. If this flag set to true, these pixels will be filled with the value of nearest left non-zero pixel.
+Additional flagcoding band with mask identifying duplicated pixels will be added to L1C product.
+
+<h5>Full MISR</h5>
+By default, when calculating collocation between SLSTR and OLCI bands using MISR product, the mapping between Oa17_radiance OLCI band and S3 SLSTR band is calculated.
+If this option set to true individual mapping for each SLSTR band is calculated. By default this option is set to 'False'.
 
 <h3>Usage from the command line</h3>
 By invoking gpt with name "L1CSYN" of the tool (operator) and the option <b>-h</b> the specific help for this L1C SYN
@@ -126,7 +136,7 @@ Parameter Options:
                                              (make sure to quote the option due to spaces in &lt;geometry&gt;).
                                              If not given, the entire scene is used.
   -PolciRegexp=&lt;string&gt;                      Regular expressions (comma-separated) to set up selection of OLCI bands. It has priority over OLCI raster data selection. Will not be considered if empty
-  -PstayOnOlciGrid=&lt;boolean&gt;                 If this parameter is set to true, the final product will be provided on the OLCI image grid. Default value is 'False'
+  -PstayOnOlciGrid=&lt;boolean&gt;                 If this parameter is set to true, the final product will be provided on the OLCI image grid. Default value is 'False'.
   -PreprojectionCRS=&lt;string&gt;                 The CRS used for the reprojection. If set to None or left empty, no reprojection will be performed.
                                              Default value is 'EPSG:4326'.
   -PshapeFile=&lt;file&gt;                         Optional file which may be used for selecting subset. This has priority over WKT GeoRegion.
@@ -137,8 +147,10 @@ Parameter Options:
   -PMISRFile=&lt;file&gt;                          Optional MISR product, which is used to collocate SLSTR and OLCI bands.
   -Pduplicate=&lt;boolean&gt;                      If set to true, after collocation using MISR product, all empty pixels will be filled with the values of its nearest left non-zero neighboring pixel.
                                              This option will work only with MISR product.
+                                             Default value is 'False'.
   -PfullMISR=&lt;boolean&gt;                       If set to true, collocation of every SLSTR band will be calculated separately, using correspoing MISR bands.
                                              This option will work only with MISR product.
+                                             Default value is 'False'.
 
 Graph XML Format:
   &lt;graph id="someGraphId"&gt;
