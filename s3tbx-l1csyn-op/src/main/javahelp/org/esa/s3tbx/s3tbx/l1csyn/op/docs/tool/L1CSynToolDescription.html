@@ -95,10 +95,11 @@ The subset region in geographical coordinates using WKT-format, e.g. POLYGON((&l
 
 <h5>MISR file</h5>
 Optional MISR product, which contains information for the pixelwise collocation of OLCI and SLSTR bands. If not given, default collocation will be performed.
+Additional mask named "MISR pixel applied" identifying duplicated pixels will be added to L1C product.
 
 <h5>Duplication</h5>
 After applying collocation using MISR product some pixels of SLSTR bands in L1C product does not have defined value. If this flag set to true, these pixels will be filled with the value of nearest left non-zero pixel.
-Additional flagcoding band with mask identifying duplicated pixels will be added to L1C product.
+Additional mask named "Duplicated pixel after MISR" identifying duplicated pixels will be added to L1C product.
 
 <h5>Full MISR</h5>
 By default, when calculating collocation between SLSTR and OLCI bands using MISR product, the mapping between Oa17_radiance OLCI band and S3 SLSTR band is calculated.
