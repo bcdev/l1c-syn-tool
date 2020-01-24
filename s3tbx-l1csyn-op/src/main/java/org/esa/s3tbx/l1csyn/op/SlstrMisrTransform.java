@@ -267,10 +267,10 @@ public class SlstrMisrTransform implements Serializable{
                 for (int i = 0; i < nCamLength; i++) {
                     for (int j = 0; j < step ; j++) {
                         for (int k = 0; k < nDetCamLength; k++) {
-                            short row = rowArray.get(i, j, k);
+                            short row = rowArray.get(i, j, k) ;
                             short col = colArray.get(i, j, k);
-                            if (row >= 0 && col >= 0) {
-                                if (row <= olciNumRows && col <= olciNumCols) {
+                            if ((row-rowOffset) >= 0 && col >= 0) {
+                                if ( (row-rowOffset)  <= olciNumRows && col <= olciNumCols) {
                                     int[] gridCoors = {i, j, k};
                                     int[] imageCoors = {col, row - rowOffset};
                                     olciMap.put(gridCoors, imageCoors);
