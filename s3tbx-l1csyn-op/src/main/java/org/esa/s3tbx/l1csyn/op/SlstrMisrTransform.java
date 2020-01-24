@@ -128,23 +128,53 @@ public class SlstrMisrTransform implements Serializable{
         String colVariableName = getColVariableName(netcdfFile);
         Variable rowVariable = netcdfFile.findVariable(rowVariableName);
         Variable colVariable = netcdfFile.findVariable(colVariableName);
-        Array rowArray = rowVariable.read();
-        Array colArray = colVariable.read();
-
-        int col;
-        int row;
         TreeMap<int[], int[]> colRowMap = new TreeMap<>(new ComparatorIntArray());
+        if (nLineOlcLength < 10000) {
+            Array rowArray = rowVariable.read();
+            Array colArray = colVariable.read();
+            int col;
+            int row;
 
-        for (int i = 0; i < nCamLength; i++) {
-            for (int j = 0; j < nLineOlcLength; j++) {
-                for (int k = 0; k < nDetCamLength; k++) {
-                    int[] position = {i, j, k};
-                    // Type of variable of (row,col) might change with change of MISR format. Be careful here.
-                    row = ((ArrayInt.D3) rowArray).get(i,j,k) ;
-                    col = ((ArrayShort.D3) colArray).get(i,j,k) ;
-                    if (col>0 && row>0) {
-                        int[] colRowArray = {col, row};
-                        colRowMap.put(colRowArray, position);
+
+            for (int i = 0; i < nCamLength; i++) {
+                for (int j = 0; j < nLineOlcLength; j++) {
+                    for (int k = 0; k < nDetCamLength; k++) {
+                        int[] position = {i, j, k};
+                        // Type of variable of (row,col) might change with change of MISR format. Be careful here.
+                        row = ((ArrayInt.D3) rowArray).get(i, j, k);
+                        col = ((ArrayShort.D3) colArray).get(i, j, k);
+                        if (col > 0 && row > 0) {
+                            int[] colRowArray = {col, row};
+                            colRowMap.put(colRowArray, position);
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            for (int longDimSplitter = 10000; longDimSplitter < nLineOlcLength+10000; longDimSplitter+=10000) {
+                int step = 10000;
+                if (longDimSplitter > nLineOlcLength) {
+                    step = nLineOlcLength + step - longDimSplitter;
+                    longDimSplitter = nLineOlcLength;
+                }
+
+                Array rowArray = rowVariable.read(new int[]{0, longDimSplitter-step, 0}, new int[]{nCamLength, step, nDetCamLength});
+                Array colArray = colVariable.read(new int[]{0, longDimSplitter-step, 0}, new int[]{nCamLength, step, nDetCamLength});
+                int col;
+                int row;
+                for (int i = 0; i < nCamLength; i++) {
+                    for (int j = 0; j < step; j++) {
+                        for (int k = 0; k < nDetCamLength; k++) {
+                            int[] position = {i, j, k};
+                            // Type of variable of (row,col) might change with change of MISR format. Be careful here.
+                            row = ((ArrayInt.D3) rowArray).get(i, j, k);
+                            col = ((ArrayShort.D3) colArray).get(i, j, k);
+                            if (col > 0 && row > 0) {
+                                int[] colRowArray = {col, row};
+                                colRowMap.put(colRowArray, position);
+                            }
+                        }
                     }
                 }
             }
@@ -155,7 +185,7 @@ public class SlstrMisrTransform implements Serializable{
 
 
     // Step 4.2
-    private TreeMap getOlciMisrMap() throws IOException {
+    private TreeMap getOlciMisrMap() throws IOException, InvalidRangeException {
         //should provide mapping between OLCI image grid and instrument grid
 
         TreeMap<int[], int[]> olciMap = new TreeMap<>(new ComparatorIntArray());
@@ -178,8 +208,7 @@ public class SlstrMisrTransform implements Serializable{
             colVariable = netcdfFile.findVariable(colVariableName);
         }
         //
-        ArrayShort.D3 rowArray = (ArrayShort.D3) rowVariable.read();
-        ArrayShort.D3 colArray = (ArrayShort.D3) colVariable.read();
+
         int nCamLength = netcdfFile.findDimension("N_CAM").getLength();
         int nLineOlcLength = netcdfFile.findDimension("N_LINE_OLC").getLength();
         int nDetCamLength = netcdfFile.findDimension("N_DET_CAM").getLength();
@@ -187,15 +216,45 @@ public class SlstrMisrTransform implements Serializable{
         Variable rowOffsetVariable = netcdfFile.findVariable("input_products_row_offset");
         int rowOffset = (int) rowOffsetVariable.readScalarInt();
 
-        for (int i=0; i<nCamLength ; i++){
-            for (int j=0; j<nLineOlcLength ; j++){
-                for (int k=0; k<nDetCamLength ; k++){
-                    short row = rowArray.get(i,j,k);
-                    short col = colArray.get(i,j,k);
-                    if (row>0 && col>0) {
-                        int[] gridCoors = {i, j, k};
-                        int[] imageCoors = {col, row - rowOffset};
-                        olciMap.put(gridCoors, imageCoors);
+        if (nLineOlcLength < 10000) {
+            ArrayShort.D3 rowArray = (ArrayShort.D3) rowVariable.read();
+            ArrayShort.D3 colArray = (ArrayShort.D3) colVariable.read();
+            for (int i = 0; i < nCamLength; i++) {
+                for (int j = 0; j < nLineOlcLength; j++) {
+                    for (int k = 0; k < nDetCamLength; k++) {
+                        short row = rowArray.get(i, j, k);
+                        short col = colArray.get(i, j, k);
+                        if (row > 0 && col > 0) {
+                            int[] gridCoors = {i, j, k};
+                            int[] imageCoors = {col, row - rowOffset};
+                            olciMap.put(gridCoors, imageCoors);
+                        }
+                    }
+                }
+            }
+        }
+
+        else {
+
+            for (int longDimSplitter = 10000; longDimSplitter < nLineOlcLength+10000; longDimSplitter+=10000) {
+                int step = 10000;
+                if (longDimSplitter > nLineOlcLength) {
+                    step = nLineOlcLength + step -longDimSplitter;
+                    longDimSplitter = nLineOlcLength;
+                }
+                ArrayShort.D3 rowArray = (ArrayShort.D3) rowVariable.read(new int[]{0, longDimSplitter-step, 0}, new int[]{nCamLength, step, nDetCamLength});
+                ArrayShort.D3 colArray = (ArrayShort.D3) colVariable.read(new int[]{0, longDimSplitter-step, 0}, new int[]{nCamLength, step, nDetCamLength});
+                for (int i = 0; i < nCamLength; i++) {
+                    for (int j = 0; j < step ; j++) {
+                        for (int k = 0; k < nDetCamLength; k++) {
+                            short row = rowArray.get(i, j, k);
+                            short col = colArray.get(i, j, k);
+                            if (row > 0 && col > 0) {
+                                int[] gridCoors = {i, j, k};
+                                int[] imageCoors = {col, row - rowOffset};
+                                olciMap.put(gridCoors, imageCoors);
+                            }
+                        }
                     }
                 }
             }

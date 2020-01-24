@@ -177,6 +177,8 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         form.add(title, scrollPane);
         parametersPane.getBindingContext().bindEnabledState("reprojectionCRS",false,"stayOnOlciGrid",true);
         parametersPane.getBindingContext().bindEnabledState("upsamplingMethod",false,"stayOnOlciGrid",true);
+        parametersPane.getBindingContext().bindEnabledState("duplicate",false,"misrFile",true);
+        parametersPane.getBindingContext().bindEnabledState("fullMISR",false,"misrFile",true);
     }
 
     private void setSourceProductSelectorToolTipTexts() {
