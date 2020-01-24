@@ -21,6 +21,10 @@ public class SlstrMisrTransform implements Serializable{
     private Product slstrImageProduct;
     private String misrPath;
     private String bandType;
+    private int olciNumRows;
+    private int olciNumCols;
+    private int slstrNumRows;
+    private int slstrNumCols;
 
     private int N_DET_CAM = 740;
 
@@ -29,6 +33,16 @@ public class SlstrMisrTransform implements Serializable{
         this.slstrImageProduct = slstrImageProduct;
         this.misrPath = misrManifest.getParent();
         this.bandType = bandType;
+        this.olciNumRows = olciImageProduct.getBand("Oa17_radiance").getRasterHeight();
+        this.olciNumCols = olciImageProduct.getBand("Oa17_radiance").getRasterWidth();
+        if (bandType.contains("S")){
+            this.slstrNumRows = slstrImageProduct.getBand("S3_radiance_an").getRasterHeight();
+            this.slstrNumCols = slstrImageProduct.getBand("S3_radiance_an").getRasterWidth();
+        }
+        else {
+            this.slstrNumRows = slstrImageProduct.getBand("S3_radiance_ao").getRasterHeight();
+            this.slstrNumCols = slstrImageProduct.getBand("S3_radiance_ao").getRasterWidth();
+        }
     }
 
     private int[] getColRow(int scan, int pixel, int detector) {
@@ -143,9 +157,11 @@ public class SlstrMisrTransform implements Serializable{
                         // Type of variable of (row,col) might change with change of MISR format. Be careful here.
                         row = ((ArrayInt.D3) rowArray).get(i, j, k);
                         col = ((ArrayShort.D3) colArray).get(i, j, k);
-                        if (col > 0 && row > 0) {
-                            int[] colRowArray = {col, row};
-                            colRowMap.put(colRowArray, position);
+                        if (col >= 0 && row >= 0) {
+                            if (row <= slstrNumRows && col <= slstrNumCols) {
+                                int[] colRowArray = {col, row};
+                                colRowMap.put(colRowArray, position);
+                            }
                         }
                     }
                 }
@@ -170,9 +186,11 @@ public class SlstrMisrTransform implements Serializable{
                             // Type of variable of (row,col) might change with change of MISR format. Be careful here.
                             row = ((ArrayInt.D3) rowArray).get(i, j, k);
                             col = ((ArrayShort.D3) colArray).get(i, j, k);
-                            if (col > 0 && row > 0) {
-                                int[] colRowArray = {col, row};
-                                colRowMap.put(colRowArray, position);
+                            if (col >= 0 && row >= 0) {
+                                if (row <= slstrNumRows && col <= slstrNumCols) {
+                                    int[] colRowArray = {col, row};
+                                    colRowMap.put(colRowArray, position);
+                                }
                             }
                         }
                     }
@@ -224,10 +242,12 @@ public class SlstrMisrTransform implements Serializable{
                     for (int k = 0; k < nDetCamLength; k++) {
                         short row = rowArray.get(i, j, k);
                         short col = colArray.get(i, j, k);
-                        if (row > 0 && col > 0) {
-                            int[] gridCoors = {i, j, k};
-                            int[] imageCoors = {col, row - rowOffset};
-                            olciMap.put(gridCoors, imageCoors);
+                        if (row >= 0 && col >= 0) {
+                            if (row <= olciNumRows && col <= olciNumCols) {
+                                int[] gridCoors = {i, j, k};
+                                int[] imageCoors = {col, row - rowOffset};
+                                olciMap.put(gridCoors, imageCoors);
+                            }
                         }
                     }
                 }
@@ -249,10 +269,12 @@ public class SlstrMisrTransform implements Serializable{
                         for (int k = 0; k < nDetCamLength; k++) {
                             short row = rowArray.get(i, j, k);
                             short col = colArray.get(i, j, k);
-                            if (row > 0 && col > 0) {
-                                int[] gridCoors = {i, j, k};
-                                int[] imageCoors = {col, row - rowOffset};
-                                olciMap.put(gridCoors, imageCoors);
+                            if (row >= 0 && col >= 0) {
+                                if (row <= olciNumRows && col <= olciNumCols) {
+                                    int[] gridCoors = {i, j, k};
+                                    int[] imageCoors = {col, row - rowOffset};
+                                    olciMap.put(gridCoors, imageCoors);
+                                }
                             }
                         }
                     }
