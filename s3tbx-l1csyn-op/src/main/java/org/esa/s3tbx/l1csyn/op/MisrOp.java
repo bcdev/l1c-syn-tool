@@ -254,10 +254,9 @@ public class MisrOp extends Operator {
         misrFlagCoding.addFlag("MISR applied", 1, "MISR applied");
         misrFlags.setSampleCoding(misrFlagCoding);
 
+        targetProduct.addBand(misrFlags);
         targetProduct.addMask("MISR pixel applied",  "misr_flags != 0",
                 "MISR information was used to get value of this pixel", Color.RED, 0.5);
-
-        targetProduct.addBand(misrFlags);
 
         if (duplicate) {
             final FlagCoding duplicateFlagCoding = new FlagCoding("Duplicated pixel after MISR");
@@ -269,11 +268,10 @@ public class MisrOp extends Operator {
             duplicateFlagCoding.addFlag("pixel not duplicated", 0, "pixel not duplicated");
             duplicateFlagCoding.addFlag("pixel duplicated", 1, "pixel duplicated");
             duplicateFlags.setSampleCoding(duplicateFlagCoding);
+            targetProduct.addBand(duplicateFlags);
 
             targetProduct.addMask("Duplicated pixel after MISR", "duplicate_flags != 0",
                     "After applying misregistration, this pixel is a duplicate of its neighbour", Color.BLUE, 0.5);
-
-            targetProduct.addBand(duplicateFlags);
         }
     }
 
