@@ -154,6 +154,13 @@ public class MisrOp extends Operator {
                         }
                     }
                 }
+                for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
+                    for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+                        if (!olciSourceProduct.getRasterDataNode("Oa17_radiance").isPixelValid(x,y)){
+                            targetTile.setSample(x, y, targetBand.getNoDataValue());
+                        }
+                    }
+                }
             }
 
         }
@@ -178,7 +185,7 @@ public class MisrOp extends Operator {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     int[] position = {x, y};
                     int[] slstrGridPosition = (int[]) treeMap.get(position);
-                    if (slstrGridPosition == null) {
+                    if (slstrGridPosition == null && olciSourceProduct.getRasterDataNode("Oa17_radiance").isPixelValid(x,y)) {
                         targetTile.setSample(x,y,1);
                     }
                 }
