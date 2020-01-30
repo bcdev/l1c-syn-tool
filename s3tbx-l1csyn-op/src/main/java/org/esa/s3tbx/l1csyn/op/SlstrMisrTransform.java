@@ -158,7 +158,7 @@ public class SlstrMisrTransform implements Serializable{
                         row = ((ArrayInt.D3) rowArray).get(i, j, k);
                         col = ((ArrayShort.D3) colArray).get(i, j, k);
                         if (col >= 0 && row >= 0) {
-                            if (row <= slstrNumRows && col <= slstrNumCols) {
+                            if (row < slstrNumRows && col < slstrNumCols) {
                                 int[] colRowArray = {col, row};
                                 colRowMap.put(colRowArray, position);
                             }
@@ -187,7 +187,7 @@ public class SlstrMisrTransform implements Serializable{
                             row = ((ArrayInt.D3) rowArray).get(i, j, k);
                             col = ((ArrayShort.D3) colArray).get(i, j, k);
                             if (col >= 0 && row >= 0) {
-                                if (row <= slstrNumRows && col <= slstrNumCols) {
+                                if (row < slstrNumRows && col < slstrNumCols) {
                                     int[] colRowArray = {col, row};
                                     colRowMap.put(colRowArray, position);
                                 }
@@ -244,7 +244,7 @@ public class SlstrMisrTransform implements Serializable{
                         short col = colArray.get(i, j, k);
                         int rowNorm = row - rowOffset;
                         if (rowNorm >= 0 && col >= 0) {
-                            if (rowNorm <= olciNumRows && col <= olciNumCols) {
+                            if (rowNorm < olciNumRows && col < olciNumCols) {
                                 int[] gridCoors = {i, j, k};
                                 int[] imageCoors = {col, rowNorm};
                                 olciMap.put(gridCoors, imageCoors);
@@ -272,7 +272,7 @@ public class SlstrMisrTransform implements Serializable{
                             short col = colArray.get(i, j, k);
                             int rowNorm = row - rowOffset;
                             if ((rowNorm) >= 0 && col >= 0) {
-                                if ( (rowNorm)  <= olciNumRows && col <= olciNumCols) {
+                                if ( (rowNorm)  < olciNumRows && col < olciNumCols) {
                                     int[] gridCoors = {i, j, k};
                                     int[] imageCoors = {col, rowNorm};
                                     olciMap.put(gridCoors, imageCoors);
