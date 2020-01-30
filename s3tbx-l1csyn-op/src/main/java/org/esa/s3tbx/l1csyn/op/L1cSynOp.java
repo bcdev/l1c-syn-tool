@@ -391,16 +391,16 @@ public class L1cSynOp extends Operator {
         }
         Map<String, ProductData.UTC> startEndDateMap = getStartEndDate(slstrSource, olciSource);
         DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
-        Date startDateUTC = startEndDateMap.get("startDate").getAsDate();
-        String dateStringStart = dateFormat.format(startDateUTC);
-        Date endDateUTC = startEndDateMap.get("endDate").getAsDate();
-        String dateStringEnd = dateFormat.format(endDateUTC);
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        Date startDate = startEndDateMap.get("startDate").getAsDate();
+        String dateStringStart = dateFormat.format(startDate);
+        Date endDate = startEndDateMap.get("endDate").getAsDate();
+        String dateStringEnd = dateFormat.format(endDate);
         synName.append(dateStringStart);
         synName.append("_");
         synName.append(dateStringEnd);
         synName.append("_");
 
-        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         Date date = new Date();
         String currentDate = dateFormat.format(date);
         synName.append(currentDate);
