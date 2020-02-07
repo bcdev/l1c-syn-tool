@@ -358,7 +358,7 @@ public class L1cSynOp extends Operator {
     }
 
     private void fixSlstrProductType() {
-        //This method was used before SNAP v.6.0.9 in order to ensure that SLSTR product is opened in correct format. 
+        //This method was used before SNAP v.6.0.9 in order to ensure that SLSTR product is opened in correct format.
         String filePath = slstrSource.getFileLocation().toString();
         File slstrFile = new File(filePath);
         try {

@@ -129,7 +129,7 @@ public class SlstrMisrTransform implements Serializable{
 
     // Step 3
     private TreeMap<int[], int[]> getMisrOlciMap() throws IOException, InvalidRangeException {
-        // provides mapping between MISR (row/col) and OLCI instrument grid (N_LINE_OLC/N_DET_CAM/N_CAM) from MISR product
+        // provides mapping between SLSTR (row/col) and OLCI instrument grid (N_LINE_OLC/N_DET_CAM/N_CAM) from MISR product
         String bandName = "/misregist_Oref_"+bandType+".nc";
 
         String path = this.misrPath;
@@ -335,6 +335,16 @@ public class SlstrMisrTransform implements Serializable{
             }
         }
         throw new NullPointerException("Orphan variable not found");
+    }
+
+    //so far this value is not used, but may be needed in the future
+    private int getSlstrS3Offset(Product slstrImageProduct) throws IOException{
+        String path = slstrImageProduct.getFileLocation().getParent();
+        String filePath = path + "/S3_radiance_an.nc";
+        NetcdfFile netcdfFile = NetcdfFile.open(filePath);
+        String offsetAttribute = netcdfFile.findGlobalAttribute("start_offset").getStringValue();
+        int offsetValue = Integer.parseInt(offsetAttribute);
+        return  offsetValue;
     }
 
     public static class ComparatorIntArray implements java.util.Comparator<int[]>, Serializable{
