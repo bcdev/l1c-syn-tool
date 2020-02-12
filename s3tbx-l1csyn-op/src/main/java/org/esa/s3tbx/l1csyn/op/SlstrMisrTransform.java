@@ -342,8 +342,11 @@ public class SlstrMisrTransform implements Serializable{
         String path = slstrImageProduct.getFileLocation().getParent();
         String filePath = path + "/S3_radiance_an.nc";
         NetcdfFile netcdfFile = NetcdfFile.open(filePath);
-        String offsetAttribute = netcdfFile.findGlobalAttribute("start_offset").getStringValue();
-        int offsetValue = Integer.parseInt(offsetAttribute);
+        Number offsetAttribute = netcdfFile.findGlobalAttribute("start_offset").getNumericValue();
+        System.out.println(offsetAttribute);
+        System.out.println(filePath);
+        int offsetValue = (int) offsetAttribute;
+        netcdfFile.close();
         return  offsetValue;
     }
 

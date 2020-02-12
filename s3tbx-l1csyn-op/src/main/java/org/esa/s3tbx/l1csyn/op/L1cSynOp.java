@@ -41,6 +41,9 @@ import java.util.regex.Pattern;
 public class L1cSynOp extends Operator {
 
     private long allowedTimeDiff = 200L;
+    private File misrFile = null;
+    private boolean duplicate = false;
+    private boolean fullMisr = false;
 
     @SourceProduct(alias = "olciProduct", label = "OLCI Product", description = "OLCI source product")
     private Product olciSource;
@@ -118,7 +121,7 @@ public class L1cSynOp extends Operator {
                     "If not given, the entire scene is used.")
     private String geoRegion;
 
-    @Parameter(alias = "MISRFile",label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
+    /*@Parameter(alias = "MISRFile",label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
     private File misrFile;
 
     @Parameter(alias = "duplicate", label = "duplicate pixel using MISR", description = "If set to true, during MISR geocoding, empty pixels will be filled with duplicates.",
@@ -127,7 +130,7 @@ public class L1cSynOp extends Operator {
 
     @Parameter(alias = "fullMISR",label = "use MISR for each band separately", description = "If set to true, during MISR geocoding, every SLSTR band geocoding will be calculated separately.",
             defaultValue =  "false")
-    private  boolean fullMisr;
+    private  boolean fullMisr;*/
 
     @Override
     public void initialize() throws OperatorException {
