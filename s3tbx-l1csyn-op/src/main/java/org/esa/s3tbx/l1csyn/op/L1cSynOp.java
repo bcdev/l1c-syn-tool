@@ -89,7 +89,7 @@ public class L1cSynOp extends Operator {
     @Parameter(alias = "bandsSlstr",
             label = "SLSTR raster data",
             description = "Predefined regular expressions for selection of OLCI bands in the output product. Multiple selection is possible.",
-            valueSet = {"All", "F._BT_.*", "S._BT_.*", "S*._radiance_an", ".*_an.*", ".*_ao.*", ".*_bn.*", ".*_bo.*", ".*_bn.*", ".*_co.*", ".*_cn.*",
+            valueSet = {"All", "F._BT_.*", "S._BT_.*", "S*._radiance_an", ".*_an.*", ".*_ao.*", ".*_bn.*", ".*_bo.*", ".*_bn.*", ".*_co.*", ".*_cn.*", ".*_fn.*",".*_fo.*",
                     ".*_tn.*", ".*_tx.*"},
             defaultValue = "All"
     )
