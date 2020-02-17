@@ -130,7 +130,7 @@ public class L1cSynOpTest {
         l1cSynOp.setSourceProduct("olciProduct", olciProduct);
         l1cSynOp.setSourceProduct("slstrProduct", slstrProduct);
         Product result = l1cSynOp.getTargetProduct();
-        assertTrue(result.getName().startsWith("S3A_SY_1_SYN____20170313T120342_20170313T120643"));
+        assertTrue(result.getName().startsWith("S3A_SY_1_SYN____20170313T110342_20170313T110643"));
         assertTrue(result.getName().endsWith("0179_015_208_2520_LN2_O_NT____.SEN3"));
     }
 
