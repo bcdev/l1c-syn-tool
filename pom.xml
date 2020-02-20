@@ -8,6 +8,9 @@
     <artifactId>s3tbx-l1csyn-tool</artifactId>
     <packaging>pom</packaging>
     <version>2.6-SNAPSHOT</version>
+
+    <description>Sentinel-3 OLCI/SLSTR L1C Synergy Tool for S3TBX in SNAP</description>
+
     <modules>
         <module>l1csyn-coreg-lib</module>
         <module>s3tbx-l1csyn-op</module>
