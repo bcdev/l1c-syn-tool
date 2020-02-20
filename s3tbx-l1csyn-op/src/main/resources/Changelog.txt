@@ -1,6 +1,0 @@
-Changes in version 2.5:
-	- General performance improvement
-	- Fixed a bug with wrong endtime in default filename of L1C_Synergy product
-	- Added support to "fo/fn" bands
-	- Added support to OLCI full orbit input product
-	- Minor UI improvements
