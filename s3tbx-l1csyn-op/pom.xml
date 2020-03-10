@@ -133,12 +133,13 @@
             <version>${netbeans.version}</version>
         </dependency>
 
+        <!--
         <dependency>
             <groupId>org.esa.s3tbx</groupId>
             <artifactId>l1csyn-coreg-lib</artifactId>
             <version>0.3-SNAPSHOT</version>
         </dependency>
-
+        -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
