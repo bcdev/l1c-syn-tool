@@ -13,8 +13,10 @@ import java.util.Locale;
 
 public class L1cSynCoreg {
 
-    public static void main(String... args){
+    final private static String SLSTR_KEYWORD = "-slstrProduct";
+    final private static String OLCI_KEYWORD = "-olciProduct";
 
+    public static void main(String... args){
         try {
             run(args);
         } catch (Throwable e) {
@@ -53,5 +55,25 @@ public class L1cSynCoreg {
     }
 
 
+    private static File parseOlci(String... args){
+        String stringPath = null;
+        for (int i=0 ; i<args.length-1; i++) {
+            if (args[i].equals(OLCI_KEYWORD)){
+                 stringPath = args[i+1] ;
+            }
+        }
 
+        return new File(stringPath);
+    }
+
+    private static File parseSlsrt(String... args){
+        String stringPath = null;
+        for (int i=0 ; i<args.length-1; i++) {
+            if (args[i].equals(SLSTR_KEYWORD)){
+                stringPath = args[i+1] ;
+            }
+        }
+
+        return new File(stringPath);
+    }
 }
