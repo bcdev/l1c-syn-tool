@@ -74,7 +74,7 @@ public class SlstrMisrTransformation implements Serializable{
         String colVariableName = getColVariableName(netcdfFile);
         Variable rowVariable = netcdfFile.findVariable(rowVariableName);
         Variable colVariable = netcdfFile.findVariable(colVariableName);
-        TreeMap<int[], int[]> colRowMap = new TreeMap<>(new ComparatorIntArray());
+        TreeMap<int[], int[]> colRowMap = new TreeMap(new ComparatorIntArray());
         if (nLineOlcLength < 10000) {
             Array rowArray = rowVariable.read();
             Array colArray = colVariable.read();
@@ -138,7 +138,7 @@ public class SlstrMisrTransformation implements Serializable{
     private TreeMap getOlciMisrMap() throws IOException, InvalidRangeException {
         //should provide mapping between OLCI image grid and instrument grid
 
-        TreeMap<int[], int[]> olciMap = new TreeMap<>(new ComparatorIntArray());
+        TreeMap<int[], int[]> olciMap = new TreeMap(new ComparatorIntArray());
         String bandName = "/misreg_Oref_Oa17.nc";
         String path = this.misrPath;
         String misrBandFile = path + bandName;
@@ -225,7 +225,7 @@ public class SlstrMisrTransformation implements Serializable{
 
     TreeMap getSlstrOlciMap() throws InvalidRangeException, IOException {
         //Provides mapping between SLSTR image grid and OLCI image grid
-        TreeMap<int[], int[]> gridMapPixel = new TreeMap<>(new ComparatorIntArray() );
+        TreeMap<int[], int[]> gridMapPixel = new TreeMap(new ComparatorIntArray() );
         TreeMap misrOlciMap = getMisrOlciMap(); //3
         TreeMap olciImageMap = getOlciMisrMap(); // 4.2
         for (Iterator<Map.Entry<int[], int[]>> entries = misrOlciMap.entrySet().iterator(); entries.hasNext(); ) {
@@ -277,7 +277,7 @@ public class SlstrMisrTransformation implements Serializable{
         Number offsetAttribute = netcdfFile.findGlobalAttribute("start_offset").getNumericValue();
         System.out.println(offsetAttribute);
         System.out.println(filePath);
-        int offsetValue = (int) offsetAttribute;
+        int offsetValue = (int) offsetAttribute.intValue();
         netcdfFile.close();
         return  offsetValue;
     }
