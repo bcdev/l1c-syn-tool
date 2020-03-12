@@ -3,13 +3,8 @@ package org.esa.l1csyn.coreg.lib;
 import org.esa.s3tbx.l1csyn.op.L1cSynOp;
 import org.esa.snap.core.dataio.ProductIO;
 import org.esa.snap.core.datamodel.Product;
-import org.esa.snap.core.gpf.Operator;
-import org.esa.snap.core.gpf.main.CommandLineTool;
-import org.esa.snap.core.gpf.main.GPT;
-import org.esa.snap.core.util.SystemUtils;
 
 import java.io.File;
-import java.util.Locale;
 
 public class L1cSynCoreg {
 
@@ -34,9 +29,12 @@ public class L1cSynCoreg {
     public static void run(String[] args) throws Exception {
         Product slstrProduct = null;
         Product olciProduct = null;
-
+        System.out.println(1);
         L1cSynOp l1cSynOp = new L1cSynOp();
+        /*System.out.println(2);
+
         l1cSynOp.setParameterDefaultValues();
+        System.out.println(2);
 
         File olciProductPath = parseOlci(args);
         File slstrProductPath = parseSlsrt(args);
@@ -47,11 +45,17 @@ public class L1cSynCoreg {
             olciProduct = ProductIO.readProduct(olciProductPath);
         }
 
+        System.out.println(3);
 
 
         l1cSynOp.setSourceProduct("slstrSource",slstrProduct);
         l1cSynOp.setSourceProduct("olciSource",olciProduct);
         Product synProduct = l1cSynOp.getTargetProduct();
+
+        String currentLoc = System.getProperty("user.dir");
+        ProductIO.writeProduct(synProduct,currentLoc+"/l1c_output.nc","NetCDF4-CF");
+        System.out.println(4);*/
+
     }
 
 
@@ -59,7 +63,7 @@ public class L1cSynCoreg {
         String stringPath = null;
         for (int i=0 ; i<args.length-1; i++) {
             if (args[i].equals(OLCI_KEYWORD)){
-                 stringPath = args[i+1] ;
+                stringPath = args[i+1] ;
             }
         }
 

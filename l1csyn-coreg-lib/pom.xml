@@ -12,11 +12,37 @@
     <artifactId>l1csyn-coreg-lib</artifactId>
     <version>0.3-SNAPSHOT</version>
 
+    <build>
+        <plugins>
+            <plugin>
+                <!-- Build an executable JAR -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <mainClass>org.esa.l1csyn.coreg.lib.L1cSynCoreg</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencies>
         <dependency>
+            <groupId>edu.ucar</groupId>
+            <artifactId>netcdfAll</artifactId>
+            <version>5.0.0-beta6</version>
+        </dependency>
+
+        <!-- <dependency>
             <groupId>org.esa.s3tbx</groupId>
             <artifactId>s3tbx-l1csyn-op</artifactId>
             <version>2.6-SNAPSHOT</version>
-        </dependency>
+        </dependency> -->
     </dependencies>
 </project>
