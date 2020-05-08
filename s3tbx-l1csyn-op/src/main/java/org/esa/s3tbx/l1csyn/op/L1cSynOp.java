@@ -41,9 +41,9 @@ import java.util.regex.Pattern;
 public class L1cSynOp extends Operator {
 
     private long allowedTimeDiff = 200L;
-    private File misrFile = null;
-    private boolean duplicate = false;
-    private boolean fullMisr = false;
+    //private File misrFile = null;
+    //private boolean duplicate = false;
+    //private boolean fullMisr = false;
 
     @SourceProduct(alias = "olciProduct", label = "OLCI Product", description = "OLCI source product")
     private Product olciSource;
@@ -121,7 +121,7 @@ public class L1cSynOp extends Operator {
                     "If not given, the entire scene is used.")
     private String geoRegion;
 
-    /*@Parameter(alias = "MISRFile",label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
+    @Parameter(alias = "MISRFile",label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
     private File misrFile;
 
     @Parameter(alias = "duplicate", label = "duplicate pixel using MISR", description = "If set to true, during MISR geocoding, empty pixels will be filled with duplicates.",
@@ -130,7 +130,11 @@ public class L1cSynOp extends Operator {
 
     @Parameter(alias = "fullMISR",label = "use MISR for each band separately", description = "If set to true, during MISR geocoding, every SLSTR band geocoding will be calculated separately.",
             defaultValue =  "false")
-    private  boolean fullMisr;*/
+    private  boolean fullMisr;
+
+    @Parameter(alias = "formatMISR",label = "describes if provided MISR product is in new format", description = "If set to true, it is assumed that MISR product has new format.",
+            defaultValue =  "false")
+    private  boolean formatMisr;
 
     @Override
     public void initialize() throws OperatorException {
@@ -154,9 +158,9 @@ public class L1cSynOp extends Operator {
         if (misrFile != null) {
             String misrFormat = getMisrFormat(misrFile);
             try {
-                if (misrFormat.equals("new") && fullMisr == false) {
-                    SlstrMisrTransform misrTransformNadir = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3");
-                    SlstrMisrTransform misrTransformOblique = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao");
+                if (misrFormat.equals("valid") && fullMisr == false) {
+                    SlstrMisrTransform misrTransformNadir = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3", formatMisr);
+                    SlstrMisrTransform misrTransformOblique = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr);
                     TreeMap mapNadirS3 = misrTransformNadir.getSlstrOlciMap();
                     TreeMap mapObliqueAo = misrTransformOblique.getSlstrOlciMap();
                     HashMap misrParams = getMisrParams( null, null, mapNadirS3, null , null,null, mapObliqueAo, null , null);
@@ -165,16 +169,16 @@ public class L1cSynOp extends Operator {
                     misrSourceProductMap.put("slstrSource", slstrSource);
                     collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);
                 }
-                else if (misrFormat.equals("new") && fullMisr == true) {
-                    TreeMap mapOlciSlstrS1 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S1").getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS2 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S2").getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS3 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3").getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS4 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S4").getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS5 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S5").getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS6 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S6").getSlstrOlciMap();
-                    TreeMap mapOlciSlstrao = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao").getSlstrOlciMap();
-                    TreeMap mapOlciSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"bo").getSlstrOlciMap();
-                    TreeMap mapOlciSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"co").getSlstrOlciMap();
+                else if (misrFormat.equals("valid") && fullMisr == true) {
+                    TreeMap mapOlciSlstrS1 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S1", formatMisr).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS2 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S2", formatMisr).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS3 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3", formatMisr).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS4 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S4", formatMisr).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS5 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S5", formatMisr).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS6 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S6", formatMisr).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrao = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"bo", formatMisr).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"co", formatMisr).getSlstrOlciMap();
 
                     HashMap misrParams = getMisrParams( mapOlciSlstrS1, mapOlciSlstrS2, mapOlciSlstrS3, mapOlciSlstrS4 , mapOlciSlstrS5,mapOlciSlstrS6, mapOlciSlstrao, mapOlciSlstrbo, mapOlciSlstrco );
 
@@ -422,7 +426,7 @@ public class L1cSynOp extends Operator {
     private String getMisrFormat(File misrFile) {
         String format = null;
         if (misrFile.getAbsolutePath().endsWith("xfdumanifest.xml")) {
-            format = "new";
+            format = "valid";
         }
         if (format == null) {
             throw new OperatorException("Wrong MISR file format. Please specify path to xfdumanifest.xml of MISR product.");
