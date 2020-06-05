@@ -89,7 +89,7 @@ public class SlstrMisrTransform implements Serializable{
     }
 
 
-
+    /// step 1 updated juni 2020
     private TreeMap getSlstrImageMap(int x, int y) throws IOException, InvalidRangeException {
         // Provides mapping between SLSTR image grid(x,y) and SLSTR instrument grid(scan,pixel,detector)
         //x and y are dimensions of SLSTR L1B raster
@@ -105,12 +105,16 @@ public class SlstrMisrTransform implements Serializable{
         Array scanArray = scanVariable.read();
         Array pixelArray = pixelVariable.read();
         Array detectorArray = detectorVariable.read();
+        //add offset?
+        //Variable offsetScanVariable = netcdfFile.findVariable("l0_scan_offset_an");
+        //int scanOffset = offsetScanVariable.readScalarInt();
 
+        //
         for (int i = 0; i < x; i++) {
             for (int j = 0; j < y; j++) {
                 int[] imagePosition = {i,j};
-                short scan =  ((ArrayShort.D2) scanArray).get(j,i);
-                short pixel = ((ArrayShort.D2) pixelArray).get(j,i);
+                int scan =  ((ArrayShort.D2) scanArray).get(j,i);
+                int pixel = ((ArrayShort.D2) pixelArray).get(j,i);
                 byte detector = ((ArrayByte.D2) detectorArray).get(j,i);
                 int[] gridPosition = {scan, pixel, detector};
                 if (scan != -1 && pixel != -1 && detector != -1) {
@@ -122,7 +126,7 @@ public class SlstrMisrTransform implements Serializable{
     }
 
 
-
+    //step2
     private TreeMap getSlstrGridMisrMap(Map mapSlstr, boolean minimize) {
         //provides map between SLSTR instrument grid (scan,pixel,detector) and MISR file (row,col)
         TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray());
@@ -176,6 +180,8 @@ public class SlstrMisrTransform implements Serializable{
         String colVariableName = getColVariableName(netcdfFile);
         Variable rowVariable = netcdfFile.findVariable(rowVariableName);
         Variable colVariable = netcdfFile.findVariable(colVariableName);
+        Variable rowOffsetVariable = netcdfFile.findVariable("input_products_row_offset");
+        int rowOffset = rowOffsetVariable.readScalarInt();
         TreeMap<int[], int[]> colRowMap = new TreeMap<>(new ComparatorIntArray());
         if (nLineOlcLength < 10000) {
             Array rowArray = rowVariable.read();
@@ -189,7 +195,7 @@ public class SlstrMisrTransform implements Serializable{
                     for (int k = 0; k < nDetCamLength; k++) {
                         int[] position = {i, j, k};
                         // Type of variable of (row,col) might change with change of MISR format. Be careful here.
-                        row = ((ArrayInt.D3) rowArray).get(i, j, k);
+                        row = ((ArrayInt.D3) rowArray).get(i, j, k) + rowOffset;
                         col = ((ArrayShort.D3) colArray).get(i, j, k);
                         if (col >= 0 && row >= 0) {
                             if (row < slstrNumRows && col < slstrNumCols) {
@@ -218,7 +224,7 @@ public class SlstrMisrTransform implements Serializable{
                         for (int k = 0; k < nDetCamLength; k++) {
                             int[] position = {i, j, k};
                             // Type of variable of (row,col) might change with change of MISR format. Be careful here.
-                            row = ((ArrayInt.D3) rowArray).get(i, j, k);
+                            row = ((ArrayInt.D3) rowArray).get(i, j, k) + rowOffset;
                             col = ((ArrayShort.D3) colArray).get(i, j, k);
                             if (col >= 0 && row >= 0) {
                                 if (row < slstrNumRows && col < slstrNumCols) {
@@ -238,7 +244,7 @@ public class SlstrMisrTransform implements Serializable{
     //step 3 for orphan pixels
     private TreeMap<int[], int[]> getMisrOlciOrphanMap() throws IOException, InvalidRangeException {
         // provides mapping between MISR (row/orphan) and OLCI instrument grid (N_LINE_OLC/N_DET_CAM/N_CAM) from MISR product
-        String bandName = "/misregist_Oref_S5.nc";
+        String bandName = "/misregist_Oref_"+bandType+".nc";
 
         String path = this.misrPath;
         String misrBandFile = path + bandName;
@@ -262,10 +268,10 @@ public class SlstrMisrTransform implements Serializable{
             for (int j = 0; j < nLineOlcLength; j++) {
                 for (int k = 0; k < nDetCamLength; k++) {
                     int[] position = {i, j, k};
-                    if (orphanVariableName.matches("L1b_orphan_.._"+"an")) {
+                    if (orphanVariableName.matches("L1b_orphan_.._"+"a.")) {
                         row = ((ArrayInt.D3) rowArray).get(i,j,k) ;
                         orphan = ((ArrayShort.D3) orphanArray).get(i,j,k) ;
-                    } else if (orphanVariableName.matches("orphan_corresp_s._"+"an")) {
+                    } else if (orphanVariableName.matches("orphan_corresp_s._"+"a.")) {
                         row = ((ArrayInt.D3) rowArray).get(i,j,k);
                         orphan = ((ArrayInt.D3) orphanArray).get(i,j,k);
                     }
@@ -314,7 +320,7 @@ public class SlstrMisrTransform implements Serializable{
 
         Variable rowOffsetVariable = netcdfFile.findVariable("input_products_row_offset");
         int rowOffset = (int) rowOffsetVariable.readScalarInt();
-
+        rowOffset = 0 ;
         if (nLineOlcLength < 10000) {
             ArrayShort.D3 rowArray = (ArrayShort.D3) rowVariable.read();
             ArrayShort.D3 colArray = (ArrayShort.D3) colVariable.read();
@@ -323,7 +329,7 @@ public class SlstrMisrTransform implements Serializable{
                     for (int k = 0; k < nDetCamLength; k++) {
                         short row = rowArray.get(i, j, k);
                         short col = colArray.get(i, j, k);
-                        int rowNorm = row - rowOffset;
+                        int rowNorm = row + rowOffset;
                         if (rowNorm >= 0 && col >= 0) {
                             if (rowNorm < olciNumRows && col < olciNumCols) {
                                 int[] gridCoors = {i, j, k};
@@ -351,7 +357,7 @@ public class SlstrMisrTransform implements Serializable{
                         for (int k = 0; k < nDetCamLength; k++) {
                             short row = rowArray.get(i, j, k);
                             short col = colArray.get(i, j, k);
-                            int rowNorm = row - rowOffset;
+                            int rowNorm = row + rowOffset;
                             if ((rowNorm) >= 0 && col >= 0) {
                                 if ( (rowNorm)  < olciNumRows && col < olciNumCols) {
                                     int[] gridCoors = {i, j, k};
@@ -459,7 +465,7 @@ public class SlstrMisrTransform implements Serializable{
     private String getOrphanVariableName(NetcdfFile netcdfFile) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getName().matches("L1b_orphan_.._"+"an") || variable.getName().matches("orphan_corresp_s._"+"an") || variable.getName().matches("L1b_orphan_"+"an")) {
+            if (variable.getName().matches("L1b_orphan_.._"+"a.") || variable.getName().matches("orphan_corresp_s._"+"a.") || variable.getName().matches("L1b_orphan_"+"a.")) {
                 return variable.getName();
             }
         }

@@ -177,8 +177,8 @@ public class L1cSynOp extends Operator {
                     TreeMap mapOlciSlstrS5 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S5", formatMisr).getSlstrOlciMap();
                     TreeMap mapOlciSlstrS6 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S6", formatMisr).getSlstrOlciMap();
                     TreeMap mapOlciSlstrao = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"bo", formatMisr).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"co", formatMisr).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr).getSlstrOlciMap();
 
                     HashMap misrParams = getMisrParams( mapOlciSlstrS1, mapOlciSlstrS2, mapOlciSlstrS3, mapOlciSlstrS4 , mapOlciSlstrS5,mapOlciSlstrS6, mapOlciSlstrao, mapOlciSlstrbo, mapOlciSlstrco );
 
