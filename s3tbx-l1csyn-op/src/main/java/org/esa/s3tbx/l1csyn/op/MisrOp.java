@@ -133,19 +133,23 @@ public class MisrOp extends Operator {
                     targetTile.setSample(x,y,targetBand.getNoDataValue());
                     int[] position = {x, y};
                     int[] slstrGridPosition = (int[]) treeMap.get(position);
-                    if (slstrGridPosition != null) {
-                        double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]); // / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
-                        if (reflecValue  < 0 ) {
-                            reflecValue = targetBand.getNoDataValue();
+                    if (slstrGridPosition != null && slstrGridPosition[0]<slstrSourceProduct.getBand(targetBand.getName()).getRasterWidth() && slstrGridPosition[1]<slstrSourceProduct.getBand(targetBand.getName()).getRasterHeight() ) {
+                        try {
+                            double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]); // / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
+                            if (reflecValue < 0) {
+                                reflecValue = targetBand.getNoDataValue();
+                            }
+                            targetTile.setSample(x, y, reflecValue);
                         }
-                        targetTile.setSample(x,y, reflecValue);
+                        catch (Exception e){}
                     }
 
                 }
             }
-            if (duplicate) {
+            if (duplicate ) {
                 for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                     double duplicatePixel = getDuplicatedPixel(targetRectangle.x, y, targetBand, treeMap);
+                    //double duplicatePixel = 0d ;
                     for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                         if (targetTile.getSampleDouble(x, y) != targetBand.getNoDataValue()) {
                             duplicatePixel = targetTile.getSampleDouble(x, y);
@@ -197,7 +201,7 @@ public class MisrOp extends Operator {
         double duplicatePixel;
         int [] position = {x, y};
         int[] slstrGridPosition = (int[]) treeMap.get(position);
-        if (slstrGridPosition != null) {
+        if (slstrGridPosition != null && slstrGridPosition[0]<slstrSourceProduct.getBand(targetBand.getName()).getRasterWidth() && slstrGridPosition[1]<slstrSourceProduct.getBand(targetBand.getName()).getRasterHeight()) {
             duplicatePixel = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
         }
         else {
@@ -206,7 +210,8 @@ public class MisrOp extends Operator {
                 int[] tempPosition = {x, y};
                 slstrGridPosition = (int[]) treeMap.get(tempPosition);
             }
-            if (slstrGridPosition != null) {
+            if (slstrGridPosition != null && slstrGridPosition[0]<slstrSourceProduct.getBand(targetBand.getName()).getRasterWidth() && slstrGridPosition[1]<slstrSourceProduct.getBand(targetBand.getName()).getRasterHeight()) {
+
                 duplicatePixel = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
             }
             else {
