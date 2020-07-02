@@ -94,10 +94,11 @@ public class SlstrMisrTransform implements Serializable{
     }
 
 
-    /// step 1 updated juni 2020
+    /// step 1 updated juni 2020, reupdated ~1july 2020
     private TreeMap getSlstrImageMap(int x, int y) throws IOException, InvalidRangeException {
         // Provides mapping between SLSTR image grid(x,y) and SLSTR instrument grid(scan,pixel,detector)
         //x and y are dimensions of SLSTR L1B raster
+        int SLSTRoffset = -110;
         TreeMap<int[], int[]> slstrMap = new TreeMap<>(new ComparatorIntArray());
 
         String path = slstrImageProduct.getFileLocation().getParent();
@@ -117,7 +118,7 @@ public class SlstrMisrTransform implements Serializable{
         //
         for (int i = 0; i < x; i++) {
             for (int j = 0; j < y; j++) {
-                int[] imagePosition = {i,j};
+                int[] imagePosition = {i-SLSTRoffset,j};
                 short scan =  ((ArrayShort.D2) scanArray).get(j,i);
                 short pixel = ((ArrayShort.D2) pixelArray).get(j,i);
                 byte detector = ((ArrayByte.D2) detectorArray).get(j,i);
@@ -291,7 +292,7 @@ public class SlstrMisrTransform implements Serializable{
     // Step 4.2
     private TreeMap getOlciMisrMap() throws IOException, InvalidRangeException {
         //should provide mapping between OLCI image grid and instrument grid
-
+        int OLCIOffset = 0;
         TreeMap<int[], int[]> olciMap = new TreeMap<>(new ComparatorIntArray());
         String bandName = "/misreg_Oref_Oa17.nc";
         String path = this.misrPath;
@@ -332,7 +333,7 @@ public class SlstrMisrTransform implements Serializable{
                         if (rowNorm >= 0 && col >= 0) {
                             if (rowNorm < olciNumRows && col < olciNumCols) {
                                 int[] gridCoors = {i, j, k};
-                                int[] imageCoors = {col, rowNorm};
+                                int[] imageCoors = {col-OLCIOffset, rowNorm};
                                 olciMap.put(gridCoors, imageCoors);
                             }
                         }
@@ -360,7 +361,7 @@ public class SlstrMisrTransform implements Serializable{
                             if ((rowNorm) >= 0 && col >= 0) {
                                 if ( (rowNorm)  < olciNumRows && col < olciNumCols) {
                                     int[] gridCoors = {i, j, k};
-                                    int[] imageCoors = {col, rowNorm};
+                                    int[] imageCoors = {col+OLCIOffset, rowNorm};
                                     olciMap.put(gridCoors, imageCoors);
                                 }
                             }
@@ -466,7 +467,7 @@ public class SlstrMisrTransform implements Serializable{
             int[] mjk = (int[]) misrOlciMap.get(rowCol);
             if (mjk != null) {
                 if (mjk[0] == camIndex) {
-                    int[] camCoors = new int[]{mjk[1],mjk[2]};
+                    int[] camCoors = new int[]{mjk[2],mjk[1]};
                     gridMapPixel.put(camCoors,entry.getKey());
                 }
             }

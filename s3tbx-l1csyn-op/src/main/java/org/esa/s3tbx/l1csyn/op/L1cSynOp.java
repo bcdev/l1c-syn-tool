@@ -136,6 +136,10 @@ public class L1cSynOp extends Operator {
             defaultValue =  "false")
     private  boolean formatMisr;
 
+    @Parameter(alias = "numCam",label = "camera ID for tests", description = "tests only",
+            defaultValue =  "0")
+    private  int numCam;
+
     @Override
     public void initialize() throws OperatorException {
 
@@ -162,8 +166,14 @@ public class L1cSynOp extends Operator {
                     SlstrMisrTransform misrTransformNadir = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3", formatMisr);
                     SlstrMisrTransform misrTransformOblique = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr);
                     // TODO : revert after tests
-                    TreeMap mapNadirS3 = misrTransformNadir.getSlstrOlciMap();
-                    //TreeMap mapNadirS3 = misrTransformNadir.getSlstrOlciSingleCameraMap(0);
+                    //
+                    TreeMap mapNadirS3;
+                    if (numCam>=0 && numCam<5) {
+                         mapNadirS3 = misrTransformNadir.getSlstrOlciInstrumentMap(numCam);
+                    }
+                    else {
+                         mapNadirS3 = misrTransformNadir.getSlstrOlciMap();
+                    }
                     TreeMap mapObliqueAo = misrTransformOblique.getSlstrOlciMap();
                     HashMap misrParams = getMisrParams( null, null, mapNadirS3, null , null,null, mapObliqueAo, null , null);
                     HashMap<String, Product> misrSourceProductMap = new HashMap<>();
