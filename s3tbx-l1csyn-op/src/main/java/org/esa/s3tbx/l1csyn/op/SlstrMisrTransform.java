@@ -26,10 +26,11 @@ public class SlstrMisrTransform implements Serializable{
     private int slstrNumCols;
     private boolean newTransform = false;
     private int minScan = 9999999;
+    private int SLSTRoffset = -0;
 
     private int N_DET_CAM = 740;
 
-    SlstrMisrTransform(Product olciImageProduct, Product slstrImageProduct, File misrManifest, String bandType, boolean newTransform) {
+    SlstrMisrTransform(Product olciImageProduct, Product slstrImageProduct, File misrManifest, String bandType, boolean newTransform,int SLSTRoffset) {
         this.olciImageProduct = olciImageProduct;
         this.slstrImageProduct = slstrImageProduct;
         this.misrPath = misrManifest.getParent();
@@ -98,7 +99,6 @@ public class SlstrMisrTransform implements Serializable{
     private TreeMap getSlstrImageMap(int x, int y) throws IOException, InvalidRangeException {
         // Provides mapping between SLSTR image grid(x,y) and SLSTR instrument grid(scan,pixel,detector)
         //x and y are dimensions of SLSTR L1B raster
-        int SLSTRoffset = -110;
         TreeMap<int[], int[]> slstrMap = new TreeMap<>(new ComparatorIntArray());
 
         String path = slstrImageProduct.getFileLocation().getParent();

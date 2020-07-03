@@ -5,6 +5,7 @@ import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Polygon;
 import org.apache.commons.lang.ArrayUtils;
 import org.esa.snap.core.dataio.ProductIO;
+import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.MetadataElement;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductData;
@@ -163,8 +164,9 @@ public class L1cSynOp extends Operator {
             String misrFormat = getMisrFormat(misrFile);
             try {
                 if (misrFormat.equals("valid") && fullMisr == false) {
-                    SlstrMisrTransform misrTransformNadir = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3", formatMisr);
-                    SlstrMisrTransform misrTransformOblique = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr);
+                    int SLSTROffset = getSLSLTROffset();
+                    SlstrMisrTransform misrTransformNadir = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3", formatMisr,-SLSTROffset);
+                    SlstrMisrTransform misrTransformOblique = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr,0-SLSTROffset);
                     // TODO : revert after tests
                     //
                     TreeMap mapNadirS3;
@@ -193,15 +195,16 @@ public class L1cSynOp extends Operator {
                     System.out.println(camMap4.size()+"CAM4");*/
                 }
                 else if (misrFormat.equals("valid") && fullMisr == true) {
-                    TreeMap mapOlciSlstrS1 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S1", formatMisr).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS2 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S2", formatMisr).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS3 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3", formatMisr).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS4 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S4", formatMisr).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS5 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S5", formatMisr).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS6 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S6", formatMisr).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrao = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr).getSlstrOlciMap();
+                    int SLSTROffset = getSLSLTROffset();
+                    TreeMap mapOlciSlstrS1 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S1", formatMisr,-SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS2 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S2", formatMisr,-SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS3 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3", formatMisr,-SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS4 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S4", formatMisr,-SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS5 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S5", formatMisr,-SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS6 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S6", formatMisr,-SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrao = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr,-SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr,-SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr,-SLSTROffset).getSlstrOlciMap();
 
                     HashMap misrParams = getMisrParams( mapOlciSlstrS1, mapOlciSlstrS2, mapOlciSlstrS3, mapOlciSlstrS4 , mapOlciSlstrS5,mapOlciSlstrS6, mapOlciSlstrao, mapOlciSlstrbo, mapOlciSlstrco );
 
@@ -455,6 +458,37 @@ public class L1cSynOp extends Operator {
             throw new OperatorException("Wrong MISR file format. Please specify path to xfdumanifest.xml of MISR product.");
         }
         return format;
+    }
+
+    private int getSLSLTROffset() throws IOException{
+        Band olciBand = olciSource.getBand("Oa17_radiance");
+        Band olciLatBand = olciSource.getBand("latitude");
+        Band slstrLatBand = slstrSource.getBand("latitude_an");
+        Band slstrBand = slstrSource.getBand("S3_radiance_an");
+        int xPos = 0;
+        double lat =0;
+        olciBand.readRasterDataFully();
+        olciLatBand.readRasterDataFully();
+        slstrLatBand.readRasterDataFully();
+        while (xPos==0){
+            for (int i=0;  i<olciBand.getRasterWidth(); i++){
+                if (olciBand.isPixelValid(i,0)){
+                    lat = olciLatBand.getPixelDouble(i,0);
+                    xPos = 1;
+                    break;
+                }
+            }
+        }
+        for (int i=1 ; i <slstrLatBand.getRasterWidth();i++){
+            float prev = slstrLatBand.getPixelFloat(0,0);
+            float current = slstrLatBand.getPixelFloat(i,0);
+            if (prev>=lat && lat>=current){
+                return i;
+            }
+
+        }
+
+        return 0;
     }
 
     private String readShapeFile(File shapeFile) {
