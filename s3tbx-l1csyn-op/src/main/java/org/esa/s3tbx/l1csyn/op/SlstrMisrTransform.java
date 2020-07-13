@@ -416,11 +416,6 @@ public class SlstrMisrTransform implements Serializable{
                 if (mjk != null) {
                     int[] xy = (int[]) olciImageMap.get(mjk);
                     if (xy!= null) {
-
-                        if (gridMapPixel.containsKey(xy) && test1==0) {
-                             //System.out.println("HAS KEY 1"+bandType);
-                            test1 = 1;
-                        }
                         gridMapPixel.put(xy, entry.getKey());
                     }
                 }
@@ -435,10 +430,7 @@ public class SlstrMisrTransform implements Serializable{
                     int[] xy = (int[]) olciImageOrphanMap.get(mjk);
                     if (xy!= null) {
 
-                        if (gridMapOrphan.containsKey(xy) && test2==0) {
-                            //System.out.println("HAS KEY 2"+bandType);
-                            test2 = 1;
-                        }
+
                         gridMapOrphan.put(xy, entry.getKey());
                     }
                 }
@@ -479,23 +471,11 @@ public class SlstrMisrTransform implements Serializable{
         TreeMap<int[], int[]> gridMapPixel = new TreeMap<>(new ComparatorIntArray() );
         TreeMap slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight()); //1
         TreeMap slstrMisrMap = getSlstrGridMisrMap(slstrImageMap,true); //2
-        TreeMap misrOlciMap = getMisrOlciMap(); //3
-        TreeMap olciImageMap = getOlciMisrMap();
         for (Iterator<Map.Entry<int[], int[]>> entries = slstrImageMap.entrySet().iterator(); entries.hasNext(); ) {
             Map.Entry<int[], int[]> entry = entries.next();
             int[] slstrScanPixDet = entry.getValue();
             int[] rowCol = (int[]) slstrMisrMap.get(slstrScanPixDet);
             gridMapPixel.put(rowCol,entry.getKey());
-            /*int[] mjk = (int[]) misrOlciMap.get(rowCol);
-            if (mjk != null && mjk[0] == camIndex ) {
-
-                int[] xy = (int[]) olciImageMap.get(mjk);
-                if (xy!= null) {
-                    gridMapPixel.put(xy, entry.getKey());
-                }
-            }
-
-             */
         }
         return gridMapPixel;
     }
