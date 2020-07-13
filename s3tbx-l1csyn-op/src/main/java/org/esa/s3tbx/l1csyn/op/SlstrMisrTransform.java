@@ -485,7 +485,8 @@ public class SlstrMisrTransform implements Serializable{
             Map.Entry<int[], int[]> entry = entries.next();
             int[] slstrScanPixDet = entry.getValue();
             int[] rowCol = (int[]) slstrMisrMap.get(slstrScanPixDet);
-            int[] mjk = (int[]) misrOlciMap.get(rowCol);
+            gridMapPixel.put(rowCol,entry.getKey());
+            /*int[] mjk = (int[]) misrOlciMap.get(rowCol);
             if (mjk != null && mjk[0] == camIndex ) {
 
                 int[] xy = (int[]) olciImageMap.get(mjk);
@@ -493,6 +494,8 @@ public class SlstrMisrTransform implements Serializable{
                     gridMapPixel.put(xy, entry.getKey());
                 }
             }
+
+             */
         }
         return gridMapPixel;
     }

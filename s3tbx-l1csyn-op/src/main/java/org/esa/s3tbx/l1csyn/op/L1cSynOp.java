@@ -134,11 +134,11 @@ public class L1cSynOp extends Operator {
     private  boolean fullMisr;
 
     @Parameter(alias = "formatMISR",label = "describes if provided MISR product is in new format", description = "If set to true, it is assumed that MISR product has new format.",
-            defaultValue =  "false")
+            defaultValue =  "true")
     private  boolean formatMisr;
 
-    @Parameter(alias = "numCam",label = "camera ID for tests", description = "tests only",
-            defaultValue =  "0")
+    @Parameter(alias = "numCam",label = "camera ID for tests", description = "For the tests of the intermediate cameras, use 0-4 range. If set to 5, provide full MISR image. This is test option only",
+            defaultValue =  "99")
     private  int numCam;
 
     @Override
@@ -164,7 +164,9 @@ public class L1cSynOp extends Operator {
             String misrFormat = getMisrFormat(misrFile);
             try {
                 if (misrFormat.equals("valid") && fullMisr == false) {
+                    //SLSTR offset
                     int SLSTROffset = getSLSLTROffset();
+                    System.out.println(SLSTROffset+" SLSTR offset found");
                     SlstrMisrTransform misrTransformNadir = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3", formatMisr,-SLSTROffset);
                     SlstrMisrTransform misrTransformOblique = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr,0-SLSTROffset);
                     // TODO : revert after tests
@@ -172,6 +174,9 @@ public class L1cSynOp extends Operator {
                     TreeMap mapNadirS3;
                     if (numCam>=0 && numCam<5) {
                          mapNadirS3 = misrTransformNadir.getSlstrOlciInstrumentMap(numCam);
+                    }
+                    else if (numCam==5){
+                        mapNadirS3 = misrTransformNadir.getSlstrOlciSingleCameraMap(numCam);
                     }
                     else {
                          mapNadirS3 = misrTransformNadir.getSlstrOlciMap();
@@ -460,6 +465,7 @@ public class L1cSynOp extends Operator {
         return format;
     }
 
+    // calculates offset between SLSTR and OLCI products
     private int getSLSLTROffset() throws IOException{
         Band olciBand = olciSource.getBand("Oa17_radiance");
         Band olciLatBand = olciSource.getBand("latitude");
