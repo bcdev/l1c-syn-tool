@@ -17,6 +17,7 @@ import org.esa.snap.core.gpf.annotations.OperatorMetadata;
 import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
+import org.esa.snap.core.util.StopWatch;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.ContentFeatureCollection;
@@ -90,7 +91,7 @@ public class L1cSynOp extends Operator {
     @Parameter(alias = "bandsSlstr",
             label = "SLSTR raster data",
             description = "Predefined regular expressions for selection of OLCI bands in the output product. Multiple selection is possible.",
-            valueSet = {"All", "F._BT_.*", "S._BT_.*", "S*._radiance_an", ".*_an.*", ".*_ao.*", ".*_bn.*", ".*_bo.*", ".*_bn.*", ".*_co.*", ".*_cn.*", ".*_fn.*",".*_fo.*",
+            valueSet = {"All", "F._BT_.*", "S._BT_.*", "S*._radiance_an", ".*_an.*", ".*_ao.*", ".*_bn.*", ".*_bo.*", ".*_bn.*", ".*_co.*", ".*_cn.*", ".*_fn.*", ".*_fo.*",
                     ".*_tn.*", ".*_tx.*"},
             defaultValue = "All"
     )
@@ -122,24 +123,100 @@ public class L1cSynOp extends Operator {
                     "If not given, the entire scene is used.")
     private String geoRegion;
 
-    @Parameter(alias = "MISRFile",label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
+    @Parameter(alias = "MISRFile", label = "MISRfile", description = "Optional MISR file which may be used for coregistration of OLCI and SLSTR products")
     private File misrFile;
 
     @Parameter(alias = "duplicate", label = "duplicate pixel using MISR", description = "If set to true, during MISR geocoding, empty pixels will be filled with duplicates.",
             defaultValue = "false")
     private boolean duplicate;
 
-    @Parameter(alias = "fullMISR",label = "use MISR for each band separately", description = "If set to true, during MISR geocoding, every SLSTR band geocoding will be calculated separately.",
-            defaultValue =  "false")
-    private  boolean fullMisr;
+    @Parameter(alias = "fullMISR", label = "use MISR for each band separately", description = "If set to true, during MISR geocoding, every SLSTR band geocoding will be calculated separately.",
+            defaultValue = "false")
+    private boolean fullMisr;
 
-    @Parameter(alias = "formatMISR",label = "describes if provided MISR product is in new format", description = "If set to true, it is assumed that MISR product has new format.",
-            defaultValue =  "true")
-    private  boolean formatMisr;
+    @Parameter(alias = "formatMISR", label = "describes if provided MISR product is in new format", description = "If set to true, it is assumed that MISR product has new format.",
+            defaultValue = "true")
+    private boolean formatMisr;
 
-    @Parameter(alias = "numCam",label = "camera ID for tests", description = "For the tests of the intermediate cameras, use 0-4 range. If set to 5, provide full MISR image. This is test option only",
-            defaultValue =  "99")
-    private  int numCam;
+    @Parameter(alias = "numCam", label = "camera ID for tests", description = "For the tests of the intermediate cameras, use 0-4 range. If set to 5, provide full MISR image. This is test option only",
+            defaultValue = "99")
+    private int numCam;
+
+    private static Map<String, ProductData.UTC> getStartEndDate(Product slstrSource, Product olciSource) {
+        HashMap<String, ProductData.UTC> dateMap = new HashMap<>();
+        String startDateString;
+        String endDateString;
+        ProductData.UTC startDateUTC;
+        ProductData.UTC endDateUTC;
+
+        DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+        final long slstrStartTime = slstrSource.getStartTime().getAsDate().getTime();
+        final long olciStartTime = olciSource.getStartTime().getAsDate().getTime();
+        if (slstrStartTime < olciStartTime) {
+            startDateUTC = slstrSource.getStartTime();
+        } else {
+            startDateUTC = olciSource.getStartTime();
+        }
+        final long slstrEndTime = slstrSource.getStartTime().getAsDate().getTime();
+        final long olciEndTime = olciSource.getStartTime().getAsDate().getTime();
+        if (slstrEndTime > olciEndTime) {
+            endDateUTC = slstrSource.getEndTime();
+        } else {
+            endDateUTC = olciSource.getEndTime();
+        }
+        dateMap.put("startDate", startDateUTC);
+        dateMap.put("endDate", endDateUTC);
+        return dateMap;
+    }
+
+    public static String getSynName(Product slstrSource, Product olciSource) throws OperatorException {
+        // pattern is MMM_SS_L_TTTTTT_yyyymmddThhmmss_YYYYMMDDTHHMMSS_yyyyMMDDTHHMMSS_<instance ID>_GGG_<class ID>.<extension>
+        if (slstrSource == null || olciSource == null) {
+            return "L1C";
+        }
+
+        String slstrName = slstrSource.getName();
+        String olciName = olciSource.getName();
+
+        if (slstrName.length() < 81 || olciName.length() < 81) {
+            return "L1C";
+        }
+
+        StringBuilder synName = new StringBuilder();
+        if (olciName.contains("S3A") && slstrName.contains("S3A")) {
+            synName.append("S3A_SY_1_SYN____");
+        } else if (olciName.contains("S3B") && slstrName.contains("S3B")) {
+            synName.append("S3B_SY_1_SYN____");
+        } else {
+            synName.append("________________");
+        }
+        Map<String, ProductData.UTC> startEndDateMap = getStartEndDate(slstrSource, olciSource);
+        DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        Date startDate = startEndDateMap.get("startDate").getAsDate();
+        String dateStringStart = dateFormat.format(startDate);
+        Date endDate = startEndDateMap.get("endDate").getAsDate();
+        String dateStringEnd = dateFormat.format(endDate);
+        synName.append(dateStringStart);
+        synName.append("_");
+        synName.append(dateStringEnd);
+        synName.append("_");
+
+        Date date = new Date();
+        String currentDate = dateFormat.format(date);
+        synName.append(currentDate);
+        synName.append("_");
+        String instanceString = slstrSource.getName().substring(64, 81);
+        synName.append(instanceString);
+        synName.append("_");
+        synName.append("LN2_");
+        synName.append("O_NT_"); /// Operational, non-time-critical
+        String slstrBaseline = "___"; //slstrSource.getName().substring(91,94); //todo: clarify if there should be any baseline
+        synName.append(slstrBaseline);
+        synName.append(".SEN3");
+        return synName.toString();
+    }
 
     @Override
     public void initialize() throws OperatorException {
@@ -166,23 +243,21 @@ public class L1cSynOp extends Operator {
                 if (misrFormat.equals("valid") && fullMisr == false) {
                     //SLSTR offset
                     int SLSTROffset = getSLSLTROffset();
-                    System.out.println(SLSTROffset+" SLSTR offset found");
-                    SlstrMisrTransform misrTransformNadir = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3", formatMisr,-SLSTROffset);
-                    SlstrMisrTransform misrTransformOblique = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr,0-SLSTROffset);
+                    System.out.println(SLSTROffset + " SLSTR offset found");
+                    SlstrMisrTransform misrTransformNadir = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S3", formatMisr, -SLSTROffset);
+                    SlstrMisrTransform misrTransformOblique = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, 0 - SLSTROffset);
                     // TODO : revert after tests
                     //
                     TreeMap mapNadirS3;
-                    if (numCam>=0 && numCam<5) {
-                         mapNadirS3 = misrTransformNadir.getSlstrOlciInstrumentMap(numCam);
-                    }
-                    else if (numCam==5){
+                    if (numCam >= 0 && numCam < 5) {
+                        mapNadirS3 = misrTransformNadir.getSlstrOlciInstrumentMap(numCam);
+                    } else if (numCam == 5) {
                         mapNadirS3 = misrTransformNadir.getSlstrOlciSingleCameraMap(numCam);
-                    }
-                    else {
-                         mapNadirS3 = misrTransformNadir.getSlstrOlciMap();
+                    } else {
+                        mapNadirS3 = misrTransformNadir.getSlstrOlciMap();
                     }
                     TreeMap mapObliqueAo = misrTransformOblique.getSlstrOlciMap();
-                    HashMap misrParams = getMisrParams( null, null, mapNadirS3, null , null,null, mapObliqueAo, null , null);
+                    HashMap misrParams = getMisrParams(null, null, mapNadirS3, null, null, null, mapObliqueAo, null, null);
                     HashMap<String, Product> misrSourceProductMap = new HashMap<>();
                     misrSourceProductMap.put("olciSource", olciSource);
                     misrSourceProductMap.put("slstrSource", slstrSource);
@@ -198,28 +273,26 @@ public class L1cSynOp extends Operator {
                     System.out.println(camMap2.size()+"CAM2");
                     System.out.println(camMap3.size()+"CAM3");
                     System.out.println(camMap4.size()+"CAM4");*/
-                }
-                else if (misrFormat.equals("valid") && fullMisr == true) {
+                } else if (misrFormat.equals("valid") && fullMisr == true) {
                     int SLSTROffset = getSLSLTROffset();
-                    TreeMap mapOlciSlstrS1 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S1", formatMisr,-SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS2 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S2", formatMisr,-SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS3 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S3", formatMisr,-SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS4 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S4", formatMisr,-SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS5 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S5", formatMisr,-SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS6 = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"S6", formatMisr,-SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrao = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr,-SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr,-SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile,"ao", formatMisr,-SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS1 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S1", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS2 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S2", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS3 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S3", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS4 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S4", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS5 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S5", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrS6 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S6", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrao = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    TreeMap mapOlciSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
 
-                    HashMap misrParams = getMisrParams( mapOlciSlstrS1, mapOlciSlstrS2, mapOlciSlstrS3, mapOlciSlstrS4 , mapOlciSlstrS5,mapOlciSlstrS6, mapOlciSlstrao, mapOlciSlstrbo, mapOlciSlstrco );
+                    HashMap misrParams = getMisrParams(mapOlciSlstrS1, mapOlciSlstrS2, mapOlciSlstrS3, mapOlciSlstrS4, mapOlciSlstrS5, mapOlciSlstrS6, mapOlciSlstrao, mapOlciSlstrbo, mapOlciSlstrco);
 
                     HashMap<String, Product> misrSourceProductMap = new HashMap<>();
                     misrSourceProductMap.put("olciSource", olciSource);
                     misrSourceProductMap.put("slstrSource", slstrSource);
 
                     collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);
-                }
-                else {
+                } else {
                     throw new OperatorException("MISR file information is not read correctly");
                 }
             } catch (InvalidRangeException e1) {
@@ -267,20 +340,20 @@ public class L1cSynOp extends Operator {
         l1cTarget.setDescription("SENTINEL-3 SYN Level 1C Product");
     }
 
-    private HashMap getMisrParams(TreeMap S1PixelMap, TreeMap S2PixelMap, TreeMap S3PixelMap, TreeMap S4PixelMap, TreeMap S5PixelMap, TreeMap S6PixelMap,TreeMap aoPixelMap, TreeMap boPixelMap, TreeMap coPixelMap) {
+    private HashMap getMisrParams(TreeMap S1PixelMap, TreeMap S2PixelMap, TreeMap S3PixelMap, TreeMap S4PixelMap, TreeMap S5PixelMap, TreeMap S6PixelMap, TreeMap aoPixelMap, TreeMap boPixelMap, TreeMap coPixelMap) {
         HashMap<String, Object> misrParams = new HashMap<>();
-        misrParams.put("duplicate",duplicate);
-        misrParams.put("singlePixelMap",!fullMisr);
+        misrParams.put("duplicate", duplicate);
+        misrParams.put("singlePixelMap", !fullMisr);
 
-        misrParams.put("S1PixelMap",S1PixelMap);
-        misrParams.put("S2PixelMap",S2PixelMap);
-        misrParams.put("S3PixelMap",S3PixelMap);
-        misrParams.put("S4PixelMap",S4PixelMap);
-        misrParams.put("S5PixelMap",S5PixelMap);
-        misrParams.put("S6PixelMap",S6PixelMap);
-        misrParams.put("aoPixelMap",aoPixelMap);
-        misrParams.put("boPixelMap",boPixelMap);
-        misrParams.put("coPixelMap",coPixelMap);
+        misrParams.put("S1PixelMap", S1PixelMap);
+        misrParams.put("S2PixelMap", S2PixelMap);
+        misrParams.put("S3PixelMap", S3PixelMap);
+        misrParams.put("S4PixelMap", S4PixelMap);
+        misrParams.put("S5PixelMap", S5PixelMap);
+        misrParams.put("S6PixelMap", S6PixelMap);
+        misrParams.put("aoPixelMap", aoPixelMap);
+        misrParams.put("boPixelMap", boPixelMap);
+        misrParams.put("coPixelMap", coPixelMap);
         return misrParams;
     }
 
@@ -311,7 +384,7 @@ public class L1cSynOp extends Operator {
             for (String maskName : maskNames) {
                 Matcher matcher = pattern.matcher(maskName);
                 if (!matcher.matches()) {
-                    if (l1cTarget.getMaskGroup().get(maskName)!=null) {
+                    if (l1cTarget.getMaskGroup().get(maskName) != null) {
                         l1cTarget.getMaskGroup().remove(l1cTarget.getMaskGroup().get(maskName));
                     }
                 }
@@ -367,34 +440,6 @@ public class L1cSynOp extends Operator {
         }
     }
 
-    private static Map<String, ProductData.UTC> getStartEndDate(Product slstrSource, Product olciSource) {
-        HashMap<String, ProductData.UTC> dateMap = new HashMap<>();
-        String startDateString;
-        String endDateString;
-        ProductData.UTC startDateUTC;
-        ProductData.UTC endDateUTC;
-
-        DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
-        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-        final long slstrStartTime = slstrSource.getStartTime().getAsDate().getTime();
-        final long olciStartTime = olciSource.getStartTime().getAsDate().getTime();
-        if (slstrStartTime < olciStartTime) {
-            startDateUTC = slstrSource.getStartTime();
-        } else {
-            startDateUTC = olciSource.getStartTime();
-        }
-        final long slstrEndTime = slstrSource.getStartTime().getAsDate().getTime();
-        final long olciEndTime = olciSource.getStartTime().getAsDate().getTime();
-        if (slstrEndTime > olciEndTime) {
-            endDateUTC = slstrSource.getEndTime();
-        } else {
-            endDateUTC = olciSource.getEndTime();
-        }
-        dateMap.put("startDate", startDateUTC);
-        dateMap.put("endDate", endDateUTC);
-        return dateMap;
-    }
-
     private void fixSlstrProductType() {
         //This method was used before SNAP v.6.0.9 in order to ensure that SLSTR product is opened in correct format.
         String filePath = slstrSource.getFileLocation().toString();
@@ -404,54 +449,6 @@ public class L1cSynOp extends Operator {
         } catch (IOException e2) {
             throw new OperatorException("Can not reopen SLSTR product.");
         }
-    }
-
-    public static String getSynName(Product slstrSource, Product olciSource) throws OperatorException {
-        // pattern is MMM_SS_L_TTTTTT_yyyymmddThhmmss_YYYYMMDDTHHMMSS_yyyyMMDDTHHMMSS_<instance ID>_GGG_<class ID>.<extension>
-        if (slstrSource == null || olciSource == null) {
-            return "L1C";
-        }
-
-        String slstrName = slstrSource.getName();
-        String olciName = olciSource.getName();
-
-        if (slstrName.length() < 81 || olciName.length() < 81) {
-            return "L1C";
-        }
-
-        StringBuilder synName = new StringBuilder();
-        if (olciName.contains("S3A") && slstrName.contains("S3A")) {
-            synName.append("S3A_SY_1_SYN____");
-        } else if (olciName.contains("S3B") && slstrName.contains("S3B")) {
-            synName.append("S3B_SY_1_SYN____");
-        } else {
-            synName.append("________________");
-        }
-        Map<String, ProductData.UTC> startEndDateMap = getStartEndDate(slstrSource, olciSource);
-        DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        Date startDate = startEndDateMap.get("startDate").getAsDate();
-        String dateStringStart = dateFormat.format(startDate);
-        Date endDate = startEndDateMap.get("endDate").getAsDate();
-        String dateStringEnd = dateFormat.format(endDate);
-        synName.append(dateStringStart);
-        synName.append("_");
-        synName.append(dateStringEnd);
-        synName.append("_");
-
-        Date date = new Date();
-        String currentDate = dateFormat.format(date);
-        synName.append(currentDate);
-        synName.append("_");
-        String instanceString = slstrSource.getName().substring(64, 81);
-        synName.append(instanceString);
-        synName.append("_");
-        synName.append("LN2_");
-        synName.append("O_NT_"); /// Operational, non-time-critical
-        String slstrBaseline = "___"; //slstrSource.getName().substring(91,94); //todo: clarify if there should be any baseline
-        synName.append(slstrBaseline);
-        synName.append(".SEN3");
-        return synName.toString();
     }
 
     private String getMisrFormat(File misrFile) {
@@ -466,32 +463,36 @@ public class L1cSynOp extends Operator {
     }
 
     // calculates offset between SLSTR and OLCI products
-    private int getSLSLTROffset() throws IOException{
-        Band olciBand = olciSource.getBand("Oa17_radiance");
-        Band olciLatBand = olciSource.getBand("latitude");
-        Band slstrLatBand = slstrSource.getBand("latitude_an");
-        Band slstrBand = slstrSource.getBand("S3_radiance_an");
-        int xPos = 0;
-        double lat =0;
-        olciBand.readRasterDataFully();
-        olciLatBand.readRasterDataFully();
-        slstrLatBand.readRasterDataFully();
-        while (xPos==0){
-            for (int i=0;  i<olciBand.getRasterWidth(); i++){
-                if (olciBand.isPixelValid(i,0)){
-                    lat = olciLatBand.getPixelDouble(i,0);
-                    xPos = 1;
-                    break;
-                }
+    private int getSLSLTROffset() throws IOException {
+        final Band flagBand = olciSource.getBand("quality_flags");
+        final int olciWidth = flagBand.getRasterWidth();
+        final int[] flags = new int[olciWidth];
+        flagBand.readPixels(0, 0, olciWidth, 1, flags);
+
+        final Band olciLatBand = olciSource.getBand("latitude");
+        final float[] olciLats = new float[olciWidth];
+        olciLatBand.readPixels(0, 0, olciWidth, 1, olciLats);
+
+        final Band slstrLatBand = slstrSource.getBand("latitude_an");
+        final int slstrWidth = slstrLatBand.getRasterWidth();
+        final float[] slstrLats = new float[slstrWidth];
+        slstrLatBand.readPixels(0, 0, slstrWidth, 1, slstrLats);
+
+        double lat = 0;
+        for (int i = 0; i < olciWidth; i++) {
+            if ((flags[i] & 0x2000000) != 0x2000000) {  // which is invalid
+                lat = olciLats[i];
+                break;
             }
         }
-        for (int i=1 ; i <slstrLatBand.getRasterWidth();i++){
-            float prev = slstrLatBand.getPixelFloat(0,0);
-            float current = slstrLatBand.getPixelFloat(i,0);
-            if (prev>=lat && lat>=current){
+
+        for (int i = 1; i < slstrWidth; i++) {
+            float prev = slstrLats[i-1];
+            float current = slstrLats[i];
+            if (prev >= lat && lat >= current) {
+                System.out.println("done: offset = " + i);
                 return i;
             }
-
         }
 
         return 0;
