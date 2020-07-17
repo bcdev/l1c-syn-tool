@@ -541,5 +541,4 @@ public class L1cSynOp extends Operator {
             super(L1cSynOp.class);
         }
     }
-
 }

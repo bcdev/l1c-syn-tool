@@ -26,7 +26,7 @@ public class SlstrMisrTransform implements Serializable{
     private int slstrNumCols;
     private boolean newTransform = false;
     private int minScan = 9999999;
-    private int SLSTRoffset = -0;
+    private final int SLSTRoffset;
 
     private int N_DET_CAM = 740;
 
@@ -46,15 +46,15 @@ public class SlstrMisrTransform implements Serializable{
             this.slstrNumCols = slstrImageProduct.getBand("S3_radiance_ao").getRasterWidth();
         }
         this.newTransform = newTransform;
+        this.SLSTRoffset = SLSTRoffset;
     }
 
-    private int[] getColRow(int scan, int pixel, int detector) {
+    // package access for testing only tb 2020-07-17
+    static int[] getColRow(int scan, int pixel, int detector) {
+        final int[] colRow = new int[2];
+        colRow[0] = pixel;
         //todo : clarify the formula
-        int row = scan * 4 + detector;
-        int col = pixel;
-        int[] colRow = new int[2];
-        colRow[0] = col;
-        colRow[1] = row;
+        colRow[1] = scan * 4 + detector;
         return colRow;
     }
 
@@ -136,7 +136,7 @@ public class SlstrMisrTransform implements Serializable{
 
 
     //step2
-    private TreeMap getSlstrGridMisrMap(Map mapSlstr, boolean minimize) throws IOException{
+    private TreeMap getSlstrGridMisrMap(Map<int[], int[]> mapSlstr, boolean minimize) {
         int SminOk = 0;
         //provides map between SLSTR instrument grid (scan,pixel,detector) and MISR file (row,col)
         TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray());
@@ -146,8 +146,7 @@ public class SlstrMisrTransform implements Serializable{
             System.out.println(SminOk+" is the offset");
         }
 
-        for (Object value : mapSlstr.values()) {
-            int[] scanPixelDetector = (int[]) value;
+        for (int[] scanPixelDetector : mapSlstr.values()) {
             int scan = scanPixelDetector[0];
             int pixel = scanPixelDetector[1];
             int detector = scanPixelDetector[2];
