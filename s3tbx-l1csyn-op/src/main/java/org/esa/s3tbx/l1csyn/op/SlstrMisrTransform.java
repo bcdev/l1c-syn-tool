@@ -24,7 +24,7 @@ public class SlstrMisrTransform implements Serializable {
     private final int slstrNumCols;
     private boolean newTransform = false;
     private int minScan = 9999999;
-    private int SLSTRoffset = -0;
+    private int SLSTRoffset;
 
     private int N_DET_CAM = 740;
 
@@ -43,9 +43,11 @@ public class SlstrMisrTransform implements Serializable {
             this.slstrNumCols = slstrImageProduct.getBand("S3_radiance_ao").getRasterWidth();
         }
         this.newTransform = newTransform;
+        this.SLSTRoffset = SLSTRoffset;
     }
 
-    private int[] getColRow(int scan, int pixel, int detector) {
+    // package access for testing only tb 2020-07-17
+    static int[] getColRow(int scan, int pixel, int detector) {
         //todo : clarify the formula
         return new int[]{pixel, scan * 4 + detector};
     }
