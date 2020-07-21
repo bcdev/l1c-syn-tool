@@ -28,4 +28,19 @@ public class SlstrMisrTransformTest {
             assertEquals("Wrong value for key: " + key, stringTreeMap.get(key), integerTreeMap.get(iKey));
         }
     }
+
+    @Test
+    public void testGetColRow() {
+        int[] colRow = SlstrMisrTransform.getColRow(0, 1, 2);
+        assertEquals(1, colRow[0]);
+        assertEquals(2, colRow[1]);
+
+        colRow = SlstrMisrTransform.getColRow(1, 2, 3);
+        assertEquals(2, colRow[0]);
+        assertEquals(7, colRow[1]);
+
+        colRow = SlstrMisrTransform.getColRow(2, 3, 4);
+        assertEquals(3, colRow[0]);
+        assertEquals(12, colRow[1]);
+    }
 }
