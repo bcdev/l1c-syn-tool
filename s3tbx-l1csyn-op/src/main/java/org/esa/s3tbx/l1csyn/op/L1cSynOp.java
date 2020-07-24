@@ -42,7 +42,7 @@ import java.util.regex.Pattern;
         version = "2.5")
 public class L1cSynOp extends Operator {
 
-    private long allowedTimeDiff = 200L;
+    private final long allowedTimeDiff = 200L;
     //private File misrFile = null;
     //private boolean duplicate = false;
     //private boolean fullMisr = false;
@@ -240,24 +240,25 @@ public class L1cSynOp extends Operator {
         if (misrFile != null) {
             String misrFormat = getMisrFormat(misrFile);
             try {
-                if (misrFormat.equals("valid") && fullMisr == false) {
-                    //SLSTR offset
-                    int SLSTROffset = getSLSLTROffset();
-                    System.out.println(SLSTROffset + " SLSTR offset found");
+                //SLSTR offset
+                int SLSTROffset = getSLSLTROffset();
+                System.out.println(SLSTROffset + " SLSTR offset found");
+                if (misrFormat.equals("valid") && !fullMisr) {
                     SlstrMisrTransform misrTransformNadir = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S3", formatMisr, -SLSTROffset);
-                    SlstrMisrTransform misrTransformOblique = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, 0 - SLSTROffset);
+                    SlstrMisrTransform misrTransformOblique = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset);
                     // TODO : revert after tests
                     //
-                    TreeMap mapNadirS3;
+                    Map<int[], int[]> mapNadirS3;
                     if (numCam >= 0 && numCam < 5) {
                         mapNadirS3 = misrTransformNadir.getSlstrOlciInstrumentMap(numCam);
                     } else if (numCam == 5) {
-                        mapNadirS3 = misrTransformNadir.getSlstrOlciSingleCameraMap(numCam);
+                        mapNadirS3 = misrTransformNadir.getSlstrOlciSingleCameraMap();
                     } else {
                         mapNadirS3 = misrTransformNadir.getSlstrOlciMap();
                     }
-                    TreeMap mapObliqueAo = misrTransformOblique.getSlstrOlciMap();
-                    HashMap misrParams = getMisrParams(null, null, mapNadirS3, null, null, null, mapObliqueAo, null, null);
+                    Map<int[], int[]> mapObliqueAo = misrTransformOblique.getSlstrOlciMap();
+
+                    HashMap<String, Object> misrParams = getMisrParams(null, null, mapNadirS3, null, null, null, mapObliqueAo, null, null);
                     HashMap<String, Product> misrSourceProductMap = new HashMap<>();
                     misrSourceProductMap.put("olciSource", olciSource);
                     misrSourceProductMap.put("slstrSource", slstrSource);
@@ -273,19 +274,18 @@ public class L1cSynOp extends Operator {
                     System.out.println(camMap2.size()+"CAM2");
                     System.out.println(camMap3.size()+"CAM3");
                     System.out.println(camMap4.size()+"CAM4");*/
-                } else if (misrFormat.equals("valid") && fullMisr == true) {
-                    int SLSTROffset = getSLSLTROffset();
-                    TreeMap mapOlciSlstrS1 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S1", formatMisr, -SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS2 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S2", formatMisr, -SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS3 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S3", formatMisr, -SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS4 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S4", formatMisr, -SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS5 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S5", formatMisr, -SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrS6 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S6", formatMisr, -SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrao = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
-                    TreeMap mapOlciSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                } else if (misrFormat.equals("valid") && fullMisr) {
+                    Map<int[], int[]> mapOlciSlstrS1 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S1", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    Map<int[], int[]> mapOlciSlstrS2 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S2", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    Map<int[], int[]> mapOlciSlstrS3 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S3", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    Map<int[], int[]> mapOlciSlstrS4 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S4", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    Map<int[], int[]> mapOlciSlstrS5 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S5", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    Map<int[], int[]> mapOlciSlstrS6 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S6", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    Map<int[], int[]> mapOlciSlstrao = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    Map<int[], int[]> mapOlciSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    Map<int[], int[]> mapOlciSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
 
-                    HashMap misrParams = getMisrParams(mapOlciSlstrS1, mapOlciSlstrS2, mapOlciSlstrS3, mapOlciSlstrS4, mapOlciSlstrS5, mapOlciSlstrS6, mapOlciSlstrao, mapOlciSlstrbo, mapOlciSlstrco);
+                    HashMap<String, Object> misrParams = getMisrParams(mapOlciSlstrS1, mapOlciSlstrS2, mapOlciSlstrS3, mapOlciSlstrS4, mapOlciSlstrS5, mapOlciSlstrS6, mapOlciSlstrao, mapOlciSlstrbo, mapOlciSlstrco);
 
                     HashMap<String, Product> misrSourceProductMap = new HashMap<>();
                     misrSourceProductMap.put("olciSource", olciSource);
@@ -308,7 +308,7 @@ public class L1cSynOp extends Operator {
             sourceProductMap.put("slaveProduct", slstrInput);
             collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
         }
-        if (reprojectionCRS != null && !reprojectionCRS.toLowerCase().equals("none") && !reprojectionCRS.equals("") && stayOnOlciGrid == false && misrFile == null) {
+        if (reprojectionCRS != null && !reprojectionCRS.toLowerCase().equals("none") && !reprojectionCRS.equals("") && !stayOnOlciGrid && misrFile == null) {
             l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
         } else {
             l1cTarget = collocatedTarget;
@@ -340,20 +340,23 @@ public class L1cSynOp extends Operator {
         l1cTarget.setDescription("SENTINEL-3 SYN Level 1C Product");
     }
 
-    private HashMap getMisrParams(TreeMap S1PixelMap, TreeMap S2PixelMap, TreeMap S3PixelMap, TreeMap S4PixelMap, TreeMap S5PixelMap, TreeMap S6PixelMap, TreeMap aoPixelMap, TreeMap boPixelMap, TreeMap coPixelMap) {
+    private HashMap<String, Object> getMisrParams(Map<int[], int[]> S1PixelMap, Map<int[], int[]> S2PixelMap, Map<int[], int[]> S3PixelMap,
+                                                  Map<int[], int[]> S4PixelMap, Map<int[], int[]> S5PixelMap, Map<int[], int[]> S6PixelMap,
+                                                  Map<int[], int[]> aoPixelMap, Map<int[], int[]> boPixelMap, Map<int[], int[]> coPixelMap) {
         HashMap<String, Object> misrParams = new HashMap<>();
         misrParams.put("duplicate", duplicate);
         misrParams.put("singlePixelMap", !fullMisr);
 
-        misrParams.put("S1PixelMap", S1PixelMap);
-        misrParams.put("S2PixelMap", S2PixelMap);
-        misrParams.put("S3PixelMap", S3PixelMap);
-        misrParams.put("S4PixelMap", S4PixelMap);
-        misrParams.put("S5PixelMap", S5PixelMap);
-        misrParams.put("S6PixelMap", S6PixelMap);
-        misrParams.put("aoPixelMap", aoPixelMap);
-        misrParams.put("boPixelMap", boPixelMap);
-        misrParams.put("coPixelMap", coPixelMap);
+        misrParams.put("S1PixelMap", MapToWrapedArrayFactory.createWrappedArray(S1PixelMap));
+        misrParams.put("S2PixelMap", MapToWrapedArrayFactory.createWrappedArray(S2PixelMap));
+        misrParams.put("S3PixelMap", MapToWrapedArrayFactory.createWrappedArray(S3PixelMap));
+        misrParams.put("S4PixelMap", MapToWrapedArrayFactory.createWrappedArray(S4PixelMap));
+        misrParams.put("S5PixelMap", MapToWrapedArrayFactory.createWrappedArray(S5PixelMap));
+        misrParams.put("S6PixelMap", MapToWrapedArrayFactory.createWrappedArray(S6PixelMap));
+        misrParams.put("aoPixelMap", MapToWrapedArrayFactory.createWrappedArray(aoPixelMap));
+        misrParams.put("boPixelMap", MapToWrapedArrayFactory.createWrappedArray(boPixelMap));
+        misrParams.put("coPixelMap", MapToWrapedArrayFactory.createWrappedArray(coPixelMap));
+
         return misrParams;
     }
 

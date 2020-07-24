@@ -5,6 +5,7 @@ import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.FlagCoding;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductData;
+import org.esa.snap.core.datamodel.RasterDataNode;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.core.gpf.OperatorSpi;
@@ -16,7 +17,8 @@ import org.esa.snap.core.gpf.annotations.TargetProduct;
 import org.esa.snap.core.util.ProductUtils;
 
 import java.awt.*;
-import java.util.TreeMap;
+import java.util.HashMap;
+import java.util.Map;
 
 
 @OperatorMetadata(alias = "Misregister",
@@ -43,31 +45,31 @@ public class MisrOp extends Operator {
     private boolean singlePixelMap;
 
     @Parameter(alias = "S1PixelMap", description = "Pixel map for S1 nadir view")
-    private TreeMap S1PixelMap;
+    private Map<int[], int[]> S1PixelMap;
 
     @Parameter(alias = "S2PixelMap", description = "Pixel map for S2 nadir view")
-    private TreeMap S2PixelMap;
+    private Map<int[], int[]> S2PixelMap;
 
     @Parameter(alias = "S3PixelMap", description = "Pixel map for S3 nadir view")
-    private TreeMap S3PixelMap;
+    private Map<int[], int[]> S3PixelMap;
 
     @Parameter(alias = "S4PixelMap", description = "Pixel map for S4 nadir view")
-    private TreeMap S4PixelMap;
+    private Map<int[], int[]> S4PixelMap;
 
     @Parameter(alias = "S5PixelMap", description = "Pixel map for S5 nadir view")
-    private TreeMap S5PixelMap;
+    private Map<int[], int[]> S5PixelMap;
 
     @Parameter(alias = "S6PixelMap", description = "Pixel map for S6 nadir view")
-    private TreeMap S6PixelMap;
+    private Map<int[], int[]> S6PixelMap;
 
     @Parameter(alias = "aoPixelMap", description = "Pixel map for ao oblique view")
-    private TreeMap aoPixelMap;
+    private Map<int[], int[]> aoPixelMap;
 
     @Parameter(alias = "boPixelMap", description = "Pixel map for bo oblique view")
-    private TreeMap boPixelMap;
+    private Map<int[], int[]> boPixelMap;
 
     @Parameter(alias = "coPixelMap", description = "Pixel map for co oblique view")
-    private TreeMap coPixelMap;
+    private Map<int[], int[]> coPixelMap;
 
 
     @TargetProduct
@@ -90,65 +92,61 @@ public class MisrOp extends Operator {
     }
 
     @Override
-    public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm){
+    public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm) {
         Tile sourceTile;
-        TreeMap treeMap = new TreeMap();
+        Map<int[], int[]> map = new HashMap<>();
         Rectangle targetRectangle = targetTile.getRectangle();
 
 
-        if (  targetBand.getName().contains("_ao") ) {
-            treeMap = aoPixelMap;
-        }
-        else if ( targetBand.getName().contains("_bo") ){
-            treeMap = boPixelMap;
-        }
-        else if (targetBand.getName().contains("_co")) {
-            treeMap = coPixelMap;
-        }
-        else if ((targetBand.getName().contains("S1") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S1") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S1") && targetBand.getName().contains("_cn"))  ) {
-            treeMap = S1PixelMap;
-        }
-        else if ((targetBand.getName().contains("S2") && targetBand.getName().contains("_an"))  || (targetBand.getName().contains("S2") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S2") && targetBand.getName().contains("_cn")) ) {
-            treeMap = S2PixelMap;
-        }
-        else if ((targetBand.getName().contains("S3") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S3") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S3") && targetBand.getName().contains("_cn"))  ) {
-            treeMap = S3PixelMap;
-        }
-        else if ((targetBand.getName().contains("S4") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S4") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S4") && targetBand.getName().contains("_cn")) ) {
-            treeMap = S4PixelMap;
-        }
-        else if ((targetBand.getName().contains("S5") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S5") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S5") && targetBand.getName().contains("_cn")) ) {
-            treeMap = S5PixelMap;
-        }
-        else if ((targetBand.getName().contains("S6") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S6") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S6") && targetBand.getName().contains("_cn")) ) {
-            treeMap = S6PixelMap;
-        }
-        else if ((targetBand.getName().contains("_an") || targetBand.getName().contains("_bn") || targetBand.getName().contains("_cn"))) {
-            treeMap = S3PixelMap;
+        if (targetBand.getName().contains("_ao")) {
+            map = aoPixelMap;
+        } else if (targetBand.getName().contains("_bo")) {
+            map = boPixelMap;
+        } else if (targetBand.getName().contains("_co")) {
+            map = coPixelMap;
+        } else if ((targetBand.getName().contains("S1") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S1") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S1") && targetBand.getName().contains("_cn"))) {
+            map = S1PixelMap;
+        } else if ((targetBand.getName().contains("S2") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S2") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S2") && targetBand.getName().contains("_cn"))) {
+            map = S2PixelMap;
+        } else if ((targetBand.getName().contains("S3") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S3") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S3") && targetBand.getName().contains("_cn"))) {
+            map = S3PixelMap;
+        } else if ((targetBand.getName().contains("S4") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S4") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S4") && targetBand.getName().contains("_cn"))) {
+            map = S4PixelMap;
+        } else if ((targetBand.getName().contains("S5") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S5") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S5") && targetBand.getName().contains("_cn"))) {
+            map = S5PixelMap;
+        } else if ((targetBand.getName().contains("S6") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S6") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S6") && targetBand.getName().contains("_cn"))) {
+            map = S6PixelMap;
+        } else if ((targetBand.getName().contains("_an") || targetBand.getName().contains("_bn") || targetBand.getName().contains("_cn"))) {
+            map = S3PixelMap;
         }
 
+        RasterDataNode oa17_radiance = olciSourceProduct.getRasterDataNode("Oa17_radiance");
         if (slstrSourceProduct.containsBand(targetBand.getName())) {
+            Band sourceBand = slstrSourceProduct.getBand(targetBand.getName());
+            int sourceRasterWidth = sourceBand.getRasterWidth();
+            int sourceRasterHeight = sourceBand.getRasterHeight();
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                    targetTile.setSample(x,y,targetBand.getNoDataValue());
+                    targetTile.setSample(x, y, targetBand.getNoDataValue());
                     int[] position = {x, y};
-                    int[] slstrGridPosition = (int[]) treeMap.get(position);
-                    if (slstrGridPosition != null && slstrGridPosition[0]<slstrSourceProduct.getBand(targetBand.getName()).getRasterWidth() && slstrGridPosition[1]<slstrSourceProduct.getBand(targetBand.getName()).getRasterHeight() ) {
-                        try {
-                            double reflecValue = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]); // / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
-                            if (reflecValue < 0) {
-                                reflecValue = targetBand.getNoDataValue();
+                    int[] slstrGridPosition = map.get(position);
+                    if (slstrGridPosition != null) {
+                        if (slstrGridPosition[0] < sourceRasterWidth && slstrGridPosition[1] < sourceRasterHeight) {
+                            try {
+                                double reflecValue = sourceBand.getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]); // / slstrSourceProduct.getRasterDataNode(targetBand.getName()).getScalingFactor();
+                                if (reflecValue < 0) {
+                                    reflecValue = targetBand.getNoDataValue();
+                                }
+                                targetTile.setSample(x, y, reflecValue);
+                            } catch (Exception e) {
                             }
-                            targetTile.setSample(x, y, reflecValue);
                         }
-                        catch (Exception e){}
                     }
-
                 }
             }
-            if (duplicate ) {
+            if (duplicate) {
                 for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                    double duplicatePixel = getDuplicatedPixel(targetRectangle.x, y, targetBand, treeMap);
+                    double duplicatePixel = getDuplicatedPixel(targetRectangle.x, y, targetBand, map, sourceBand);
                     //double duplicatePixel = 0d ;
                     for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                         if (targetTile.getSampleDouble(x, y) != targetBand.getNoDataValue()) {
@@ -160,61 +158,57 @@ public class MisrOp extends Operator {
                 }
                 for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                     for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                        if (!olciSourceProduct.getRasterDataNode("Oa17_radiance").isPixelValid(x,y)){
+                        if (!oa17_radiance.isPixelValid(x, y)) {
                             targetTile.setSample(x, y, targetBand.getNoDataValue());
                         }
                     }
                 }
             }
 
-        }
-        else if (targetBand.getName().equals("misr_flags")){
-            treeMap = S3PixelMap;
+        } else if (targetBand.getName().equals("misr_flags")) {
+            map = S3PixelMap;
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     int[] position = {x, y};
-                    int[] slstrGridPosition = (int[]) treeMap.get(position);
-                    if (slstrGridPosition != null ) {
-                        targetTile.setSample(x,y,1);
-                    }
-                    else {
-                        targetTile.setSample(x,y,0);
+                    int[] slstrGridPosition = map.get(position);
+                    if (slstrGridPosition != null) {
+                        targetTile.setSample(x, y, 1);
+                    } else {
+                        targetTile.setSample(x, y, 0);
                     }
                 }
             }
-        }
-        else if (targetBand.getName().equals("duplicate_flags")){
-            treeMap = S3PixelMap;
+        } else if (targetBand.getName().equals("duplicate_flags")) {
+            map = S3PixelMap;
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     int[] position = {x, y};
-                    int[] slstrGridPosition = (int[]) treeMap.get(position);
-                    if (slstrGridPosition == null && olciSourceProduct.getRasterDataNode("Oa17_radiance").isPixelValid(x,y)) {
-                        targetTile.setSample(x,y,1);
+                    int[] slstrGridPosition = map.get(position);
+                    if (slstrGridPosition == null && oa17_radiance.isPixelValid(x, y)) {
+                        targetTile.setSample(x, y, 1);
                     }
                 }
             }
         }
     }
 
-    private double getDuplicatedPixel(int x, int y, Band targetBand, TreeMap treeMap){
+    private double getDuplicatedPixel(int x, int y, Band targetBand, Map<int[], int[]> map, Band sourceBand) {
+        int rasterWidth = sourceBand.getRasterWidth();
+        int rasterHeight = sourceBand.getRasterHeight();
         double duplicatePixel;
-        int [] position = {x, y};
-        int[] slstrGridPosition = (int[]) treeMap.get(position);
-        if (slstrGridPosition != null && slstrGridPosition[0]<slstrSourceProduct.getBand(targetBand.getName()).getRasterWidth() && slstrGridPosition[1]<slstrSourceProduct.getBand(targetBand.getName()).getRasterHeight()) {
-            duplicatePixel = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
-        }
-        else {
+        int[] position = {x, y};
+        int[] slstrGridPosition = map.get(position);
+        if (slstrGridPosition != null && slstrGridPosition[0] < rasterWidth && slstrGridPosition[1] < rasterHeight) {
+            duplicatePixel = sourceBand.getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
+        } else {
             while (slstrGridPosition == null && x > 0) {
                 x = x - 1;
                 int[] tempPosition = {x, y};
-                slstrGridPosition = (int[]) treeMap.get(tempPosition);
+                slstrGridPosition = map.get(tempPosition);
             }
-            if (slstrGridPosition != null && slstrGridPosition[0]<slstrSourceProduct.getBand(targetBand.getName()).getRasterWidth() && slstrGridPosition[1]<slstrSourceProduct.getBand(targetBand.getName()).getRasterHeight()) {
-
-                duplicatePixel = slstrSourceProduct.getRasterDataNode(targetBand.getName()).getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
-            }
-            else {
+            if (slstrGridPosition != null && slstrGridPosition[0] < rasterWidth && slstrGridPosition[1] < rasterHeight) {
+                duplicatePixel = sourceBand.getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
+            } else {
                 duplicatePixel = targetBand.getNoDataValue();
             }
         }
@@ -225,11 +219,10 @@ public class MisrOp extends Operator {
     }
 
 
-
     private void createTargetProduct() {
         targetProduct = new Product(olciSourceProduct.getName(), olciSourceProduct.getProductType(),
-                olciSourceProduct.getSceneRasterWidth(),
-                olciSourceProduct.getSceneRasterHeight());
+                                    olciSourceProduct.getSceneRasterWidth(),
+                                    olciSourceProduct.getSceneRasterHeight());
 
 
         for (Band olciBand : olciSourceProduct.getBands()) {
@@ -238,14 +231,13 @@ public class MisrOp extends Operator {
 
         for (Band slstrBand : slstrSourceProduct.getBands()) {
             if (slstrBand.getName().contains("_an") || slstrBand.getName().contains("_bn") || slstrBand.getName().contains("_cn")
-                    || slstrBand.getName().contains("_ao") || slstrBand.getName().contains("_bo") || slstrBand.getName().contains("_co")) {
+                || slstrBand.getName().contains("_ao") || slstrBand.getName().contains("_bo") || slstrBand.getName().contains("_co")) {
                 Band copiedBand = targetProduct.addBand(slstrBand.getName(), ProductData.TYPE_FLOAT32);
                 targetProduct.getBand(slstrBand.getName()).setNoDataValue(slstrSourceProduct.getBand(slstrBand.getName()).getNoDataValue());
                 targetProduct.getBand(slstrBand.getName()).setNoDataValueUsed(true);
-            }
-            else {
+            } else {
                 if (!slstrBand.getName().contains("_in") && !slstrBand.getName().contains("_io") &&
-                        !slstrBand.getName().contains("_fn") && !slstrBand.getName().contains("_fo")) {
+                    !slstrBand.getName().contains("_fn") && !slstrBand.getName().contains("_fo")) {
                     ProductUtils.copyBand(slstrBand.getName(), slstrSourceProduct, targetProduct, true);
                 }
             }
@@ -261,30 +253,30 @@ public class MisrOp extends Operator {
         misrFlagCoding.setDescription("MISR processor flag");
         targetProduct.getFlagCodingGroup().add(misrFlagCoding);
         Band misrFlags = new Band("misr_flags", ProductData.TYPE_UINT32,
-                olciSourceProduct.getSceneRasterWidth(),
-                olciSourceProduct.getSceneRasterHeight());
+                                  olciSourceProduct.getSceneRasterWidth(),
+                                  olciSourceProduct.getSceneRasterHeight());
         misrFlagCoding.addFlag("MISR not applied", 0, "MISR not Applied");
         misrFlagCoding.addFlag("MISR applied", 1, "MISR applied");
         misrFlags.setSampleCoding(misrFlagCoding);
 
         targetProduct.addBand(misrFlags);
-        targetProduct.addMask("MISR pixel applied",  "misr_flags != 0",
-                "MISR information was used to get value of this pixel", Color.RED, 0.5);
+        targetProduct.addMask("MISR pixel applied", "misr_flags != 0",
+                              "MISR information was used to get value of this pixel", Color.RED, 0.5);
 
         if (duplicate) {
             final FlagCoding duplicateFlagCoding = new FlagCoding("Duplicated pixel after MISR");
             duplicateFlagCoding.setDescription("Duplicate pixels");
             targetProduct.getFlagCodingGroup().add(duplicateFlagCoding);
             Band duplicateFlags = new Band("duplicate_flags", ProductData.TYPE_UINT32,
-                    olciSourceProduct.getSceneRasterWidth(),
-                    olciSourceProduct.getSceneRasterHeight());
+                                           olciSourceProduct.getSceneRasterWidth(),
+                                           olciSourceProduct.getSceneRasterHeight());
             duplicateFlagCoding.addFlag("pixel not duplicated", 0, "pixel not duplicated");
             duplicateFlagCoding.addFlag("pixel duplicated", 1, "pixel duplicated");
             duplicateFlags.setSampleCoding(duplicateFlagCoding);
             targetProduct.addBand(duplicateFlags);
 
             targetProduct.addMask("Duplicated pixel after MISR", "duplicate_flags != 0",
-                    "After applying misregistration, this pixel is a duplicate of its neighbour", Color.BLUE, 0.5);
+                                  "After applying misregistration, this pixel is a duplicate of its neighbour", Color.BLUE, 0.5);
         }
     }
 
