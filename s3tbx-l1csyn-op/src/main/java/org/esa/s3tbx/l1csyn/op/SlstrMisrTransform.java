@@ -272,7 +272,7 @@ public class SlstrMisrTransform implements Serializable {
                 }
             }
         }
-
+        netcdfFile.close();
         return orphanRowMap;
     }
 
