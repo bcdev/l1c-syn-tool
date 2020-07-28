@@ -166,8 +166,8 @@ public class SlstrMisrTransform implements Serializable {
         int nLineOlcLength = netcdfFile.findDimension("N_LINE_OLC").getLength();
         int nDetCamLength = netcdfFile.findDimension("N_DET_CAM").getLength();
         int nCamLength = netcdfFile.findDimension("N_CAM").getLength();
-        String rowVariableName = getRowVariableName(netcdfFile);
-        String colVariableName = getColVariableName(netcdfFile);
+        String rowVariableName = getRowVariableName(netcdfFile,"row_corresp_\\S+");
+        String colVariableName = getColVariableName(netcdfFile,"col_corresp_\\S+");
         Variable rowVariable = netcdfFile.findVariable(rowVariableName);
         Variable colVariable = netcdfFile.findVariable(colVariableName);
         Variable rowOffsetVariable = netcdfFile.findVariable("input_products_row_offset");
@@ -176,8 +176,8 @@ public class SlstrMisrTransform implements Serializable {
         TreeMap<int[], int[]> colRowMap = new TreeMap<>(new ComparatorIntArray());
         if (nLineOlcLength < 10000) {
             ArrayInt.D3 rowArray = (ArrayInt.D3) rowVariable.read();
-            ArrayShort.D3 colArray = (ArrayShort.D3) colVariable.read();
-            short col;
+            ArrayInt.D3 colArray = (ArrayInt.D3) colVariable.read();
+            int col;
             int row;
 
 
@@ -206,8 +206,8 @@ public class SlstrMisrTransform implements Serializable {
                 }
 
                 ArrayInt.D3 rowArray = (ArrayInt.D3) rowVariable.read(new int[]{0, longDimSplitter - step, 0}, new int[]{nCamLength, step, nDetCamLength});
-                ArrayShort.D3 colArray = (ArrayShort.D3) colVariable.read(new int[]{0, longDimSplitter - step, 0}, new int[]{nCamLength, step, nDetCamLength});
-                short col;
+                ArrayInt.D3 colArray = (ArrayInt.D3) colVariable.read(new int[]{0, longDimSplitter - step, 0}, new int[]{nCamLength, step, nDetCamLength});
+                int col;
                 int row;
                 for (int i = 0; i < nCamLength; i++) {
                     for (int j = 0; j < step; j++) {
@@ -240,7 +240,7 @@ public class SlstrMisrTransform implements Serializable {
         int nLineOlcLength = netcdfFile.findDimension("N_LINE_OLC").getLength();
         int nDetCamLength = netcdfFile.findDimension("N_DET_CAM").getLength();
         int nCamLength = netcdfFile.findDimension("N_CAM").getLength();
-        String rowVariableName = getRowVariableName(netcdfFile);
+        String rowVariableName = getRowVariableName(netcdfFile,"row_corresp_\\S+");
         String orphanVariableName = getOrphanVariableName(netcdfFile);
         Variable rowVariable = netcdfFile.findVariable(rowVariableName);
         Variable orphanVariable = netcdfFile.findVariable(orphanVariableName);
@@ -397,7 +397,7 @@ public class SlstrMisrTransform implements Serializable {
             }
 
             TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray());
-            gridMap.putAll(gridMapOrphan);
+            //gridMap.putAll(gridMapOrphan);
             gridMap.putAll(gridMapPixel);
             return gridMap;
         } else {
@@ -447,22 +447,28 @@ public class SlstrMisrTransform implements Serializable {
         return gridMapPixel;
     }
 
-    private String getRowVariableName(NetcdfFile netcdfFile) {
+    private String getRowVariableName(NetcdfFile netcdfFile, String pattern) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getName().matches("L1b_row_.._" + "..") || variable.getName().matches("row_corresp_s._" + "..") || variable.getName().matches("L1b_row_" + "..")) {
+            if ( variable.getName().matches(pattern) ) {
                 return variable.getName();
             }
         }
         throw new NullPointerException("Row variable not found");
     }
 
-    private String getColVariableName(NetcdfFile netcdfFile) {
+    private String getColVariableName(NetcdfFile netcdfFile, String pattern) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getName().matches("L1b_col_.._" + "..") || variable.getName().matches("col_corresp_s._" + "..") || variable.getName().matches("L1b_col_" + "..")) {
+            if (variable.getFullName().matches(pattern)){
+                return variable.getFullName();
+            }
+            /*if ( variable.getName().matches("col_corresp_s." + "_an") || variable.getName().matches("L2b_col_" + "..")) {
                 return variable.getName();
             }
+            else if ( variable.getName().matches("L1b_col_.._" + "..")) {
+                return variable.getName();
+            }*/
         }
         throw new NullPointerException("Col variable not found");
     }
