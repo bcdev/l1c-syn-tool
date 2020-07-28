@@ -397,7 +397,7 @@ public class SlstrMisrTransform implements Serializable {
             }
 
             TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray());
-            //gridMap.putAll(gridMapOrphan);
+            gridMap.putAll(gridMapOrphan);
             gridMap.putAll(gridMapPixel);
             return gridMap;
         } else {
