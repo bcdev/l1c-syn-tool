@@ -188,16 +188,17 @@ public class SlstrMisrTransform implements Serializable {
                         row = rowArray.get(i, j, k) + rowOffset;
                         col = colArray.get(i, j, k);
                         if (col >= 0 && row >= 0) {
-                            if (row < slstrNumRows && col < slstrNumCols) {
+                            //if (row < slstrNumRows && col < slstrNumCols) {
                                 int[] colRowArray = {col, row};
                                 int[] position = {i, j, k};
                                 colRowMap.put(colRowArray, position);
-                            }
+                            //}
                         }
                     }
                 }
             }
         } else {
+            int cut = 5000;
             for (int longDimSplitter = 10000; longDimSplitter < nLineOlcLength + 10000; longDimSplitter += 10000) {
                 int step = 10000;
                 if (longDimSplitter > nLineOlcLength) {
@@ -216,11 +217,11 @@ public class SlstrMisrTransform implements Serializable {
                             row = rowArray.get(i, j, k) + rowOffset;
                             col = colArray.get(i, j, k);
                             if (col >= 0 && row >= 0) {
-                                if (row < slstrNumRows && col < slstrNumCols) {
+                                //if (row < slstrNumRows && col < slstrNumCols) {
                                     int[] colRowArray = {col, row};
                                     int[] position = {i, j, k};
                                     colRowMap.put(colRowArray, position);
-                                }
+                                //}
                             }
                         }
                     }
