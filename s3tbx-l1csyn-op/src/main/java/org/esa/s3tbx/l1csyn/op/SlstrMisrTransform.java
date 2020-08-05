@@ -345,7 +345,7 @@ public class SlstrMisrTransform implements Serializable {
                             if ((rowNorm) >= 0 && col >= 0) {
                                 if ((rowNorm) < olciNumRows && col < olciNumCols) {
                                     int[] gridCoors = {i, j, k};
-                                    int[] imageCoors = {col + OLCIOffset, rowNorm};
+                                    int[] imageCoors = {col - OLCIOffset, rowNorm};
                                     olciMap.put(gridCoors, imageCoors);
                                 }
                             }
@@ -365,15 +365,24 @@ public class SlstrMisrTransform implements Serializable {
         // New version
         if (newTransform) {
             //TreeMap<int[], int[]> gridMapPixel = new TreeMap<>(new ComparatorIntArray() );
-            Map<int[], int[]> gridMapOrphan = new TreeMap<>(new ComparatorIntArray());
-            Map<int[], int[]> slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight()); //1
-            Map<int[], int[]> slstrOrphanMap = getSlstrOrphanImageMap();
+            /* If MISR format allows, this should be converted to:
             Map<int[], int[]> slstrMisrMap = MapToWrapedArrayFactory.createWrappedArray(getSlstrGridMisrMap(slstrImageMap, true)); //2
             Map<int[], int[]> slstrOrphanMisrMap = MapToWrapedArrayFactory.createWrappedArray(getSlstrGridMisrMap(slstrOrphanMap, true));
             Map<int[], int[]> misrOlciMap = MapToWrapedArrayFactory.createWrappedArray(getMisrOlciMap()); //3
             Map<int[], int[]> misrOrphanOlciMap = MapToWrapedArrayFactory.createWrappedArray(getMisrOlciOrphanMap());
             Map<int[], int[]> olciImageMap = MapToWrapedArrayFactory.createWrappedArray(getOlciMisrMap()); // 4
             Map<int[], int[]> olciImageOrphanMap = MapToWrapedArrayFactory.createWrappedArray(getOlciMisrMap()); // 4
+            */
+
+            Map<int[], int[]> gridMapOrphan = new TreeMap<>(new ComparatorIntArray());
+            Map<int[], int[]> slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight()); //1
+            Map<int[], int[]> slstrOrphanMap = getSlstrOrphanImageMap();
+            Map<int[], int[]> slstrMisrMap = getSlstrGridMisrMap(slstrImageMap, true); //2
+            Map<int[], int[]> slstrOrphanMisrMap = getSlstrGridMisrMap(slstrOrphanMap, true);
+            Map<int[], int[]> misrOlciMap = getMisrOlciMap(); //3
+            Map<int[], int[]> misrOrphanOlciMap = getMisrOlciOrphanMap();
+            Map<int[], int[]> olciImageMap = getOlciMisrMap(); // 4
+            Map<int[], int[]> olciImageOrphanMap = getOlciMisrMap(); // 4
             for (Map.Entry<int[], int[]> entry : slstrImageMap.entrySet()) {
                 int[] slstrScanPixDet = entry.getValue();
                 int[] rowCol = slstrMisrMap.get(slstrScanPixDet);
