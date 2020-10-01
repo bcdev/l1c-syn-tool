@@ -173,6 +173,13 @@ public class SlstrMisrTransform implements Serializable {
         Variable rowOffsetVariable = netcdfFile.findVariable("input_products_row_offset");
         //int rowOffset = rowOffsetVariable.readScalarInt();
         int rowOffset = 0;
+        int colOffset = 0;
+        double colScale = 0;
+        double rowScale = 0;
+        rowOffset = rowVariable.findAttribute("add_offset").getNumericValue().intValue();
+        colOffset = colVariable.findAttribute("add_offset").getNumericValue().intValue();
+        colScale = colVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
+        rowScale = rowVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
         TreeMap<int[], int[]> colRowMap = new TreeMap<>(new ComparatorIntArray());
         if (nLineOlcLength < 10000) {
             ArrayInt.D3 rowArray = (ArrayInt.D3) rowVariable.read();
@@ -185,8 +192,8 @@ public class SlstrMisrTransform implements Serializable {
                 for (int j = 0; j < nLineOlcLength; j++) {
                     for (int k = 0; k < nDetCamLength; k++) {
                         // Type of variable of (row,col) might change with change of MISR format. Be careful here.
-                        row = rowArray.get(i, j, k) + rowOffset;
-                        col = colArray.get(i, j, k);
+                        row = (int) (rowArray.get(i, j, k) * rowScale + rowOffset);
+                        col = (int) (colArray.get(i, j, k) * colScale + colOffset);
                         if (col >= 0 && row >= 0) {
                             //if (row < slstrNumRows && col < slstrNumCols) {
                                 int[] colRowArray = {col, row};
