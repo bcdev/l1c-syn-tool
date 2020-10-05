@@ -240,9 +240,11 @@ public class L1cSynOp extends Operator {
         if (misrFile != null) {
             String misrFormat = getMisrFormat(misrFile);
             try {
-                //SLSTR offset
-                int SLSTROffset = getSLSLTROffset();
-                System.out.println(SLSTROffset + " SLSTR offset found");
+                //SLSTR offset. As of 5th October 2020 its set to 0.
+                // The previous function is kept if we need to apply offset again.
+                //int SLSTROffset = getSLSLTROffset();
+                //System.out.println(SLSTROffset + " SLSTR offset found");
+                int SLSTROffset = 0;
                 if (misrFormat.equals("valid") && !fullMisr) {
                     SlstrMisrTransform misrTransformNadir = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S3", formatMisr, -SLSTROffset);
                     SlstrMisrTransform misrTransformOblique = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset);
