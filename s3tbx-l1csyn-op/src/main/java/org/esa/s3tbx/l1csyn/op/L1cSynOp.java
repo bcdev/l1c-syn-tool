@@ -130,6 +130,10 @@ public class L1cSynOp extends Operator {
             defaultValue = "false")
     private boolean duplicate;
 
+    @Parameter(alias = "orphan", label = "orphan pixel using MISR", description = "If set to true, during MISR geocoding, orphan pixels will be used in addition.",
+            defaultValue = "false")
+    private boolean orphan;
+
     @Parameter(alias = "fullMISR", label = "use MISR for each band separately", description = "If set to true, during MISR geocoding, every SLSTR band geocoding will be calculated separately.",
             defaultValue = "false")
     private boolean fullMisr;
@@ -251,16 +255,21 @@ public class L1cSynOp extends Operator {
                     // TODO : revert after tests
                     //
                     Map<int[], int[]> mapNadirS3;
+                    Map<int[], int[]> mapOrphanS3;
                     if (numCam >= 0 && numCam < 5) {
                         mapNadirS3 = misrTransformNadir.getSlstrOlciInstrumentMap(numCam);
+                        mapOrphanS3 = null;
                     } else if (numCam == 5) {
                         mapNadirS3 = misrTransformNadir.getSlstrOlciSingleCameraMap();
+                        mapOrphanS3 = null;
                     } else {
                         mapNadirS3 = misrTransformNadir.getSlstrOlciMap();
+                        mapOrphanS3 = misrTransformNadir.getOrphanOlciMap();
                     }
                     Map<int[], int[]> mapObliqueAo = misrTransformOblique.getSlstrOlciMap();
+                    Map<int[], int[]> mapOrphanao = misrTransformOblique.getOrphanOlciMap();
 
-                    HashMap<String, Object> misrParams = getMisrParams(null, null, mapNadirS3, null, null, null, mapObliqueAo, null, null);
+                    HashMap<String, Object> misrParams = getMisrParams(null, null, mapNadirS3, null, null, null, mapObliqueAo, null, null,null,null, mapOrphanS3,null,null,null,mapOrphanao,null,null);
                     HashMap<String, Product> misrSourceProductMap = new HashMap<>();
                     misrSourceProductMap.put("olciSource", olciSource);
                     misrSourceProductMap.put("slstrSource", slstrSource);
@@ -286,8 +295,19 @@ public class L1cSynOp extends Operator {
                     Map<int[], int[]> mapOlciSlstrao = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
                     Map<int[], int[]> mapOlciSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
                     Map<int[], int[]> mapOlciSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    Map<int[], int[]> mapOrphanSlstrS1 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S1", formatMisr, -SLSTROffset).getOrphanOlciMap();
+                    Map<int[], int[]> mapOrphanSlstrS2 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S2", formatMisr, -SLSTROffset).getOrphanOlciMap();
+                    Map<int[], int[]> mapOrphanSlstrS3 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S3", formatMisr, -SLSTROffset).getOrphanOlciMap();
+                    Map<int[], int[]> mapOrphanSlstrS4 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S4", formatMisr, -SLSTROffset).getOrphanOlciMap();
+                    Map<int[], int[]> mapOrphanSlstrS5 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S5", formatMisr, -SLSTROffset).getOrphanOlciMap();
+                    Map<int[], int[]> mapOrphanSlstrS6 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S6", formatMisr, -SLSTROffset).getOrphanOlciMap();
+                    Map<int[], int[]> mapOrphanSlstrrao = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getOrphanOlciMap();
+                    Map<int[], int[]> mapOrphanSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getOrphanOlciMap();
+                    Map<int[], int[]> mapOrphanSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getOrphanOlciMap();
 
-                    HashMap<String, Object> misrParams = getMisrParams(mapOlciSlstrS1, mapOlciSlstrS2, mapOlciSlstrS3, mapOlciSlstrS4, mapOlciSlstrS5, mapOlciSlstrS6, mapOlciSlstrao, mapOlciSlstrbo, mapOlciSlstrco);
+
+                    HashMap<String, Object> misrParams = getMisrParams(mapOlciSlstrS1, mapOlciSlstrS2, mapOlciSlstrS3, mapOlciSlstrS4, mapOlciSlstrS5, mapOlciSlstrS6, mapOlciSlstrao, mapOlciSlstrbo, mapOlciSlstrco,
+                            mapOrphanSlstrS1,mapOrphanSlstrS2,mapOrphanSlstrS3,mapOrphanSlstrS4,mapOrphanSlstrS5,mapOrphanSlstrS6,mapOrphanSlstrrao,mapOrphanSlstrbo,mapOrphanSlstrco);
 
                     HashMap<String, Product> misrSourceProductMap = new HashMap<>();
                     misrSourceProductMap.put("olciSource", olciSource);
@@ -344,9 +364,13 @@ public class L1cSynOp extends Operator {
 
     private HashMap<String, Object> getMisrParams(Map<int[], int[]> S1PixelMap, Map<int[], int[]> S2PixelMap, Map<int[], int[]> S3PixelMap,
                                                   Map<int[], int[]> S4PixelMap, Map<int[], int[]> S5PixelMap, Map<int[], int[]> S6PixelMap,
-                                                  Map<int[], int[]> aoPixelMap, Map<int[], int[]> boPixelMap, Map<int[], int[]> coPixelMap) {
+                                                  Map<int[], int[]> aoPixelMap, Map<int[], int[]> boPixelMap, Map<int[], int[]> coPixelMap,
+                                                  Map<int[], int[]> S1OrphanMap, Map<int[], int[]> S2OrphanMap, Map<int[], int[]> S3OrphanMap,
+                                                  Map<int[], int[]> S4OrphanMap, Map<int[], int[]> S5OrphanMap, Map<int[], int[]> S6OrphanMap,
+                                                  Map<int[], int[]> aoOrphanMap, Map<int[], int[]> boOrphanMap, Map<int[], int[]> coOrphanMap) {
         HashMap<String, Object> misrParams = new HashMap<>();
         misrParams.put("duplicate", duplicate);
+        misrParams.put("orphan", orphan);
         misrParams.put("singlePixelMap", !fullMisr);
 
         misrParams.put("S1PixelMap", MapToWrapedArrayFactory.createWrappedArray(S1PixelMap));
@@ -358,6 +382,15 @@ public class L1cSynOp extends Operator {
         misrParams.put("aoPixelMap", MapToWrapedArrayFactory.createWrappedArray(aoPixelMap));
         misrParams.put("boPixelMap", MapToWrapedArrayFactory.createWrappedArray(boPixelMap));
         misrParams.put("coPixelMap", MapToWrapedArrayFactory.createWrappedArray(coPixelMap));
+        misrParams.put("S1OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S1PixelMap));
+        misrParams.put("S2OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S2PixelMap));
+        misrParams.put("S3OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S3PixelMap));
+        misrParams.put("S4OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S4PixelMap));
+        misrParams.put("S5OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S5PixelMap));
+        misrParams.put("S6OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S6PixelMap));
+        misrParams.put("aoOrphanMap", MapToWrapedArrayFactory.createWrappedArray(aoPixelMap));
+        misrParams.put("boOrphanMap", MapToWrapedArrayFactory.createWrappedArray(boPixelMap));
+        misrParams.put("coOrphanMap", MapToWrapedArrayFactory.createWrappedArray(coPixelMap));
 
         return misrParams;
     }

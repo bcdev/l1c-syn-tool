@@ -15,8 +15,14 @@ import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
 import org.esa.snap.core.util.ProductUtils;
+import org.esa.snap.dataio.netcdf.util.NetcdfFileOpener;
+import ucar.ma2.ArrayShort;
+import ucar.nc2.NetcdfFile;
+import ucar.nc2.Variable;
 
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,6 +45,10 @@ public class MisrOp extends Operator {
 
     @Parameter(alias = "duplicate", description = "If set to true empty pixels after MISR will be filled with neighboring values")
     private boolean duplicate;
+
+    @Parameter(alias = "orphan", description = "If set to true orphan pixels will be used",
+    defaultValue = "false")
+    private boolean orphan;
 
     @Parameter(alias = "singlePixelMap", description = "If set to true, than single pixel map will be used for coregistering all SLSTR bands. Otherwise user shall provide all maps separately",
             defaultValue = "true")
@@ -71,7 +81,32 @@ public class MisrOp extends Operator {
     @Parameter(alias = "coPixelMap", description = "Pixel map for co oblique view")
     private Map<int[], int[]> coPixelMap;
 
+    @Parameter(alias = "S1OrphanMap", description = "Orphan pixel map for S1 nadir view")
+    private Map<int[], int[]> S1OrphanMap;
 
+    @Parameter(alias = "S2OrphanMap", description = "Orphan pixel map for S2 nadir view")
+    private Map<int[], int[]> S2OrphanMap;
+
+    @Parameter(alias = "S3OrphanMap", description = "Orphan pixel map for S3 nadir view")
+    private Map<int[], int[]> S3OrphanMap;
+
+    @Parameter(alias = "S4OrphanMap", description = "Orphan pixel map for S4 nadir view")
+    private Map<int[], int[]> S4OrphanMap;
+
+    @Parameter(alias = "S5OrphanMap", description = "Orphan pixel map for S5 nadir view")
+    private Map<int[], int[]> S5OrphanMap;
+
+    @Parameter(alias = "S6OrphanMap", description = "Orphan pixel map for S6 nadir view")
+    private Map<int[], int[]> S6OrphanMap;
+
+    @Parameter(alias = "aoOrphanMap", description = "Orphan pixel map for ao oblique view")
+    private Map<int[], int[]> aoOrphanMap;
+
+    @Parameter(alias = "boOrphanMap", description = "Orphan pixel map for bo oblique view")
+    private Map<int[], int[]> boOrphanMap;
+
+    @Parameter(alias = "coPixelMap", description = "Orphan pixel map for co oblique view")
+    private Map<int[], int[]> coOrphanMap;
     @TargetProduct
     private Product targetProduct;
 
@@ -87,6 +122,16 @@ public class MisrOp extends Operator {
             this.aoPixelMap = aoPixelMap;
             this.boPixelMap = aoPixelMap;
             this.coPixelMap = aoPixelMap;
+            this.S1OrphanMap = S3OrphanMap;
+            this.S1OrphanMap = S3OrphanMap;
+            this.S2OrphanMap = S3OrphanMap;
+            this.S3OrphanMap = S3OrphanMap;
+            this.S4OrphanMap = S3OrphanMap;
+            this.S5OrphanMap = S3OrphanMap;
+            this.S6OrphanMap = S3OrphanMap;
+            this.aoOrphanMap = aoPixelMap;
+            this.boOrphanMap = aoOrphanMap;
+            this.coOrphanMap = aoOrphanMap;
         }
         createTargetProduct();
     }
@@ -95,29 +140,40 @@ public class MisrOp extends Operator {
     public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm) {
         Tile sourceTile;
         Map<int[], int[]> map = new HashMap<>();
+        Map<int[], int[]> mapOrphan = new HashMap<>();
         Rectangle targetRectangle = targetTile.getRectangle();
 
 
         if (targetBand.getName().contains("_ao")) {
             map = aoPixelMap;
+            mapOrphan = aoOrphanMap;
         } else if (targetBand.getName().contains("_bo")) {
             map = boPixelMap;
+            mapOrphan = boOrphanMap;
         } else if (targetBand.getName().contains("_co")) {
             map = coPixelMap;
+            mapOrphan = coOrphanMap;
         } else if ((targetBand.getName().contains("S1") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S1") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S1") && targetBand.getName().contains("_cn"))) {
             map = S1PixelMap;
+            mapOrphan = S1OrphanMap;
         } else if ((targetBand.getName().contains("S2") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S2") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S2") && targetBand.getName().contains("_cn"))) {
             map = S2PixelMap;
+            mapOrphan = S2OrphanMap;
         } else if ((targetBand.getName().contains("S3") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S3") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S3") && targetBand.getName().contains("_cn"))) {
             map = S3PixelMap;
+            mapOrphan = S3OrphanMap;
         } else if ((targetBand.getName().contains("S4") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S4") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S4") && targetBand.getName().contains("_cn"))) {
             map = S4PixelMap;
+            mapOrphan = S4OrphanMap;
         } else if ((targetBand.getName().contains("S5") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S5") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S5") && targetBand.getName().contains("_cn"))) {
             map = S5PixelMap;
+            mapOrphan = S5OrphanMap;
         } else if ((targetBand.getName().contains("S6") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S6") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S6") && targetBand.getName().contains("_cn"))) {
             map = S6PixelMap;
+            mapOrphan = S6OrphanMap;
         } else if ((targetBand.getName().contains("_an") || targetBand.getName().contains("_bn") || targetBand.getName().contains("_cn"))) {
             map = S3PixelMap;
+            mapOrphan = S3OrphanMap;
         }
 
         RasterDataNode oa17_radiance = olciSourceProduct.getRasterDataNode("Oa17_radiance");
@@ -144,6 +200,30 @@ public class MisrOp extends Operator {
                     }
                 }
             }
+            //Orphan pixels
+            if (orphan) {
+                String parentPath = slstrSourceProduct.getFileLocation().getParent();
+                String netCDFFile = parentPath + "/" + targetBand.getName() + ".nc";
+                try {
+                    NetcdfFile netcdfFile = NetcdfFileOpener.open(netCDFFile);
+                    Variable orphanVariable = netcdfFile.findVariable(targetBand.getName().replace("radiance_", "radiance_orphan_"));
+                    ArrayShort.D2 orphanArray = (ArrayShort.D2) orphanVariable.read();
+                    int a = 1;
+                    for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
+                        for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+                            int[] position = {x, y};
+                            int[] slstrOrphanPosition = mapOrphan.get(position);
+                            if (slstrOrphanPosition != null) {
+                                double reflecValue = orphanArray.get(slstrOrphanPosition[0],slstrOrphanPosition[1]);
+                                targetTile.setSample(x, y, reflecValue);
+                                }
+                            }
+                        }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            //
             if (duplicate) {
                 for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                     double duplicatePixel = getDuplicatedPixel(targetRectangle.x, y, targetBand, map, sourceBand);

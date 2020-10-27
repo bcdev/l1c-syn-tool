@@ -365,6 +365,33 @@ public class SlstrMisrTransform implements Serializable {
         return olciMap;
     }
 
+    TreeMap<int[], int[]> getOrphanOlciMap() throws  InvalidRangeException, IOException {
+        //Provides mapping between orphan SLSTR pixels and OLCI image grid
+        TreeMap<int[], int[]> gridMapOrphan = new TreeMap<>(new ComparatorIntArray());
+
+        if (newTransform) {
+            Map<int[], int[]> slstrOrphanMap = getSlstrOrphanImageMap(); // 1
+            Map<int[], int[]> slstrOrphanMisrMap = getSlstrGridMisrMap(slstrOrphanMap, true); // 2
+            Map<int[], int[]> misrOrphanOlciMap = getMisrOlciOrphanMap(); // 3
+            Map<int[], int[]> olciImageOrphanMap = getOlciMisrMap(); // 4
+
+            for (Map.Entry<int[], int[]> entry : slstrOrphanMap.entrySet()) {
+                int[] slstrScanPixDet = entry.getValue();
+                int[] rowOrphan = (int[]) slstrOrphanMisrMap.get(slstrScanPixDet);
+                int[] mjk = misrOrphanOlciMap.get(rowOrphan);
+                if (mjk != null) {
+                    int[] xy = olciImageOrphanMap.get(mjk);
+                    if (xy != null) {
+                        gridMapOrphan.put(xy, entry.getKey());
+                    }
+                }
+            }
+        }
+        TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray());
+        gridMap.putAll(gridMapOrphan);
+        return gridMap;
+    }
+
     TreeMap<int[], int[]> getSlstrOlciMap() throws InvalidRangeException, IOException {
         //Provides mapping between SLSTR image grid and OLCI image grid
         TreeMap<int[], int[]> gridMapPixel = new TreeMap<>(new ComparatorIntArray());
@@ -372,15 +399,10 @@ public class SlstrMisrTransform implements Serializable {
         // New version
         if (newTransform) {
 
-            // Map<int[], int[]> gridMapOrphan = new TreeMap<>(new ComparatorIntArray());
             Map<int[], int[]> slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight()); //1
-            //Map<int[], int[]> slstrOrphanMap = getSlstrOrphanImageMap();
             Map<int[], int[]> slstrMisrMap = getSlstrGridMisrMap(slstrImageMap, true); //2
-            //Map<int[], int[]> slstrOrphanMisrMap = getSlstrGridMisrMap(slstrOrphanMap, true);
             Map<int[], int[]> misrOlciMap = getMisrOlciMap(); //3
-            //Map<int[], int[]> misrOrphanOlciMap = getMisrOlciOrphanMap();
             Map<int[], int[]> olciImageMap = getOlciMisrMap(); // 4
-            //Map<int[], int[]> olciImageOrphanMap = getOlciMisrMap(); // 4
             for (Map.Entry<int[], int[]> entry : slstrImageMap.entrySet()) {
                 int[] slstrScanPixDet = entry.getValue();
                 int[] rowCol = slstrMisrMap.get(slstrScanPixDet);
@@ -392,20 +414,8 @@ public class SlstrMisrTransform implements Serializable {
                     }
                 }
             }
-            /*for (Map.Entry<int[], int[]> entry : slstrOrphanMap.entrySet()) {
-                int[] slstrScanPixDet = entry.getValue();
-                int[] rowOrphan = (int[]) slstrOrphanMisrMap.get(slstrScanPixDet);
-                int[] mjk = misrOrphanOlciMap.get(rowOrphan);
-                if (mjk != null) {
-                    int[] xy = olciImageOrphanMap.get(mjk);
-                    if (xy != null) {
-                        gridMapOrphan.put(xy, entry.getKey());
-                    }
-                }
-            }*/
 
             TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray());
-            //gridMap.putAll(gridMapOrphan);
             gridMap.putAll(gridMapPixel);
             return gridMap;
         } else {
