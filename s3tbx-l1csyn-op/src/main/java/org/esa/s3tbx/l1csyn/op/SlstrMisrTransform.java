@@ -257,19 +257,22 @@ public class SlstrMisrTransform implements Serializable {
 
         short orphan = -1;
         int row = -1;
+        int rowOffset = 0;
+        double rowScale = 0;
         TreeMap<int[], int[]> orphanRowMap = new TreeMap<>(new ComparatorIntArray());
 
         boolean match1 = orphanVariableName.matches("L1b_orphan_.._" + "a.");
         boolean match2 = orphanVariableName.matches("orphan_corresp_s._" + "a.");
-
+        rowOffset = rowVariable.findAttribute("add_offset").getNumericValue().intValue();
+        rowScale = rowVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
         for (int i = 0; i < nCamLength; i++) {
             for (int j = 0; j < nLineOlcLength; j++) {
                 for (int k = 0; k < nDetCamLength; k++) {
                     if (match1) {
-                        row = rowArray.get(i, j, k);
+                        row = (int) (rowArray.get(i, j, k) * rowScale + rowOffset);
                         orphan = orphanArray.get(i, j, k);
                     } else if (match2) {
-                        row = rowArray.get(i, j, k);
+                        row = (int) (rowArray.get(i, j, k) * rowScale + rowOffset);
                         orphan = orphanArray.get(i, j, k);
                     }
                     if (orphan > 0 && row > 0) {

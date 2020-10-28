@@ -208,17 +208,22 @@ public class MisrOp extends Operator {
                     NetcdfFile netcdfFile = NetcdfFileOpener.open(netCDFFile);
                     Variable orphanVariable = netcdfFile.findVariable(targetBand.getName().replace("radiance_", "radiance_orphan_"));
                     ArrayShort.D2 orphanArray = (ArrayShort.D2) orphanVariable.read();
+                    double scaleFactor = (double) orphanVariable.findAttribute("scale_factor").getNumericValue();
+
                     int a = 1;
                     for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                         for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                             int[] position = {x, y};
                             int[] slstrOrphanPosition = mapOrphan.get(position);
                             if (slstrOrphanPosition != null) {
-                                double reflecValue = orphanArray.get(slstrOrphanPosition[0],slstrOrphanPosition[1]);
-                                targetTile.setSample(x, y, reflecValue);
+                                if (slstrOrphanPosition[0] < orphanArray.getShape()[0] && slstrOrphanPosition[1] < orphanArray.getShape()[1]) {
+                                    double reflecValue = orphanArray.get(slstrOrphanPosition[0], slstrOrphanPosition[1]);
+                                    targetTile.setSample(x, y, reflecValue*scaleFactor);
                                 }
                             }
                         }
+                    }
+                    netcdfFile.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
