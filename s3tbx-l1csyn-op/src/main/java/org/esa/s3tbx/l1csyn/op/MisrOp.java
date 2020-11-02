@@ -218,7 +218,9 @@ public class MisrOp extends Operator {
                             if (slstrOrphanPosition != null) {
                                 if (slstrOrphanPosition[0] < orphanArray.getShape()[0] && slstrOrphanPosition[1] < orphanArray.getShape()[1]) {
                                     double reflecValue = orphanArray.get(slstrOrphanPosition[0], slstrOrphanPosition[1]);
-                                    targetTile.setSample(x, y, reflecValue*scaleFactor);
+                                    if ( reflecValue > 0) {
+                                        targetTile.setSample(x, y, reflecValue * scaleFactor);
+                                    }
                                 }
                             }
                         }

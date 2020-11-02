@@ -78,9 +78,9 @@ public class SlstrMisrTransform implements Serializable {
                 if (scan != -1 && pixel != -1 && detector != -1) {
                     int[] imagePosition = {i, j};
                     orphanMap.put(imagePosition, gridPosition);
-                    if (scan < minScan) {
-                        this.minScan = scan;
-                    }
+                    //if (scan < minScan) {
+                    //    this.minScan = scan;
+                    //}
                 }
             }
         }
@@ -221,8 +221,8 @@ public class SlstrMisrTransform implements Serializable {
                     for (int j = 0; j < step; j++) {
                         for (int k = 0; k < nDetCamLength; k++) {
                             // Type of variable of (row,col) might change with change of MISR format. Be careful here.
-                            row = rowArray.get(i, j, k) + rowOffset;
-                            col = colArray.get(i, j, k);
+                            row = (int) (rowArray.get(i, j, k) * rowScale + rowOffset);
+                            col = (int) (colArray.get(i, j, k) * colScale + colOffset);
                             if (col >= 0 && row >= 0) {
                                 //if (row < slstrNumRows && col < slstrNumCols) {
                                     int[] colRowArray = {col, row};
