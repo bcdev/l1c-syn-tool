@@ -170,7 +170,7 @@ public class SlstrMisrTransform implements Serializable {
         String colVariableName = getColVariableName(netcdfFile,"col_corresp_\\S+");
         Variable rowVariable = netcdfFile.findVariable(rowVariableName);
         Variable colVariable = netcdfFile.findVariable(colVariableName);
-       // Variable rowOffsetVariable = netcdfFile.findVariable("input_products_row_offset");
+        Variable rowOffsetVariable = netcdfFile.findVariable("input_products_row_offset");
         //int rowOffset = rowOffsetVariable.readScalarInt();
         int rowOffset = 0;
         int colOffset = 0;
