@@ -2,7 +2,10 @@ package org.esa.s3tbx.l1csyn.op;
 
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.dataio.netcdf.util.NetcdfFileOpener;
-import ucar.ma2.*;
+import ucar.ma2.ArrayByte;
+import ucar.ma2.ArrayInt;
+import ucar.ma2.ArrayShort;
+import ucar.ma2.InvalidRangeException;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
 
@@ -14,7 +17,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class SlstrMisrTransform implements Serializable {
-    private Product olciImageProduct;
     private final Product slstrImageProduct;
     private final String misrPath;
     private final String bandType;
@@ -22,6 +24,7 @@ public class SlstrMisrTransform implements Serializable {
     private final int olciNumCols;
     private final int slstrNumRows;
     private final int slstrNumCols;
+    private Product olciImageProduct;
     private boolean newTransform = false;
     private int minScan = 9999999;
     private int SLSTRoffset;
@@ -35,6 +38,7 @@ public class SlstrMisrTransform implements Serializable {
         this.bandType = bandType;
         this.olciNumRows = olciImageProduct.getBand("Oa17_radiance").getRasterHeight();
         this.olciNumCols = olciImageProduct.getBand("Oa17_radiance").getRasterWidth();
+        // maybe change to boolean variable? Now either bandType contains an "S" or not, which is a boolean functionality tb 2020-11-04
         if (bandType.contains("S")) {
             this.slstrNumRows = slstrImageProduct.getBand("S3_radiance_an").getRasterHeight();
             this.slstrNumCols = slstrImageProduct.getBand("S3_radiance_an").getRasterWidth();
@@ -166,20 +170,20 @@ public class SlstrMisrTransform implements Serializable {
         int nLineOlcLength = netcdfFile.findDimension("N_LINE_OLC").getLength();
         int nDetCamLength = netcdfFile.findDimension("N_DET_CAM").getLength();
         int nCamLength = netcdfFile.findDimension("N_CAM").getLength();
-        String rowVariableName = getRowVariableName(netcdfFile,"row_corresp_\\S+");
-        String colVariableName = getColVariableName(netcdfFile,"col_corresp_\\S+");
+        String rowVariableName = getRowVariableName(netcdfFile, "row_corresp_\\S+");
+        String colVariableName = getColVariableName(netcdfFile, "col_corresp_\\S+");
         Variable rowVariable = netcdfFile.findVariable(rowVariableName);
         Variable colVariable = netcdfFile.findVariable(colVariableName);
-       // Variable rowOffsetVariable = netcdfFile.findVariable("input_products_row_offset");
+        // Variable rowOffsetVariable = netcdfFile.findVariable("input_products_row_offset");
         //int rowOffset = rowOffsetVariable.readScalarInt();
         int rowOffset = 0;
         int colOffset = 0;
         double colScale = 0;
         double rowScale = 0;
         rowOffset = rowVariable.findAttribute("add_offset").getNumericValue().intValue();
+        rowScale = rowVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
         colOffset = colVariable.findAttribute("add_offset").getNumericValue().intValue();
         colScale = colVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
-        rowScale = rowVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
         TreeMap<int[], int[]> colRowMap = new TreeMap<>(new ComparatorIntArray());
         if (nLineOlcLength < 10000) {
             ArrayInt.D3 rowArray = (ArrayInt.D3) rowVariable.read();
@@ -192,13 +196,18 @@ public class SlstrMisrTransform implements Serializable {
                 for (int j = 0; j < nLineOlcLength; j++) {
                     for (int k = 0; k < nDetCamLength; k++) {
                         // Type of variable of (row,col) might change with change of MISR format. Be careful here.
-                        row = (int) (rowArray.get(i, j, k) * rowScale + rowOffset);
-                        col = (int) (colArray.get(i, j, k) * colScale + colOffset);
-                        if (col >= 0 && row >= 0) {
+//                        row = (int) (rowArray.get(i, j, k) * rowScale + rowOffset);
+//                        col = (int) (colArray.get(i, j, k) * colScale + colOffset);
+                        final int rawRow = rowArray.get(i, j, k);
+                        final int rawCol = colArray.get(i, j, k);
+                        if (rawCol >= 0 && rawRow >= 0) {
+                            row = (int) Math.round(rawRow * rowScale + rowOffset);
+                            col = (int) Math.round(rawCol * colScale + colOffset);
+
                             //if (row < slstrNumRows && col < slstrNumCols) {
-                                int[] colRowArray = {col, row};
-                                int[] position = {i, j, k};
-                                colRowMap.put(colRowArray, position);
+                            int[] colRowArray = {col, row};
+                            int[] position = {i, j, k};
+                            colRowMap.put(colRowArray, position);
                             //}
                         }
                     }
@@ -225,9 +234,9 @@ public class SlstrMisrTransform implements Serializable {
                             col = (int) (colArray.get(i, j, k) * colScale + colOffset);
                             if (col >= 0 && row >= 0) {
                                 //if (row < slstrNumRows && col < slstrNumCols) {
-                                    int[] colRowArray = {col, row};
-                                    int[] position = {i, j, k};
-                                    colRowMap.put(colRowArray, position);
+                                int[] colRowArray = {col, row};
+                                int[] position = {i, j, k};
+                                colRowMap.put(colRowArray, position);
                                 //}
                             }
                         }
@@ -248,7 +257,7 @@ public class SlstrMisrTransform implements Serializable {
         int nLineOlcLength = netcdfFile.findDimension("N_LINE_OLC").getLength();
         int nDetCamLength = netcdfFile.findDimension("N_DET_CAM").getLength();
         int nCamLength = netcdfFile.findDimension("N_CAM").getLength();
-        String rowVariableName = getRowVariableName(netcdfFile,"row_corresp_\\S+");
+        String rowVariableName = getRowVariableName(netcdfFile, "row_corresp_\\S+");
         String orphanVariableName = getOrphanVariableName(netcdfFile);
         Variable rowVariable = netcdfFile.findVariable(rowVariableName);
         Variable orphanVariable = netcdfFile.findVariable(orphanVariableName);
@@ -261,20 +270,13 @@ public class SlstrMisrTransform implements Serializable {
         double rowScale = 0;
         TreeMap<int[], int[]> orphanRowMap = new TreeMap<>(new ComparatorIntArray());
 
-        boolean match1 = orphanVariableName.matches("L1b_orphan_.._" + "a.");
-        boolean match2 = orphanVariableName.matches("orphan_corresp_s._" + "a.");
         rowOffset = rowVariable.findAttribute("add_offset").getNumericValue().intValue();
         rowScale = rowVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
         for (int i = 0; i < nCamLength; i++) {
             for (int j = 0; j < nLineOlcLength; j++) {
                 for (int k = 0; k < nDetCamLength; k++) {
-                    if (match1) {
-                        row = (int) (rowArray.get(i, j, k) * rowScale + rowOffset);
-                        orphan = orphanArray.get(i, j, k);
-                    } else if (match2) {
-                        row = (int) (rowArray.get(i, j, k) * rowScale + rowOffset);
-                        orphan = orphanArray.get(i, j, k);
-                    }
+                    row = (int) Math.round(rowArray.get(i, j, k) * rowScale + rowOffset);
+                    orphan = orphanArray.get(i, j, k);
                     if (orphan > 0 && row > 0) {
                         int[] orphanRowArray = {orphan, row};
                         int[] position = {i, j, k};
@@ -368,7 +370,7 @@ public class SlstrMisrTransform implements Serializable {
         return olciMap;
     }
 
-    TreeMap<int[], int[]> getOrphanOlciMap() throws  InvalidRangeException, IOException {
+    TreeMap<int[], int[]> getOrphanOlciMap() throws InvalidRangeException, IOException {
         //Provides mapping between orphan SLSTR pixels and OLCI image grid
         TreeMap<int[], int[]> gridMapOrphan = new TreeMap<>(new ComparatorIntArray());
 
@@ -471,7 +473,7 @@ public class SlstrMisrTransform implements Serializable {
     private String getRowVariableName(NetcdfFile netcdfFile, String pattern) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if ( variable.getName().matches(pattern) ) {
+            if (variable.getName().matches(pattern)) {
                 return variable.getName();
             }
         }
@@ -481,7 +483,7 @@ public class SlstrMisrTransform implements Serializable {
     private String getColVariableName(NetcdfFile netcdfFile, String pattern) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getFullName().matches(pattern)){
+            if (variable.getFullName().matches(pattern)) {
                 return variable.getFullName();
             }
             /*if ( variable.getName().matches("col_corresp_s." + "_an") || variable.getName().matches("L2b_col_" + "..")) {
