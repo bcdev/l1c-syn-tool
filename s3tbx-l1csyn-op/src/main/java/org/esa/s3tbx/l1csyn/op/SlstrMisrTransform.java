@@ -138,7 +138,7 @@ public class SlstrMisrTransform implements Serializable {
         TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray());
         //test block to rescale col-row
         if (minimize) {
-            SminOk = 4 * this.minScan - 4;
+            SminOk = 4 * this.minScan;
             System.out.println(SminOk + " is the offset");
         }
 
