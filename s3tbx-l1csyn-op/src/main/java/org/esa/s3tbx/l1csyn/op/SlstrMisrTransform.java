@@ -28,6 +28,7 @@ public class SlstrMisrTransform implements Serializable {
     private boolean newTransform = false;
     private int minScan = 9999999;
     private int SLSTRoffset;
+    private String viewtype;
 
     private int N_DET_CAM = 740;
 
@@ -41,9 +42,11 @@ public class SlstrMisrTransform implements Serializable {
         if (bandType.contains("S")) {
             this.slstrNumRows = slstrImageProduct.getBand("S3_radiance_an").getRasterHeight();
             this.slstrNumCols = slstrImageProduct.getBand("S3_radiance_an").getRasterWidth();
+            this.viewtype = "an";
         } else {
             this.slstrNumRows = slstrImageProduct.getBand("S3_radiance_ao").getRasterHeight();
             this.slstrNumCols = slstrImageProduct.getBand("S3_radiance_ao").getRasterWidth();
+            this.viewtype = "ao";
         }
         this.newTransform = newTransform;
         this.SLSTRoffset = SLSTRoffset;
@@ -60,11 +63,11 @@ public class SlstrMisrTransform implements Serializable {
         TreeMap<int[], int[]> orphanMap = new TreeMap<>(new ComparatorIntArray());
 
         String path = slstrImageProduct.getFileLocation().getParent();
-        String indexFilePath = path + "/indices_" + "an" + ".nc";
+        String indexFilePath = path + "/indices_" + viewtype + ".nc";
         NetcdfFile netcdfFile = NetcdfFileOpener.open(indexFilePath);
-        Variable scanVariable = netcdfFile.findVariable("scan_orphan_" + "an");
-        Variable pixelVariable = netcdfFile.findVariable("pixel_orphan_" + "an");
-        Variable detectorVariable = netcdfFile.findVariable("detector_orphan_" + "an");
+        Variable scanVariable = netcdfFile.findVariable("scan_orphan_" + viewtype);
+        Variable pixelVariable = netcdfFile.findVariable("pixel_orphan_" + viewtype);
+        Variable detectorVariable = netcdfFile.findVariable("detector_orphan_" + viewtype);
 
         ArrayShort.D2 scanArray = (ArrayShort.D2) scanVariable.read();
         ArrayShort.D2 pixelArray = (ArrayShort.D2) pixelVariable.read();
@@ -98,11 +101,11 @@ public class SlstrMisrTransform implements Serializable {
         TreeMap<int[], int[]> slstrMap = new TreeMap<>(new ComparatorIntArray());
 
         String path = slstrImageProduct.getFileLocation().getParent();
-        String indexFilePath = path + "/indices_" + "an" + ".nc";
+        String indexFilePath = path + "/indices_" + viewtype + ".nc";
         NetcdfFile netcdfFile = NetcdfFileOpener.open(indexFilePath);
-        Variable scanVariable = netcdfFile.findVariable("scan_" + "an");
-        Variable pixelVariable = netcdfFile.findVariable("pixel_" + "an");
-        Variable detectorVariable = netcdfFile.findVariable("detector_" + "an");
+        Variable scanVariable = netcdfFile.findVariable("scan_" + viewtype);
+        Variable pixelVariable = netcdfFile.findVariable("pixel_" + viewtype);
+        Variable detectorVariable = netcdfFile.findVariable("detector_" + viewtype);
 
         ArrayShort.D2 scanArray = (ArrayShort.D2) scanVariable.read();
         ArrayShort.D2 pixelArray = (ArrayShort.D2) pixelVariable.read();
@@ -398,7 +401,7 @@ public class SlstrMisrTransform implements Serializable {
         // New version
         if (newTransform) {
 
-            Map<int[], int[]> slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight()); //1
+            Map<int[], int[]> slstrImageMap = getSlstrImageMap(slstrImageProduct.getBand("S3_radiance_"+viewtype).getRasterWidth(), slstrImageProduct.getBand("S3_radiance_"+viewtype).getRasterHeight()); //1
             Map<int[], int[]> slstrMisrMap = getSlstrGridMisrMap(slstrImageMap, true); //2
             Map<int[], int[]> misrOlciMap = getMisrOlciMap(); //3
             Map<int[], int[]> olciImageMap = getOlciMisrMap(); // 4
