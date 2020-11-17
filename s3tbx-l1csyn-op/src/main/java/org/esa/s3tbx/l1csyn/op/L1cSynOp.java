@@ -5,10 +5,7 @@ import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Polygon;
 import org.apache.commons.lang.ArrayUtils;
 import org.esa.snap.core.dataio.ProductIO;
-import org.esa.snap.core.datamodel.Band;
-import org.esa.snap.core.datamodel.MetadataElement;
-import org.esa.snap.core.datamodel.Product;
-import org.esa.snap.core.datamodel.ProductData;
+import org.esa.snap.core.datamodel.*;
 import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
@@ -234,6 +231,8 @@ public class L1cSynOp extends Operator {
         }
 
         checkDate(slstrSource, olciSource);
+
+        checkGeocoding(slstrSource,olciSource);
 
         if (shapeFile != null) {
             geoRegion = readShapeFile(shapeFile);
@@ -475,6 +474,15 @@ public class L1cSynOp extends Operator {
         long diffInSeconds = diff / 1000L;
         if (diffInSeconds > allowedTimeDiff) {
             throw new OperatorException("The SLSTR and OLCI products differ more than" + String.format("%d", diffInSeconds) + ". Please check your input times");
+        }
+    }
+
+    private void checkGeocoding(Product slstrSource,Product olciSource) {
+        if (! (olciSource.getSceneGeoCoding() instanceof BasicPixelGeoCoding )) {
+            throw new OperatorException("OLCI product geocoding is not set to PixelGeoCoding. Please check your SNAP configuration");
+        }
+        if (! (slstrSource.getBand("S3_radiance_an").getGeoCoding() instanceof BasicPixelGeoCoding )) {
+            throw new OperatorException("SLSTR product geocoding is not set to PixelGeoCoding. Please check your SNAP configuration");
         }
     }
 
