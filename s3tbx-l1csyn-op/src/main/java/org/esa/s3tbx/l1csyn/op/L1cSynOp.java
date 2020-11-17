@@ -2,6 +2,7 @@ package org.esa.s3tbx.l1csyn.op;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.esa.snap.core.dataio.ProductIO;
+import org.esa.snap.core.dataio.geocoding.ComponentGeoCoding;
 import org.esa.snap.core.datamodel.*;
 import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.Operator;
@@ -231,6 +232,7 @@ public class L1cSynOp extends Operator {
 
         checkDate(slstrSource, olciSource);
 
+        // todo: update according to SNAP8
         checkGeocoding(slstrSource,olciSource);
 
         if (shapeFile != null) {
@@ -477,10 +479,10 @@ public class L1cSynOp extends Operator {
     }
 
     private void checkGeocoding(Product slstrSource,Product olciSource) {
-        if (! (olciSource.getSceneGeoCoding() instanceof BasicPixelGeoCoding )) {
+        if (! (olciSource.getSceneGeoCoding() instanceof ComponentGeoCoding)) {
             throw new OperatorException("OLCI product geocoding is not set to PixelGeoCoding. Please check your SNAP configuration");
         }
-        if (! (slstrSource.getBand("S3_radiance_an").getGeoCoding() instanceof BasicPixelGeoCoding )) {
+        if (! (slstrSource.getBand("S3_radiance_an").getGeoCoding() instanceof ComponentGeoCoding )) {
             throw new OperatorException("SLSTR product geocoding is not set to PixelGeoCoding. Please check your SNAP configuration");
         }
     }
