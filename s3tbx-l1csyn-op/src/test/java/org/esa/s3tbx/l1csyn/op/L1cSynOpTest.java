@@ -36,6 +36,7 @@ public class L1cSynOpTest {
         int width = result.getSceneRasterWidth();
 
         assertEquals(42, height);
+        // todo - following assertion fails
         assertEquals(60, width);
         assertEquals(414, numBands);
         assertEquals("S3_L1C_SYN", productType);
@@ -169,6 +170,7 @@ public class L1cSynOpTest {
         l1cSynOp.setParameterDefaultValues();
         l1cSynOp.setParameter("geoRegion","POLYGON((-16.936 26.715, -15.507  26.715 , -15.507 21.844 , -16.936     21.844 ,-16.936 26.715))");
         Product result = l1cSynOp.getTargetProduct();
+        // todo - following assertions fail
         assertEquals(7,result.getSceneRasterWidth());
         assertEquals(22,result.getSceneRasterHeight());
     }
