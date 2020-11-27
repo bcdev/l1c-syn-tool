@@ -27,6 +27,7 @@ public class SlstrMisrTransform implements Serializable {
     private Product olciImageProduct;
     private boolean newTransform = false;
     private int minScan = 9999999;
+    private int minScanOrphan = 9999999;
     private int SLSTRoffset;
     private String viewtype;
 
@@ -84,9 +85,9 @@ public class SlstrMisrTransform implements Serializable {
                 if (scan != -1 && pixel != -1 && detector != -1) {
                     int[] imagePosition = {i, j};
                     orphanMap.put(imagePosition, gridPosition);
-                    //if (scan < minScan) {
-                    //    this.minScan = scan;
-                    //}
+                    if (scan < minScanOrphan) {
+                        this.minScanOrphan = scan;
+                    }
                 }
             }
         }
@@ -160,6 +161,33 @@ public class SlstrMisrTransform implements Serializable {
         }
         return gridMap;
     }
+    //step2
+    private Map<int[], int[]> getSlstrGridOrphanMisrMap(Map<int[], int[]> mapSlstr, boolean minimize) throws IOException {
+        int SminOrphan = 0;
+        //provides map between SLSTR instrument grid (scan,pixel,detector) and MISR file (row,col)
+        TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray());
+        //test block to rescale col-row
+        if (minimize) {
+            SminOrphan = 4 * this.minScanOrphan;
+            System.out.println(SminOrphan + " is the orphan offset");
+        }
+
+        for (int[] scanPixelDetector : mapSlstr.values()) {
+            int scan = scanPixelDetector[0];
+            int pixel = scanPixelDetector[1];
+            int detector = scanPixelDetector[2];
+            int[] colRow = getColRow(scan, pixel, detector);
+            if (minimize) {
+                //TODO : check if only row should be normalized
+                colRow[0] = colRow[0];
+                colRow[1] = colRow[1] - SminOrphan;
+
+            }
+            gridMap.put(scanPixelDetector, colRow);
+        }
+        return gridMap;
+    }
+
 
 
     // Step 3
@@ -373,8 +401,8 @@ public class SlstrMisrTransform implements Serializable {
 
         if (newTransform) {
             Map<int[], int[]> slstrOrphanMap = getSlstrOrphanImageMap(); // 1
-            Map<int[], int[]> slstrOrphanMisrMap = getSlstrGridMisrMap(slstrOrphanMap, true); // 2
-            Map<int[], int[]> misrOrphanOlciMap = getMisrOlciOrphanMap(); // 3
+            Map<int[], int[]> slstrOrphanMisrMap = getSlstrGridOrphanMisrMap(slstrOrphanMap, true); // 2
+            Map<int[], int[]> misrOrphanOlciMap = getMisrOlciMap();
             Map<int[], int[]> olciImageOrphanMap = getOlciMisrMap(); // 4
 
             for (Map.Entry<int[], int[]> entry : slstrOrphanMap.entrySet()) {
@@ -455,10 +483,43 @@ public class SlstrMisrTransform implements Serializable {
         return gridMapPixel;
     }
 
+    // This method is used to check intermediate results of the algorithm
+    Map<int[], int[]> getSlstrOlciOrphanInstrumentMap(int camIndex) throws InvalidRangeException, IOException {
+        Map<int[], int[]> gridMapPixel = new TreeMap<>(new ComparatorIntArray());
+        Map<int[], int[]> slstrImageMap = getSlstrOrphanImageMap(); // 1
+        Map<int[], int[]> slstrMisrMap = getSlstrGridOrphanMisrMap(slstrImageMap, true); // 2
+        Map<int[], int[]> misrOlciMap = getMisrOlciOrphanMap(); // 3
+        for (Map.Entry<int[], int[]> entry : slstrImageMap.entrySet()) {
+            int[] slstrScanPixDet = entry.getValue();
+            int[] rowCol = (int[]) slstrMisrMap.get(slstrScanPixDet);
+            int[] mjk = (int[]) misrOlciMap.get(rowCol);
+            if (mjk != null) {
+                if (mjk[0] == camIndex) {
+                    int[] camCoors = new int[]{mjk[2], mjk[1]};
+                    gridMapPixel.put(camCoors, entry.getKey());
+                }
+            }
+        }
+        return gridMapPixel;
+    }
+
     Map<int[], int[]> getSlstrOlciSingleCameraMap() throws InvalidRangeException, IOException {
         Map<int[], int[]> gridMapPixel = new TreeMap<>(new ComparatorIntArray());
         Map<int[], int[]> slstrImageMap = getSlstrImageMap(slstrImageProduct.getSceneRasterWidth(), slstrImageProduct.getSceneRasterHeight()); //1
         Map<int[], int[]> slstrMisrMap = getSlstrGridMisrMap(slstrImageMap, true); //2
+        for (Map.Entry<int[], int[]> entry : slstrImageMap.entrySet()) {
+            int[] slstrScanPixDet = entry.getValue();
+            int[] rowCol = (int[]) slstrMisrMap.get(slstrScanPixDet);
+            gridMapPixel.put(rowCol, entry.getKey());
+        }
+        return gridMapPixel;
+    }
+
+    // This method is used to check intermediate results of the algorithm
+    Map<int[], int[]> getSlstrOlciOrphanSingleCameraMap() throws InvalidRangeException, IOException {
+        Map<int[], int[]> gridMapPixel = new TreeMap<>(new ComparatorIntArray());
+        Map<int[], int[]> slstrImageMap = getSlstrOrphanImageMap(); // 1
+        Map<int[], int[]> slstrMisrMap = getSlstrGridOrphanMisrMap(slstrImageMap, true);
         for (Map.Entry<int[], int[]> entry : slstrImageMap.entrySet()) {
             int[] slstrScanPixDet = entry.getValue();
             int[] rowCol = (int[]) slstrMisrMap.get(slstrScanPixDet);
