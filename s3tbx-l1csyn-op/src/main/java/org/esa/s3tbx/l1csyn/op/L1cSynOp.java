@@ -318,9 +318,9 @@ public class L1cSynOp extends Operator {
                     throw new OperatorException("MISR file information is not read correctly");
                 }
             } catch (InvalidRangeException e1) {
-                throw new OperatorException("Misregistration failed. InvalidRangeException");
+                throw new OperatorException("Misregistration failed. InvalidRangeException", e1);
             } catch (IOException e2) {
-                throw new OperatorException("Misregistration failes. I/O Exception ");
+                throw new OperatorException("Misregistration failes. I/O Exception ", e2);
             }
 
         } else {
@@ -493,8 +493,8 @@ public class L1cSynOp extends Operator {
         File slstrFile = new File(filePath);
         try {
             this.slstrSource = ProductIO.readProduct(slstrFile, "Sen3");
-        } catch (IOException e2) {
-            throw new OperatorException("Can not reopen SLSTR product.");
+        } catch (IOException e) {
+            throw new OperatorException("Can not reopen SLSTR product.", e);
         }
     }
 
