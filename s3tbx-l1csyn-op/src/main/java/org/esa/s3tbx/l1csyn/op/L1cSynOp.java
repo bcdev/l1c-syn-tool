@@ -320,7 +320,7 @@ public class L1cSynOp extends Operator {
             } catch (InvalidRangeException e1) {
                 throw new OperatorException("Misregistration failed. InvalidRangeException", e1);
             } catch (IOException e2) {
-                throw new OperatorException("Misregistration failes. I/O Exception ", e2);
+                throw new OperatorException("Misregistration failed. I/O Exception ", e2);
             }
 
         } else {
