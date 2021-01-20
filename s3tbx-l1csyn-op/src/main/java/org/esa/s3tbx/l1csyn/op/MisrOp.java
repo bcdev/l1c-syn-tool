@@ -15,16 +15,23 @@ import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
 import org.esa.snap.core.util.ProductUtils;
+import org.esa.snap.core.util.SystemUtils;
 import org.esa.snap.dataio.netcdf.util.NetcdfFileOpener;
+import org.esa.snap.rcp.SnapApp;
 import ucar.ma2.ArrayShort;
+import ucar.nc2.Attribute;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 
 @OperatorMetadata(alias = "Misregister",
@@ -204,30 +211,41 @@ public class MisrOp extends Operator {
             if (orphan) {
                 String parentPath = slstrSourceProduct.getFileLocation().getParent();
                 String netCDFFile = parentPath + "/" + targetBand.getName() + ".nc";
-                try {
-                    NetcdfFile netcdfFile = NetcdfFileOpener.open(netCDFFile);
-                    Variable orphanVariable = netcdfFile.findVariable(targetBand.getName().replace("radiance_", "radiance_orphan_"));
-                    ArrayShort.D2 orphanArray = (ArrayShort.D2) orphanVariable.read();
-                    double scaleFactor = (double) orphanVariable.findAttribute("scale_factor").getNumericValue();
+                final Path path = Paths.get(netCDFFile);
+                if (Files.exists(path)) {
+                    try {
+                        NetcdfFile netcdfFile = NetcdfFileOpener.open(netCDFFile);
+                        Variable orphanVariable = netcdfFile.findVariable(targetBand.getName().replace("radiance_", "radiance_orphan_"));
+                        ArrayShort.D2 orphanArray = (ArrayShort.D2) orphanVariable.read();
+                        final Attribute scale_factorAttribute = orphanVariable.findAttribute("scale_factor");
+                        double scaleFactor = 1.0;
+                        if (scale_factorAttribute != null) {
+                            final Number scale_factor = scale_factorAttribute.getNumericValue();
+                            if (scale_factor != null) {
+                                scaleFactor = (double) scale_factor;
+                            }
+                        }
 
-                    int a = 1;
-                    for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                        for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                            int[] position = {x, y};
-                            int[] slstrOrphanPosition = mapOrphan.get(position);
-                            if (slstrOrphanPosition != null) {
-                                if (slstrOrphanPosition[0] < orphanArray.getShape()[0] && slstrOrphanPosition[1] < orphanArray.getShape()[1]) {
-                                    double reflecValue = orphanArray.get(slstrOrphanPosition[0], slstrOrphanPosition[1]);
-                                    if ( reflecValue > 0) {
-                                        targetTile.setSample(x, y, reflecValue * scaleFactor);
+                        for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
+                            for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+                                int[] position = {x, y};
+                                int[] slstrOrphanPosition = mapOrphan.get(position);
+                                if (slstrOrphanPosition != null) {
+                                    if (slstrOrphanPosition[0] < orphanArray.getShape()[0] && slstrOrphanPosition[1] < orphanArray.getShape()[1]) {
+                                        double reflecValue = orphanArray.get(slstrOrphanPosition[0], slstrOrphanPosition[1]);
+                                        if (reflecValue > 0) {
+                                            targetTile.setSample(x, y, reflecValue * scaleFactor);
+                                        }
                                     }
                                 }
                             }
                         }
+                        netcdfFile.close();
+                    } catch (IOException ioe) {
+                        SystemUtils.LOG.log(Level.WARNING, String.format("Could not process file %s: %s", netCDFFile, ioe.getMessage()));
                     }
-                    netcdfFile.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                }else {
+                    SystemUtils.LOG.log(Level.FINE, String.format("File %s does not exist", netCDFFile));
                 }
             }
             //
