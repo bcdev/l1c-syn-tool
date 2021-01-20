@@ -330,7 +330,7 @@ public class L1cSynOp extends Operator {
             sourceProductMap.put("slaveProduct", slstrInput);
             collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
         }
-        if (reprojectionCRS != null && !reprojectionCRS.toLowerCase().equals("none") && !reprojectionCRS.equals("") && !stayOnOlciGrid && misrFile == null) {
+        if (reprojectionCRS != null && !reprojectionCRS.equalsIgnoreCase("none") && !reprojectionCRS.equals("") && !stayOnOlciGrid && misrFile == null) {
             l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
         } else {
             l1cTarget = collocatedTarget;
