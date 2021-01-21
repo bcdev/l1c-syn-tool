@@ -17,14 +17,13 @@ import org.esa.snap.core.gpf.annotations.TargetProduct;
 import org.esa.snap.core.util.ProductUtils;
 import org.esa.snap.core.util.SystemUtils;
 import org.esa.snap.dataio.netcdf.util.NetcdfFileOpener;
-import org.esa.snap.rcp.SnapApp;
 import ucar.ma2.ArrayShort;
 import ucar.nc2.Attribute;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
 
-import java.awt.*;
-import java.io.File;
+import java.awt.Color;
+import java.awt.Rectangle;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
