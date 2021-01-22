@@ -1,5 +1,6 @@
 package org.esa.s3tbx.l1csyn.op;
 
+import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.dataio.netcdf.util.NetcdfFileOpener;
 import ucar.ma2.ArrayByte;
@@ -38,15 +39,18 @@ public class SlstrMisrTransform implements Serializable {
         this.slstrImageProduct = slstrImageProduct;
         this.misrPath = misrManifest.getParent();
         this.bandType = bandType;
-        this.olciNumRows = olciImageProduct.getBand("Oa17_radiance").getRasterHeight();
-        this.olciNumCols = olciImageProduct.getBand("Oa17_radiance").getRasterWidth();
+        final Band oa17_radiance = olciImageProduct.getBand("Oa17_radiance");
+        this.olciNumRows = oa17_radiance.getRasterHeight();
+        this.olciNumCols = oa17_radiance.getRasterWidth();
         if (bandType.contains("S")) {
-            this.slstrNumRows = slstrImageProduct.getBand("S3_radiance_an").getRasterHeight();
-            this.slstrNumCols = slstrImageProduct.getBand("S3_radiance_an").getRasterWidth();
+            final Band s3_radiance_an = slstrImageProduct.getBand("S3_radiance_an");
+            this.slstrNumRows = s3_radiance_an.getRasterHeight();
+            this.slstrNumCols = s3_radiance_an.getRasterWidth();
             this.viewtype = "an";
         } else {
-            this.slstrNumRows = slstrImageProduct.getBand("S3_radiance_ao").getRasterHeight();
-            this.slstrNumCols = slstrImageProduct.getBand("S3_radiance_ao").getRasterWidth();
+            final Band s3_radiance_ao = slstrImageProduct.getBand("S3_radiance_ao");
+            this.slstrNumRows = s3_radiance_ao.getRasterHeight();
+            this.slstrNumCols = s3_radiance_ao.getRasterWidth();
             this.viewtype = "ao";
         }
         this.newTransform = newTransform;
@@ -161,6 +165,7 @@ public class SlstrMisrTransform implements Serializable {
         }
         return gridMap;
     }
+
     //step2
     private Map<int[], int[]> getSlstrGridOrphanMisrMap(Map<int[], int[]> mapSlstr, boolean minimize) throws IOException {
         int SminOrphan = 0;
@@ -189,7 +194,6 @@ public class SlstrMisrTransform implements Serializable {
     }
 
 
-
     // Step 3
     private Map<int[], int[]> getMisrOlciMap() throws IOException, InvalidRangeException {
         // provides mapping between SLSTR (row/col) and OLCI instrument grid (N_LINE_OLC/N_DET_CAM/N_CAM) from MISR product
@@ -206,14 +210,10 @@ public class SlstrMisrTransform implements Serializable {
         Variable colVariable = netcdfFile.findVariable(colVariableName);
         Variable rowOffsetVariable = netcdfFile.findVariable("input_products_row_offset");
         //int rowOffset = rowOffsetVariable.readScalarInt();
-        int rowOffset = 0;
-        int colOffset = 0;
-        double colScale = 0;
-        double rowScale = 0;
-        rowOffset = rowVariable.findAttribute("add_offset").getNumericValue().intValue();
-        colOffset = colVariable.findAttribute("add_offset").getNumericValue().intValue();
-        colScale = colVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
-        rowScale = rowVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
+        int rowOffset = rowVariable.findAttribute("add_offset").getNumericValue().intValue();
+        int colOffset = colVariable.findAttribute("add_offset").getNumericValue().intValue();
+        double colScale = colVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
+        double rowScale = rowVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
         TreeMap<int[], int[]> colRowMap = new TreeMap<>(new ComparatorIntArray());
         if (nLineOlcLength < 10000) {
             ArrayInt.D3 rowArray = (ArrayInt.D3) rowVariable.read();
@@ -343,7 +343,7 @@ public class SlstrMisrTransform implements Serializable {
         int nDetCamLength = netcdfFile.findDimension("N_DET_CAM").getLength();
 
         Variable rowOffsetVariable = netcdfFile.findVariable("input_products_row_offset");
-        int rowOffset = (int) rowOffsetVariable.readScalarInt();
+        int rowOffset = rowOffsetVariable.readScalarInt();
         rowOffset = 0;
         if (nLineOlcLength < 10000) {
             ArrayShort.D3 rowArray = (ArrayShort.D3) rowVariable.read();
@@ -407,7 +407,7 @@ public class SlstrMisrTransform implements Serializable {
 
             for (Map.Entry<int[], int[]> entry : slstrOrphanMap.entrySet()) {
                 int[] slstrScanPixDet = entry.getValue();
-                int[] rowOrphan = (int[]) slstrOrphanMisrMap.get(slstrScanPixDet);
+                int[] rowOrphan = slstrOrphanMisrMap.get(slstrScanPixDet);
                 int[] mjk = misrOrphanOlciMap.get(rowOrphan);
                 if (mjk != null) {
                     int[] xy = olciImageOrphanMap.get(mjk);
@@ -429,7 +429,7 @@ public class SlstrMisrTransform implements Serializable {
         // New version
         if (newTransform) {
 
-            Map<int[], int[]> slstrImageMap = getSlstrImageMap(slstrImageProduct.getBand("S3_radiance_"+viewtype).getRasterWidth(), slstrImageProduct.getBand("S3_radiance_"+viewtype).getRasterHeight()); //1
+            Map<int[], int[]> slstrImageMap = getSlstrImageMap(slstrImageProduct.getBand("S3_radiance_" + viewtype).getRasterWidth(), slstrImageProduct.getBand("S3_radiance_" + viewtype).getRasterHeight()); //1
             Map<int[], int[]> slstrMisrMap = getSlstrGridMisrMap(slstrImageMap, true); //2
             Map<int[], int[]> misrOlciMap = getMisrOlciMap(); //3
             Map<int[], int[]> olciImageMap = getOlciMisrMap(); // 4
@@ -454,7 +454,7 @@ public class SlstrMisrTransform implements Serializable {
             Map<int[], int[]> olciImageMap = MapToWrapedArrayFactory.createWrappedArray(getOlciMisrMap()); // 4.2
             for (Map.Entry<int[], int[]> entry : misrOlciMap.entrySet()) {
                 int[] mjk = entry.getValue();
-                int[] xy = (int[]) olciImageMap.get(mjk);
+                int[] xy = olciImageMap.get(mjk);
                 if (xy != null) {
                     gridMapPixel.put(xy, entry.getKey());
                 }
@@ -471,8 +471,8 @@ public class SlstrMisrTransform implements Serializable {
 
         for (Map.Entry<int[], int[]> entry : slstrImageMap.entrySet()) {
             int[] slstrScanPixDet = entry.getValue();
-            int[] rowCol = (int[]) slstrMisrMap.get(slstrScanPixDet);
-            int[] mjk = (int[]) misrOlciMap.get(rowCol);
+            int[] rowCol = slstrMisrMap.get(slstrScanPixDet);
+            int[] mjk = misrOlciMap.get(rowCol);
             if (mjk != null) {
                 if (mjk[0] == camIndex) {
                     int[] camCoors = new int[]{mjk[2], mjk[1]};
@@ -491,8 +491,8 @@ public class SlstrMisrTransform implements Serializable {
         Map<int[], int[]> misrOlciMap = getMisrOlciOrphanMap(); // 3
         for (Map.Entry<int[], int[]> entry : slstrImageMap.entrySet()) {
             int[] slstrScanPixDet = entry.getValue();
-            int[] rowCol = (int[]) slstrMisrMap.get(slstrScanPixDet);
-            int[] mjk = (int[]) misrOlciMap.get(rowCol);
+            int[] rowCol = slstrMisrMap.get(slstrScanPixDet);
+            int[] mjk = misrOlciMap.get(rowCol);
             if (mjk != null) {
                 if (mjk[0] == camIndex) {
                     int[] camCoors = new int[]{mjk[2], mjk[1]};
@@ -509,7 +509,7 @@ public class SlstrMisrTransform implements Serializable {
         Map<int[], int[]> slstrMisrMap = getSlstrGridMisrMap(slstrImageMap, true); //2
         for (Map.Entry<int[], int[]> entry : slstrImageMap.entrySet()) {
             int[] slstrScanPixDet = entry.getValue();
-            int[] rowCol = (int[]) slstrMisrMap.get(slstrScanPixDet);
+            int[] rowCol = slstrMisrMap.get(slstrScanPixDet);
             gridMapPixel.put(rowCol, entry.getKey());
         }
         return gridMapPixel;
@@ -522,7 +522,7 @@ public class SlstrMisrTransform implements Serializable {
         Map<int[], int[]> slstrMisrMap = getSlstrGridOrphanMisrMap(slstrImageMap, true);
         for (Map.Entry<int[], int[]> entry : slstrImageMap.entrySet()) {
             int[] slstrScanPixDet = entry.getValue();
-            int[] rowCol = (int[]) slstrMisrMap.get(slstrScanPixDet);
+            int[] rowCol = slstrMisrMap.get(slstrScanPixDet);
             gridMapPixel.put(rowCol, entry.getKey());
         }
         return gridMapPixel;
@@ -531,8 +531,9 @@ public class SlstrMisrTransform implements Serializable {
     private String getRowVariableName(NetcdfFile netcdfFile, String pattern) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getName().matches(pattern)) {
-                return variable.getName();
+            final String fullName = variable.getFullName();
+            if (fullName.matches(pattern)) {
+                return fullName;
             }
         }
         throw new NullPointerException("Row variable not found");
@@ -541,8 +542,9 @@ public class SlstrMisrTransform implements Serializable {
     private String getColVariableName(NetcdfFile netcdfFile, String pattern) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getFullName().matches(pattern)) {
-                return variable.getFullName();
+            final String fullName = variable.getFullName();
+            if (fullName.matches(pattern)) {
+                return fullName;
             }
             /*if ( variable.getName().matches("col_corresp_s." + "_an") || variable.getName().matches("L2b_col_" + "..")) {
                 return variable.getName();
@@ -557,8 +559,9 @@ public class SlstrMisrTransform implements Serializable {
     private String getOrphanVariableName(NetcdfFile netcdfFile) {
         List<Variable> variables = netcdfFile.getVariables();
         for (Variable variable : variables) {
-            if (variable.getName().matches("L1b_orphan_.._" + "a.") || variable.getName().matches("orphan_corresp_s._" + "a.") || variable.getName().matches("L1b_orphan_" + "a.")) {
-                return variable.getName();
+            final String fullName = variable.getFullName();
+            if (fullName.matches("L1b_orphan_.._" + "a.") || fullName.matches("orphan_corresp_s._" + "a.") || fullName.matches("L1b_orphan_" + "a.")) {
+                return fullName;
             }
         }
         throw new NullPointerException("Orphan variable not found");
