@@ -322,19 +322,15 @@ public class SlstrMisrTransform implements Serializable {
         String bandName = "/misreg_Oref_Oa17.nc";
         String misrBandFile = this.misrPath + bandName;
         NetcdfFile netcdfFile = NetcdfFile.open(misrBandFile);
-        String rowVariableName = "L1b_row_17";
-        String colVariableName = "L1b_col_17";
-        Variable rowVariable = netcdfFile.findVariable(rowVariableName);
-        Variable colVariable = netcdfFile.findVariable(colVariableName);
-        //
+
+        Variable rowVariable = netcdfFile.findVariable("L1b_row_17");
         if (rowVariable == null) {
-            rowVariableName = "delta_row_17";
-            rowVariable = netcdfFile.findVariable(rowVariableName);
+            rowVariable = netcdfFile.findVariable("delta_row_17");
 
         }
+        Variable colVariable = netcdfFile.findVariable("L1b_col_17");
         if (colVariable == null) {
-            colVariableName = "delta_col_17";
-            colVariable = netcdfFile.findVariable(colVariableName);
+            colVariable = netcdfFile.findVariable("delta_col_17");
         }
         //
 
