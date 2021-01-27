@@ -295,26 +295,26 @@ public class L1cSynOp extends Operator {
                     Map<int[], int[]> mapOlciSlstrS4 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S4", formatMisr, -SLSTROffset).getSlstrOlciMap();
                     Map<int[], int[]> mapOlciSlstrS5 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S5", formatMisr, -SLSTROffset).getSlstrOlciMap();
                     Map<int[], int[]> mapOlciSlstrS6 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S6", formatMisr, -SLSTROffset).getSlstrOlciMap();
-                    Map<int[], int[]> mapOlciSlstrao = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
-                    Map<int[], int[]> mapOlciSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
-                    Map<int[], int[]> mapOlciSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    Map<int[], int[]> mapOlciSlstrAo = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    Map<int[], int[]> mapOlciSlstrBo = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
+                    Map<int[], int[]> mapOlciSlstrCo = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getSlstrOlciMap();
                     Map<int[], int[]> mapOrphanSlstrS1 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S1", formatMisr, -SLSTROffset).getOrphanOlciMap();
                     Map<int[], int[]> mapOrphanSlstrS2 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S2", formatMisr, -SLSTROffset).getOrphanOlciMap();
                     Map<int[], int[]> mapOrphanSlstrS3 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S3", formatMisr, -SLSTROffset).getOrphanOlciMap();
                     Map<int[], int[]> mapOrphanSlstrS4 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S4", formatMisr, -SLSTROffset).getOrphanOlciMap();
                     Map<int[], int[]> mapOrphanSlstrS5 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S5", formatMisr, -SLSTROffset).getOrphanOlciMap();
                     Map<int[], int[]> mapOrphanSlstrS6 = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "S6", formatMisr, -SLSTROffset).getOrphanOlciMap();
-                    Map<int[], int[]> mapOrphanSlstrrao = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getOrphanOlciMap();
-                    Map<int[], int[]> mapOrphanSlstrbo = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getOrphanOlciMap();
-                    Map<int[], int[]> mapOrphanSlstrco = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getOrphanOlciMap();
+                    Map<int[], int[]> mapOrphanSlstrAo = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getOrphanOlciMap();
+                    Map<int[], int[]> mapOrphanSlstrBo = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getOrphanOlciMap();
+                    Map<int[], int[]> mapOrphanSlstrCo = new SlstrMisrTransform(olciSource, slstrSource, misrFile, "ao", formatMisr, -SLSTROffset).getOrphanOlciMap();
 
 
                     HashMap<String, Object> misrParams = getMisrParams(mapOlciSlstrS1, mapOlciSlstrS2, mapOlciSlstrS3,
                                                                        mapOlciSlstrS4, mapOlciSlstrS5, mapOlciSlstrS6,
-                                                                       mapOlciSlstrao, mapOlciSlstrbo, mapOlciSlstrco,
+                                                                       mapOlciSlstrAo, mapOlciSlstrBo, mapOlciSlstrCo,
                                                                        mapOrphanSlstrS1,mapOrphanSlstrS2,mapOrphanSlstrS3,
                                                                        mapOrphanSlstrS4,mapOrphanSlstrS5,mapOrphanSlstrS6,
-                                                                       mapOrphanSlstrrao,mapOrphanSlstrbo,mapOrphanSlstrco);
+                                                                       mapOrphanSlstrAo,mapOrphanSlstrBo,mapOrphanSlstrCo);
 
                     HashMap<String, Product> misrSourceProductMap = new HashMap<>();
                     misrSourceProductMap.put("olciSource", olciSource);
