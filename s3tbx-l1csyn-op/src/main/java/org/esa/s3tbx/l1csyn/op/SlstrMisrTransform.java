@@ -77,18 +77,17 @@ public class SlstrMisrTransform implements Serializable {
         ArrayShort.D2 scanArray = (ArrayShort.D2) scanVariable.read();
         ArrayShort.D2 pixelArray = (ArrayShort.D2) pixelVariable.read();
         ArrayByte.D2 detectorArray = (ArrayByte.D2) detectorVariable.read();
-        int orphanPixelsLenght = netcdfFile.findDimension("orphan_pixels").getLength();
-        int rowLenght = netcdfFile.findDimension("rows").getLength();
+        int orphanPixelsLength = netcdfFile.findDimension("orphan_pixels").getLength();
+        int rowLength = netcdfFile.findDimension("rows").getLength();
 
-        for (int i = 0; i < orphanPixelsLenght; i++) {
-            for (int j = 0; j < rowLenght; j++) {
+        for (int i = 0; i < orphanPixelsLength; i++) {
+            for (int j = 0; j < rowLength; j++) { // todo(mp, Jan-2021) - Could stop already after each get when return is -1 --> would save some time
                 short scan = scanArray.get(j, i);
                 short pixel = pixelArray.get(j, i);
                 byte detector = detectorArray.get(j, i);
-                int[] gridPosition = {scan, pixel, detector};
                 if (scan != -1 && pixel != -1 && detector != -1) {
-                    int[] imagePosition = {i, j};
-                    orphanMap.put(imagePosition, gridPosition);
+                    int[] imagePosition = {i, j}; // check(mp, Jan-2021) is this correct or does the next step expect it in different order?
+                    orphanMap.put(imagePosition, new int[]{scan, pixel, detector});
                     if (scan < minScanOrphan) {
                         this.minScanOrphan = scan;
                     }
@@ -120,7 +119,7 @@ public class SlstrMisrTransform implements Serializable {
         //int scanOffset = offsetScanVariable.readScalarInt();
 
         //
-        for (int i = 0; i < x; i++) {
+        for (int i = 0; i < x; i++) { // todo(mp, Jan-2021) - Could stop already after each get when return is -1 --> would save some time
             for (int j = 0; j < y; j++) {
                 short scan = scanArray.get(j, i);
                 short pixel = pixelArray.get(j, i);
@@ -140,7 +139,7 @@ public class SlstrMisrTransform implements Serializable {
 
 
     //step2
-    private Map<int[], int[]> getSlstrGridMisrMap(Map<int[], int[]> mapSlstr, boolean minimize) throws IOException {
+    private Map<int[], int[]> getSlstrGridMisrMap(Map<int[], int[]> mapSlstr, boolean minimize) {
         int SminOk = 0;
         //provides map between SLSTR instrument grid (scan,pixel,detector) and MISR file (row,col)
         TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray());
@@ -167,7 +166,7 @@ public class SlstrMisrTransform implements Serializable {
     }
 
     //step2
-    private Map<int[], int[]> getSlstrGridOrphanMisrMap(Map<int[], int[]> mapSlstr, boolean minimize) throws IOException {
+    private Map<int[], int[]> getSlstrGridOrphanMisrMap(Map<int[], int[]> mapSlstr, boolean minimize) {
         int SminOrphan = 0;
         //provides map between SLSTR instrument grid (scan,pixel,detector) and MISR file (row,col)
         TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray());
@@ -247,8 +246,10 @@ public class SlstrMisrTransform implements Serializable {
                     longDimSplitter = nLineOlcLength;
                 }
 
-                ArrayInt.D3 rowArray = (ArrayInt.D3) rowVariable.read(new int[]{0, longDimSplitter - step, 0}, new int[]{nCamLength, step, nDetCamLength});
-                ArrayInt.D3 colArray = (ArrayInt.D3) colVariable.read(new int[]{0, longDimSplitter - step, 0}, new int[]{nCamLength, step, nDetCamLength});
+                final int[] origin = {0, longDimSplitter - step, 0};
+                final int[] shape = {nCamLength, step, nDetCamLength};
+                ArrayInt.D3 rowArray = (ArrayInt.D3) rowVariable.read(origin, shape);
+                ArrayInt.D3 colArray = (ArrayInt.D3) colVariable.read(origin, shape);
                 int col;
                 int row;
                 for (int i = 0; i < nCamLength; i++) {
