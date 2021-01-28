@@ -389,15 +389,15 @@ public class L1cSynOp extends Operator {
         misrParams.put("aoPixelMap", MapToWrapedArrayFactory.createWrappedArray(aoPixelMap));
         misrParams.put("boPixelMap", MapToWrapedArrayFactory.createWrappedArray(boPixelMap));
         misrParams.put("coPixelMap", MapToWrapedArrayFactory.createWrappedArray(coPixelMap));
-        misrParams.put("S1OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S1PixelMap));
-        misrParams.put("S2OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S2PixelMap));
-        misrParams.put("S3OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S3PixelMap));
-        misrParams.put("S4OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S4PixelMap));
-        misrParams.put("S5OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S5PixelMap));
-        misrParams.put("S6OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S6PixelMap));
-        misrParams.put("aoOrphanMap", MapToWrapedArrayFactory.createWrappedArray(aoPixelMap));
-        misrParams.put("boOrphanMap", MapToWrapedArrayFactory.createWrappedArray(boPixelMap));
-        misrParams.put("coOrphanMap", MapToWrapedArrayFactory.createWrappedArray(coPixelMap));
+        misrParams.put("S1OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S1OrphanMap));
+        misrParams.put("S2OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S2OrphanMap));
+        misrParams.put("S3OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S3OrphanMap));
+        misrParams.put("S4OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S4OrphanMap));
+        misrParams.put("S5OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S5OrphanMap));
+        misrParams.put("S6OrphanMap", MapToWrapedArrayFactory.createWrappedArray(S6OrphanMap));
+        misrParams.put("aoOrphanMap", MapToWrapedArrayFactory.createWrappedArray(aoOrphanMap));
+        misrParams.put("boOrphanMap", MapToWrapedArrayFactory.createWrappedArray(boOrphanMap));
+        misrParams.put("coOrphanMap", MapToWrapedArrayFactory.createWrappedArray(coOrphanMap));
 
         return misrParams;
     }
