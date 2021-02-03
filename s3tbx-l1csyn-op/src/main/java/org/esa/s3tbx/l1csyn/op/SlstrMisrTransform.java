@@ -80,13 +80,13 @@ public class SlstrMisrTransform implements Serializable {
         int orphanPixelsLength = netcdfFile.findDimension("orphan_pixels").getLength();
         int rowLength = netcdfFile.findDimension("rows").getLength();
 
-        for (int i = 0; i < orphanPixelsLength; i++) {
+        for (int i = 0; i < orphanPixelsLength; i++) { // todo(mp, Jan-2021) - Use scanArray.getIndex(); avoid casting of arrays above
             for (int j = 0; j < rowLength; j++) { // todo(mp, Jan-2021) - Could stop already after each get when return is -1 --> would save some time
                 short scan = scanArray.get(j, i);
                 short pixel = pixelArray.get(j, i);
                 byte detector = detectorArray.get(j, i);
                 if (scan != -1 && pixel != -1 && detector != -1) {
-                    int[] imagePosition = {i, j}; // check(mp, Jan-2021) is this correct or does the next step expect it in different order?
+                    int[] imagePosition = {i, j};
                     orphanMap.put(imagePosition, new int[]{scan, pixel, detector});
                     if (scan < minScanOrphan) {
                         this.minScanOrphan = scan;
@@ -415,7 +415,7 @@ public class SlstrMisrTransform implements Serializable {
             }
         }
         TreeMap<int[], int[]> gridMap = new TreeMap<>(new ComparatorIntArray());
-        gridMap.putAll(gridMapOrphan);
+        gridMap.putAll(gridMapOrphan);// CHECK(mp, FEB-2021) - Can't we return gridMapOrphan directly?
         return gridMap;
     }
 
