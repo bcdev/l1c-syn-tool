@@ -17,17 +17,23 @@ import org.esa.snap.core.gpf.annotations.TargetProduct;
 import org.esa.snap.core.util.ProductUtils;
 import org.esa.snap.core.util.SystemUtils;
 import org.esa.snap.dataio.netcdf.util.NetcdfFileOpener;
+import ucar.ma2.Array;
 import ucar.ma2.ArrayShort;
+import ucar.ma2.Index;
 import ucar.nc2.Attribute;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
 
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -53,7 +59,7 @@ public class MisrOp extends Operator {
     private boolean duplicate;
 
     @Parameter(alias = "orphan", description = "If set to true orphan pixels will be used",
-    defaultValue = "false")
+            defaultValue = "false")
     private boolean orphan;
 
     @Parameter(alias = "singlePixelMap", description = "If set to true, than single pixel map will be used for coregistering all SLSTR bands. Otherwise user shall provide all maps separately",
@@ -115,9 +121,11 @@ public class MisrOp extends Operator {
     private Map<int[], int[]> coOrphanMap;
     @TargetProduct
     private Product targetProduct;
+    private Map<String, PrintStream> fileMap;
 
     @Override
     public void initialize() throws OperatorException {
+        fileMap = Collections.synchronizedMap(new HashMap<>());
         if (singlePixelMap == true) {
             this.S1PixelMap = S3PixelMap;
             this.S2PixelMap = S3PixelMap;
@@ -128,7 +136,6 @@ public class MisrOp extends Operator {
             this.aoPixelMap = aoPixelMap;
             this.boPixelMap = aoPixelMap;
             this.coPixelMap = aoPixelMap;
-            this.S1OrphanMap = S3OrphanMap;
             this.S1OrphanMap = S3OrphanMap;
             this.S2OrphanMap = S3OrphanMap;
             this.S3OrphanMap = S3OrphanMap;
@@ -144,7 +151,6 @@ public class MisrOp extends Operator {
 
     @Override
     public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm) {
-        Tile sourceTile;
         Map<int[], int[]> map = new HashMap<>();
         Map<int[], int[]> mapOrphan = new HashMap<>();
         Rectangle targetRectangle = targetTile.getRectangle();
@@ -209,13 +215,11 @@ public class MisrOp extends Operator {
             //Orphan pixels
             if (orphan) {
                 String parentPath = slstrSourceProduct.getFileLocation().getParent();
-                String netCDFFile = parentPath + "/" + targetBand.getName() + ".nc";
-                final Path path = Paths.get(netCDFFile);
-                if (Files.exists(path)) {
+                String netcdfDataPath = parentPath + "/" + targetBand.getName() + ".nc";
+                if (Files.exists(Paths.get(netcdfDataPath))) {
                     try {
-                        NetcdfFile netcdfFile = NetcdfFileOpener.open(netCDFFile);
-                        Variable orphanVariable = netcdfFile.findVariable(targetBand.getName().replace("radiance_", "radiance_orphan_"));
-                        ArrayShort.D2 orphanArray = (ArrayShort.D2) orphanVariable.read();
+                        NetcdfFile netcdf = NetcdfFileOpener.open(netcdfDataPath);
+                        Variable orphanVariable = netcdf.findVariable(targetBand.getName().replace("radiance_", "radiance_orphan_"));
                         final Attribute scale_factorAttribute = orphanVariable.findAttribute("scale_factor");
                         double scaleFactor = 1.0;
                         if (scale_factorAttribute != null) {
@@ -225,26 +229,39 @@ public class MisrOp extends Operator {
                             }
                         }
 
+
+                        final Array orphanData = orphanVariable.read();
+                        final int[] dataShape = orphanData.getShape(); // shape is [2400, 374] for S3_radiance_orphan_an
+                        final Index rawIndex = orphanData.getIndex();
                         for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                             for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                                 int[] position = {x, y};
                                 int[] slstrOrphanPosition = mapOrphan.get(position);
                                 if (slstrOrphanPosition != null) {
-                                    if (slstrOrphanPosition[0] < orphanArray.getShape()[0] && slstrOrphanPosition[1] < orphanArray.getShape()[1]) {
-                                        double reflecValue = orphanArray.get(slstrOrphanPosition[0], slstrOrphanPosition[1]);
-                                        if (reflecValue > 0) {
-                                            targetTile.setSample(x, y, reflecValue * scaleFactor);
+                                    final int orphanPosX = slstrOrphanPosition[0];
+                                    final int orphanPosY = slstrOrphanPosition[1];
+                                    if (orphanPosX < dataShape[0] && orphanPosY < dataShape[1]) {
+                                        // Todo(mp,Feb-2021) - this leads to an ArrayIndexOutOfBoundsException in the oblique case
+                                        try {
+                                            rawIndex.set(orphanPosY, orphanPosX); // Dimension is Y, X  --> so 'wrong' order of Y and X here
+                                        } catch (ArrayIndexOutOfBoundsException aioobe) {
+                                            // ignore for now; stop processing this line
+                                            break;
+                                        }
+                                        double dataValue = orphanData.getDouble(rawIndex);
+                                        if (dataValue > 0) {
+                                            targetTile.setSample(x, y, dataValue * scaleFactor);
                                         }
                                     }
                                 }
                             }
                         }
-                        netcdfFile.close();
+                        netcdf.close();
                     } catch (IOException ioe) {
-                        SystemUtils.LOG.log(Level.WARNING, String.format("Could not process file %s: %s", netCDFFile, ioe.getMessage()));
+                        SystemUtils.LOG.log(Level.WARNING, String.format("Could not process file %s: %s", netcdfDataPath, ioe.getMessage()));
                     }
-                }else {
-                    SystemUtils.LOG.log(Level.FINE, String.format("File %s does not exist", netCDFFile));
+                } else {
+                    SystemUtils.LOG.log(Level.FINE, String.format("File %s does not exist", netcdfDataPath));
                 }
             }
             //
@@ -296,6 +313,22 @@ public class MisrOp extends Operator {
         }
     }
 
+    @Override
+    public void dispose() {
+        for (PrintStream stream : fileMap.values()) {
+            stream.close();
+        }
+    }
+
+    private void writeToFile(String key, String text) throws IOException {
+        if (!fileMap.containsKey(key)) {
+            fileMap.put(key, new PrintStream(Files.newOutputStream(Paths.get("H:\\_other\\l1c\\" + key + ".txt"))));
+        }
+        PrintStream outStream = fileMap.get(key);
+        outStream.print(text);
+        outStream.flush();
+    }
+
     private double getDuplicatedPixel(int x, int y, Band targetBand, Map<int[], int[]> map, Band sourceBand) {
         int rasterWidth = sourceBand.getRasterWidth();
         int rasterHeight = sourceBand.getRasterHeight();
@@ -335,13 +368,13 @@ public class MisrOp extends Operator {
 
         for (Band slstrBand : slstrSourceProduct.getBands()) {
             if (slstrBand.getName().contains("_an") || slstrBand.getName().contains("_bn") || slstrBand.getName().contains("_cn")
-                || slstrBand.getName().contains("_ao") || slstrBand.getName().contains("_bo") || slstrBand.getName().contains("_co")) {
+                    || slstrBand.getName().contains("_ao") || slstrBand.getName().contains("_bo") || slstrBand.getName().contains("_co")) {
                 Band copiedBand = targetProduct.addBand(slstrBand.getName(), ProductData.TYPE_FLOAT32);
                 targetProduct.getBand(slstrBand.getName()).setNoDataValue(slstrSourceProduct.getBand(slstrBand.getName()).getNoDataValue());
                 targetProduct.getBand(slstrBand.getName()).setNoDataValueUsed(true);
             } else {
                 if (!slstrBand.getName().contains("_in") && !slstrBand.getName().contains("_io") &&
-                    !slstrBand.getName().contains("_fn") && !slstrBand.getName().contains("_fo")) {
+                        !slstrBand.getName().contains("_fn") && !slstrBand.getName().contains("_fo")) {
                     ProductUtils.copyBand(slstrBand.getName(), slstrSourceProduct, targetProduct, true);
                 }
             }
