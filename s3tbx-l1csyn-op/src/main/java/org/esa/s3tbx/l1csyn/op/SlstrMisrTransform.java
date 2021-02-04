@@ -3,9 +3,11 @@ package org.esa.s3tbx.l1csyn.op;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.dataio.netcdf.util.NetcdfFileOpener;
+import ucar.ma2.Array;
 import ucar.ma2.ArrayByte;
 import ucar.ma2.ArrayInt;
 import ucar.ma2.ArrayShort;
+import ucar.ma2.Index;
 import ucar.ma2.InvalidRangeException;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
@@ -204,29 +206,42 @@ public class SlstrMisrTransform implements Serializable {
         int nDetCamLength = netcdfFile.findDimension("N_DET_CAM").getLength();
         int nCamLength = netcdfFile.findDimension("N_CAM").getLength();
         String rowVariableName = getRowVariableName(netcdfFile, "row_corresp_\\S+");
-        String colVariableName = getColVariableName(netcdfFile, "col_corresp_\\S+");
+        String colVariableName = null;
+        Variable colVariable;
+        int colOffset = 0;
+        double colScale = 1.0;
+        if (bandType.equals("S3")) {
+            colVariableName = getColVariableName(netcdfFile, "col_corresp_\\S+");
+            colVariable = netcdfFile.findVariable(colVariableName);
+            colOffset = colVariable.findAttribute("add_offset").getNumericValue().intValue();
+            colScale = colVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
+
+        }else {
+            // in orphan case we take different variable for the column
+            colVariableName = getColVariableName(netcdfFile, "L1b_orphan_\\S+");
+            colVariable = netcdfFile.findVariable(colVariableName);
+        }
+
         Variable rowVariable = netcdfFile.findVariable(rowVariableName);
-        Variable colVariable = netcdfFile.findVariable(colVariableName);
         Variable rowOffsetVariable = netcdfFile.findVariable("input_products_row_offset");
         //int rowOffset = rowOffsetVariable.readScalarInt();
         int rowOffset = rowVariable.findAttribute("add_offset").getNumericValue().intValue();
-        int colOffset = colVariable.findAttribute("add_offset").getNumericValue().intValue();
-        double colScale = colVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
         double rowScale = rowVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
         TreeMap<int[], int[]> colRowMap = new TreeMap<>(new ComparatorIntArray());
         if (nLineOlcLength < 10000) {
-            ArrayInt.D3 rowArray = (ArrayInt.D3) rowVariable.read();
-            ArrayInt.D3 colArray = (ArrayInt.D3) colVariable.read();
+            Array rowArray = rowVariable.read();
+            Array colArray = colVariable.read();
             int col;
             int row;
 
-
+            final Index index = rowArray.getIndex();
             for (int i = 0; i < nCamLength; i++) {
                 for (int j = 0; j < nLineOlcLength; j++) {
                     for (int k = 0; k < nDetCamLength; k++) {
+                        index.set(i, j, k);
                         // Type of variable of (row,col) might change with change of MISR format. Be careful here.
-                        row = (int) (rowArray.get(i, j, k) * rowScale + rowOffset);
-                        col = (int) (colArray.get(i, j, k) * colScale + colOffset);
+                        row = (int) Math.floor(rowArray.getInt(index) * rowScale + rowOffset);
+                        col = (int) Math.floor(colArray.getInt(index) * colScale + colOffset);
                         if (col >= 0 && row >= 0) {
                             //if (row < slstrNumRows && col < slstrNumCols) {
                             int[] colRowArray = {col, row};
@@ -399,7 +414,7 @@ public class SlstrMisrTransform implements Serializable {
         if (newTransform) {
             Map<int[], int[]> slstrOrphanMap = getSlstrOrphanImageMap(); // 1
             Map<int[], int[]> slstrOrphanMisrMap = getSlstrGridOrphanMisrMap(slstrOrphanMap, true); // 2
-            Map<int[], int[]> misrOrphanOlciMap = getMisrOlciMap();
+            Map<int[], int[]> misrOrphanOlciMap = getMisrOlciMap(); // 3
             Map<int[], int[]> olciImageOrphanMap = getOlciMisrMap(); // 4
 
             for (Map.Entry<int[], int[]> entry : slstrOrphanMap.entrySet()) {
