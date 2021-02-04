@@ -18,7 +18,6 @@ import org.esa.snap.core.util.ProductUtils;
 import org.esa.snap.core.util.SystemUtils;
 import org.esa.snap.dataio.netcdf.util.NetcdfFileOpener;
 import ucar.ma2.Array;
-import ucar.ma2.ArrayShort;
 import ucar.ma2.Index;
 import ucar.nc2.Attribute;
 import ucar.nc2.NetcdfFile;
@@ -26,13 +25,10 @@ import ucar.nc2.Variable;
 
 import java.awt.Color;
 import java.awt.Rectangle;
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,6 +44,8 @@ import java.util.logging.Level;
         description = "Coregister OLCI and SLSTR L1 Products using TreeMaps from MISR product. At minimum one Treemap for oblique and one for nadir view must be provided."
 )
 public class MisrOp extends Operator {
+
+    private static final String PROP_DEBUG_OUTPUT_DIR = "l1c.debug.outputDir";
 
     @SourceProduct(alias = "olciSource", description = "OLCI source product")
     private Product olciSourceProduct;
@@ -321,8 +319,12 @@ public class MisrOp extends Operator {
     }
 
     private void writeToFile(String key, String text) throws IOException {
+        final String outputDir = System.getProperty(PROP_DEBUG_OUTPUT_DIR);
+        if(outputDir == null) {
+            return;
+        }
         if (!fileMap.containsKey(key)) {
-            fileMap.put(key, new PrintStream(Files.newOutputStream(Paths.get("H:\\_other\\l1c\\" + key + ".txt"))));
+            fileMap.put(key, new PrintStream(Files.newOutputStream(Paths.get(outputDir + key + ".txt"))));
         }
         PrintStream outStream = fileMap.get(key);
         outStream.print(text);
