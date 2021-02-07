@@ -228,11 +228,9 @@ public class SlstrMisrTransform implements Serializable {
         int rowOffset = rowVariable.findAttribute("add_offset").getNumericValue().intValue();
         double rowScale = rowVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
         TreeMap<int[], int[]> colRowMap = new TreeMap<>(new ComparatorIntArray());
-        if (nLineOlcLength < 10000) {
+        if (nLineOlcLength < 10000) { // TODO(mp,FEB-2021) - actually no need to differentiate bot cases. We could set the step to 5000
             Array rowArray = rowVariable.read();
             Array colArray = colVariable.read();
-            int col;
-            int row;
 
             final Index index = rowArray.getIndex();
             for (int i = 0; i < nCamLength; i++) {
@@ -240,8 +238,8 @@ public class SlstrMisrTransform implements Serializable {
                     for (int k = 0; k < nDetCamLength; k++) {
                         index.set(i, j, k);
                         // Type of variable of (row,col) might change with change of MISR format. Be careful here.
-                        row = (int) Math.floor(rowArray.getInt(index) * rowScale + rowOffset);
-                        col = (int) Math.floor(colArray.getInt(index) * colScale + colOffset);
+                        int row = (int) Math.floor(rowArray.getInt(index) * rowScale + rowOffset);
+                        int col = (int) Math.floor(colArray.getInt(index) * colScale + colOffset);
                         if (col >= 0 && row >= 0) {
                             //if (row < slstrNumRows && col < slstrNumCols) {
                             int[] colRowArray = {col, row};
@@ -253,7 +251,6 @@ public class SlstrMisrTransform implements Serializable {
                 }
             }
         } else {
-            int cut = 5000;
             for (int longDimSplitter = 10000; longDimSplitter < nLineOlcLength + 10000; longDimSplitter += 10000) {
                 int step = 10000;
                 if (longDimSplitter > nLineOlcLength) {
@@ -263,16 +260,17 @@ public class SlstrMisrTransform implements Serializable {
 
                 final int[] origin = {0, longDimSplitter - step, 0};
                 final int[] shape = {nCamLength, step, nDetCamLength};
-                ArrayInt.D3 rowArray = (ArrayInt.D3) rowVariable.read(origin, shape);
-                ArrayInt.D3 colArray = (ArrayInt.D3) colVariable.read(origin, shape);
-                int col;
-                int row;
+                Array rowArray = rowVariable.read(origin, shape);
+                Array colArray = colVariable.read(origin, shape);
+
+                final Index index = rowArray.getIndex();
                 for (int i = 0; i < nCamLength; i++) {
                     for (int j = 0; j < step; j++) {
                         for (int k = 0; k < nDetCamLength; k++) {
+                            index.set(i, j, k);
                             // Type of variable of (row,col) might change with change of MISR format. Be careful here.
-                            row = (int) (rowArray.get(i, j, k) * rowScale + rowOffset);
-                            col = (int) (colArray.get(i, j, k) * colScale + colOffset);
+                            int row = (int) (rowArray.getInt(index) * rowScale + rowOffset);
+                            int col = (int) (colArray.getInt(index) * colScale + colOffset);
                             if (col >= 0 && row >= 0) {
                                 //if (row < slstrNumRows && col < slstrNumCols) {
                                 int[] colRowArray = {col, row};
