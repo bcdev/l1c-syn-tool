@@ -381,13 +381,15 @@ public class SlstrMisrTransform implements Serializable {
                     step = nLineOlcLength + step - longDimSplitter;
                     longDimSplitter = nLineOlcLength;
                 }
-                ArrayShort.D3 rowArray = (ArrayShort.D3) rowVariable.read(new int[]{0, longDimSplitter - step, 0}, new int[]{nCamLength, step, nDetCamLength});
-                ArrayShort.D3 colArray = (ArrayShort.D3) colVariable.read(new int[]{0, longDimSplitter - step, 0}, new int[]{nCamLength, step, nDetCamLength});
+                Array rowArray = rowVariable.read(new int[]{0, longDimSplitter - step, 0}, new int[]{nCamLength, step, nDetCamLength});
+                Array colArray = colVariable.read(new int[]{0, longDimSplitter - step, 0}, new int[]{nCamLength, step, nDetCamLength});
+                final Index index = rowArray.getIndex();
                 for (int i = 0; i < nCamLength; i++) {
                     for (int j = 0; j < step; j++) {
                         for (int k = 0; k < nDetCamLength; k++) {
-                            short row = rowArray.get(i, j, k);
-                            short col = colArray.get(i, j, k);
+                            index.set(i, j, k);
+                            int row = rowArray.getInt(index);
+                            int col = colArray.getInt(index);
                             int rowNorm = row + rowOffset;
                             if ((rowNorm) >= 0 && col >= 0) {
                                 if ((rowNorm) < olciNumRows && col < olciNumCols) {
