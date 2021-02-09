@@ -210,14 +210,13 @@ public class SlstrMisrTransform implements Serializable {
         Variable colVariable;
         int colOffset = 0;
         double colScale = 1.0;
-        if (bandType.equals("S3")) {
+        if (bandType.matches("S.") || bandType.matches(".o")) {
             colVariableName = getColVariableName(netcdfFile, "col_corresp_\\S+");
             colVariable = netcdfFile.findVariable(colVariableName);
             colOffset = colVariable.findAttribute("add_offset").getNumericValue().intValue();
             colScale = colVariable.findAttribute("scale_factor").getNumericValue().doubleValue();
-
-        }else {
-            // in orphan case we take different variable for the column
+        } else {
+            // Not used as of 09.02.2021
             colVariableName = getColVariableName(netcdfFile, "L1b_orphan_\\S+");
             colVariable = netcdfFile.findVariable(colVariableName);
         }
