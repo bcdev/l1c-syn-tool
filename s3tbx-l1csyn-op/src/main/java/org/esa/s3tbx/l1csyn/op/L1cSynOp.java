@@ -124,15 +124,15 @@ public class L1cSynOp extends Operator {
     private File misrFile;
 
     @Parameter(alias = "duplicate", label = "duplicate pixel using MISR", description = "If set to true, during MISR geocoding, empty pixels will be filled with duplicates.",
-            defaultValue = "false")
+            defaultValue = "true")
     private boolean duplicate;
 
     @Parameter(alias = "orphan", label = "orphan pixel using MISR", description = "If set to true, during MISR geocoding, orphan pixels will be used in addition.",
-            defaultValue = "false")
+            defaultValue = "true")
     private boolean orphan;
 
     @Parameter(alias = "fullMISR", label = "use MISR for each band separately", description = "If set to true, during MISR geocoding, every SLSTR band geocoding will be calculated separately.",
-            defaultValue = "false")
+            defaultValue = "true")
     private boolean fullMisr;
 
     @Parameter(alias = "formatMISR", label = "describes if provided MISR product is in new format", description = "If set to true, it is assumed that MISR product has new format.",
