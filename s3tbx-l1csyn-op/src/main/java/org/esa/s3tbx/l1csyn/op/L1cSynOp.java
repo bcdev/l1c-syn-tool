@@ -262,6 +262,12 @@ public class L1cSynOp extends Operator {
                     } else if (numCam == 5) {
                         mapNadirS3 = misrTransformNadir.getSlstrOlciSingleCameraMap();
                         mapOrphanS3 = null;
+                    } else if (numCam == 6) {
+                        mapNadirS3 = misrTransformNadir.getSlstrOlciSingleOrphanCameraMap();
+                        mapOrphanS3 = null;
+                    }  else if (numCam == 7) {
+                        mapNadirS3 = misrTransformNadir.getSlstrOlciSingleCameraMap();
+                        mapOrphanS3 = misrTransformNadir.getSlstrOlciSingleOrphanCameraMap();
                     } else {
                         mapNadirS3 = misrTransformNadir.getSlstrOlciMap();
                         mapOrphanS3 = misrTransformNadir.getOrphanOlciMap();

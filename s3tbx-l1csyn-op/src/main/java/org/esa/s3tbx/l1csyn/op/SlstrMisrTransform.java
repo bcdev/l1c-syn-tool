@@ -526,6 +526,18 @@ public class SlstrMisrTransform implements Serializable {
         return gridMapPixel;
     }
 
+    Map<int[], int[]> getSlstrOlciSingleOrphanCameraMap() throws InvalidRangeException, IOException{
+        Map<int[], int[]> gridMapPixel = new TreeMap<>(new ComparatorIntArray());
+        Map<int[], int[]> slstrOrphanMap = getSlstrOrphanImageMap(); // 1
+        Map<int[], int[]> slstrOrphanMisrMap = getSlstrGridOrphanMisrMap(slstrOrphanMap, true); // 2
+        for (Map.Entry<int[], int[]> entry : slstrOrphanMap.entrySet()) {
+            int[] slstrScanPixDet = entry.getValue();
+            int[] rowCol = slstrOrphanMisrMap.get(slstrScanPixDet);
+            gridMapPixel.put(rowCol, entry.getKey());
+        }
+        return gridMapPixel;
+    }
+
     // This method is used to check intermediate results of the algorithm
     Map<int[], int[]> getSlstrOlciOrphanSingleCameraMap() throws InvalidRangeException, IOException {
         Map<int[], int[]> gridMapPixel = new TreeMap<>(new ComparatorIntArray());
