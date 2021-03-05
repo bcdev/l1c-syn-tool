@@ -264,7 +264,8 @@ public class MisrOp extends Operator {
             }
             //
             if (duplicate) {
-                for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
+                //Commented, because other way of filling holes will be implemented. TODO: Remove later
+                /*for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                     double duplicatePixel = getDuplicatedPixel(targetRectangle.x, y, targetBand, map, sourceBand);
                     //double duplicatePixel = 0d ;
                     for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
@@ -279,6 +280,16 @@ public class MisrOp extends Operator {
                     for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                         if (!oa17_radiance.isPixelValid(x, y)) {
                             targetTile.setSample(x, y, targetBand.getNoDataValue());
+                        }
+                    }
+                }*/
+                for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
+                    for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+                        {
+                            if (targetTile.getSampleDouble(x, y) == targetBand.getNoDataValue()) {
+                                double neighborPixel = getNeighborPixel(x, y, targetBand, map, sourceBand);
+                                targetTile.setSample(x, y, neighborPixel);
+                            }
                         }
                     }
                 }
@@ -301,10 +312,11 @@ public class MisrOp extends Operator {
             map = S3PixelMap;
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+                    int numNeigbors =  getNumberNeighbors(x, y, targetBand, map);
                     int[] position = {x, y};
                     int[] slstrGridPosition = map.get(position);
                     if (slstrGridPosition == null && oa17_radiance.isPixelValid(x, y)) {
-                        targetTile.setSample(x, y, 1);
+                        targetTile.setSample(x, y, numNeigbors);
                     }
                 }
             }
@@ -357,6 +369,83 @@ public class MisrOp extends Operator {
         return duplicatePixel;
     }
 
+    private double getNeighborPixel(int x, int y, Band targetBand, Map<int[], int[]> map, Band sourceBand){
+        int sourceRasterWidth = sourceBand.getRasterWidth();
+        int sourceRasterHeight = sourceBand.getRasterHeight();
+        double neighborPixel = targetBand.getNoDataValue();
+        double centralPixel = 0;
+        int countFound = 0;
+        int[] position = {x, y};
+        int[] slstrGridPosition = map.get(position);
+        if (slstrGridPosition != null ) {
+            centralPixel = sourceBand.getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
+            return centralPixel;
+        }
+        else {
+            for (int i=0; i<3;i+=2) {
+                for (int j = 0; j < 3; j+=2) {
+                    int[] neighborPos = {x - 1 + i, y - 1 + j};
+                    int[] slstrNeighbor = map.get(neighborPos);
+                    if (slstrNeighbor != null) {
+                        neighborPixel = sourceBand.getSampleFloat(slstrNeighbor[0], slstrNeighbor[1]);
+                        countFound += 1;
+                    }
+                }
+            }
+        }
+        if (neighborPixel!=targetBand.getNoDataValue())
+            {return neighborPixel;}
+        else {
+            for (int i=0; i<5; i++) {
+                for (int j = 0; j<5; j++) {
+                    int[] neighborPos = {x - 2 + i, y - 2 + j};
+                    int[] slstrNeighbor = map.get(neighborPos);
+                    if (slstrNeighbor != null) {
+                        neighborPixel = sourceBand.getSampleFloat(slstrNeighbor[0], slstrNeighbor[1]);
+                        countFound += 1;
+                    }
+                }
+            }
+        }
+        return neighborPixel;
+    }
+
+
+    private int getNumberNeighbors(int x, int y, Band targetBand, Map<int[], int[]> map) {
+
+        int countFound = 0;
+        int[] position = {x, y};
+        int[] slstrGridPosition = map.get(position);
+        if (slstrGridPosition != null ) {
+            return 0;
+        }
+        else {
+            for (int i=0; i<3;i+=2) {
+                for (int j = 0; j < 3; j+=2) {
+                    int[] neighborPos = {x - 1 + i, y - 1 + j};
+                    int[] slstrNeighbor = map.get(neighborPos);
+                    if (slstrNeighbor != null) {
+                        countFound += 1;
+                    }
+                }
+            }
+        }
+        if (countFound>0) {
+            return countFound;
+        }
+        else {
+            for (int i=0; i<5; i++) {
+                for (int j = 0; j<5; j++) {
+                    int[] neighborPos = {x - 2 + i, y - 2 + j};
+                    int[] slstrNeighbor = map.get(neighborPos);
+                    if (slstrNeighbor != null) {
+                        countFound += 1;
+                    }
+                }
+            }
+        }
+        return countFound;
+    }
 
     private void createTargetProduct() {
         targetProduct = new Product(olciSourceProduct.getName(), olciSourceProduct.getProductType(),
@@ -403,7 +492,8 @@ public class MisrOp extends Operator {
                               "MISR information was used to get value of this pixel", Color.RED, 0.5);
 
         if (duplicate) {
-            final FlagCoding duplicateFlagCoding = new FlagCoding("Duplicated pixel after MISR");
+            //TODO: as of 2021-03-05 this shows how many neighbors were found during filling-holes algorithm. This band may be removed before release.
+            /*final FlagCoding duplicateFlagCoding = new FlagCoding("Duplicated pixel after MISR");
             duplicateFlagCoding.setDescription("Duplicate pixels");
             targetProduct.getFlagCodingGroup().add(duplicateFlagCoding);
             Band duplicateFlags = new Band("duplicate_flags", ProductData.TYPE_UINT32,
@@ -412,6 +502,14 @@ public class MisrOp extends Operator {
             duplicateFlagCoding.addFlag("pixel not duplicated", 0, "pixel not duplicated");
             duplicateFlagCoding.addFlag("pixel duplicated", 1, "pixel duplicated");
             duplicateFlags.setSampleCoding(duplicateFlagCoding);
+            targetProduct.addBand(duplicateFlags);
+
+            targetProduct.addMask("Duplicated pixel after MISR", "duplicate_flags != 0",
+                                  "After applying misregistration, this pixel is a duplicate of its neighbour", Color.BLUE, 0.5);*/
+
+            Band duplicateFlags = new Band("duplicate_flags", ProductData.TYPE_UINT32,
+                    olciSourceProduct.getSceneRasterWidth(),
+                    olciSourceProduct.getSceneRasterHeight());
             targetProduct.addBand(duplicateFlags);
 
             targetProduct.addMask("Duplicated pixel after MISR", "duplicate_flags != 0",
