@@ -1,11 +1,7 @@
 package org.esa.s3tbx.l1csyn.op;
 
 import com.bc.ceres.core.ProgressMonitor;
-import org.esa.snap.core.datamodel.Band;
-import org.esa.snap.core.datamodel.FlagCoding;
-import org.esa.snap.core.datamodel.Product;
-import org.esa.snap.core.datamodel.ProductData;
-import org.esa.snap.core.datamodel.RasterDataNode;
+import org.esa.snap.core.datamodel.*;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.core.gpf.OperatorSpi;
@@ -16,6 +12,7 @@ import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
 import org.esa.snap.core.util.ProductUtils;
 import org.esa.snap.core.util.SystemUtils;
+import org.esa.snap.core.util.math.EuclideanDistance;
 import org.esa.snap.dataio.netcdf.util.NetcdfFileOpener;
 import ucar.ma2.Array;
 import ucar.ma2.Index;
@@ -370,39 +367,42 @@ public class MisrOp extends Operator {
     }
 
     private double getNeighborPixel(int x, int y, Band targetBand, Map<int[], int[]> map, Band sourceBand){
-        int sourceRasterWidth = sourceBand.getRasterWidth();
-        int sourceRasterHeight = sourceBand.getRasterHeight();
+
         double neighborPixel = targetBand.getNoDataValue();
-        double centralPixel = 0;
-        int countFound = 0;
         int[] position = {x, y};
         int[] slstrGridPosition = map.get(position);
+        GeoPos pixelGeoPos = targetBand.getGeoCoding().getGeoPos(new PixelPos(x,y),null);
         if (slstrGridPosition != null ) {
-            centralPixel = sourceBand.getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
+            double centralPixel = sourceBand.getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
             return centralPixel;
         }
         else {
-            for (int i=0; i<3;i+=2) {
-                for (int j = 0; j < 3; j+=2) {
-                    int[] neighborPos = {x - 1 + i, y - 1 + j};
-                    int[] slstrNeighbor = map.get(neighborPos);
-                    if (slstrNeighbor != null) {
-                        neighborPixel = sourceBand.getSampleFloat(slstrNeighbor[0], slstrNeighbor[1]);
-                        countFound += 1;
-                    }
+            EuclideanDistance euclideanDistance = new EuclideanDistance(pixelGeoPos.getLon(), pixelGeoPos.getLat());
+            for (int size = 3; size < 10; size += 2) {
+                neighborPixel = searchClosetPixel(size, sourceBand, euclideanDistance, x, y, targetBand, map);
+                if (neighborPixel != targetBand.getNoDataValue()) {
+                    return neighborPixel;
                 }
             }
         }
-        if (neighborPixel!=targetBand.getNoDataValue())
-            {return neighborPixel;}
-        else {
-            for (int i=0; i<5; i++) {
-                for (int j = 0; j<5; j++) {
-                    int[] neighborPos = {x - 2 + i, y - 2 + j};
-                    int[] slstrNeighbor = map.get(neighborPos);
-                    if (slstrNeighbor != null) {
+        return neighborPixel;
+    }
+
+    private double searchClosetPixel(int size,Band sourceBand,EuclideanDistance euclideanDistance,int x, int y, Band targetBand, Map<int[], int[]> map)
+    {
+        double distance = 9999999d;
+        double neighborPixel = targetBand.getNoDataValue();
+        int step = size / 2;
+        for (int i=0; i< size;i+=1) {
+            for (int j = 0; j < size; j+=1) {
+                int[] neighborPos = {x - step + i, y - step + j};
+                int[] slstrNeighbor = map.get(neighborPos);
+                if (slstrNeighbor != null) {
+                    GeoPos neighborGeoPos = sourceBand.getGeoCoding().getGeoPos(new PixelPos(slstrNeighbor[0],slstrNeighbor[1]),null);
+                    double neighborDist = euclideanDistance.distance(neighborGeoPos.getLon(),neighborGeoPos.getLat());
+                    if (neighborDist< distance) {
                         neighborPixel = sourceBand.getSampleFloat(slstrNeighbor[0], slstrNeighbor[1]);
-                        countFound += 1;
+                        distance = neighborDist;
                     }
                 }
             }
@@ -412,7 +412,6 @@ public class MisrOp extends Operator {
 
 
     private int getNumberNeighbors(int x, int y, Band targetBand, Map<int[], int[]> map) {
-
         int countFound = 0;
         int[] position = {x, y};
         int[] slstrGridPosition = map.get(position);
