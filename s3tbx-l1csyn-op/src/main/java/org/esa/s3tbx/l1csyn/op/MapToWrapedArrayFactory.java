@@ -13,11 +13,11 @@ public class MapToWrapedArrayFactory {
         if (map == null) {
             return null;
         }
-        Set<int[]> keys = map.keySet();
-        Iterator<int[]> keyIterator = keys.iterator();
-        if (!keyIterator.hasNext()) {
+        if (map.isEmpty()) {
             return new HashMap<>();
         }
+
+        Iterator<int[]> keyIterator = map.keySet().iterator();
         int[] next = keyIterator.next();
         int[] keyMins = Arrays.copyOf(next, next.length);
         int[] keyMaxs = Arrays.copyOf(next, next.length);
