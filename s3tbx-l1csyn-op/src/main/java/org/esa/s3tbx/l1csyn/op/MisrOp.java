@@ -118,11 +118,9 @@ public class MisrOp extends Operator {
     private Map<int[], int[]> coOrphanMap;
     @TargetProduct
     private Product targetProduct;
-    private Map<String, PrintStream> fileMap;
 
     @Override
     public void initialize() throws OperatorException {
-        fileMap = Collections.synchronizedMap(new HashMap<>());
         createTargetProduct();
     }
 
@@ -244,11 +242,9 @@ public class MisrOp extends Operator {
             if (fillEmptyPixels) {
                 for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                     for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                        {
-                            if (targetTile.getSampleDouble(x, y) == targetBand.getNoDataValue()) {
-                                double neighborPixel = getNeighborPixel(x, y, targetBand, map, sourceBand);
-                                targetTile.setSample(x, y, neighborPixel);
-                            }
+                        if (targetTile.getSampleDouble(x, y) == targetBand.getNoDataValue()) {
+                            double neighborPixel = getNeighborPixel(x, y, targetBand, map, sourceBand);
+                            targetTile.setSample(x, y, neighborPixel);
                         }
                     }
                 }
@@ -279,13 +275,6 @@ public class MisrOp extends Operator {
                     }
                 }
             }
-        }
-    }
-
-    @Override
-    public void dispose() {
-        for (PrintStream stream : fileMap.values()) {
-            stream.close();
         }
     }
 

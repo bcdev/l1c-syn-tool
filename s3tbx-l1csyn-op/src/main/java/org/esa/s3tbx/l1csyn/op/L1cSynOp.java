@@ -125,8 +125,6 @@ public class L1cSynOp extends Operator {
     @Parameter(label = "Use MISR for each band separately", description = "If set to true, mis-registration information for every SLSTR band will be calculated separately.",
             defaultValue = "true")
     private boolean fullMisr;
-    
-    private boolean debug = true;
 
     @Override
     public void initialize() throws OperatorException {
@@ -257,7 +255,6 @@ public class L1cSynOp extends Operator {
         Map<int[], int[]> mapOrphanSlstr = new SlstrMisrTransform(olciProduct, slstrProduct, misrFile, bandType, -slstrOffset).getOrphanOlciMap();
         final Map<int[], int[]> s1Orphans = MapToWrapedArrayFactory.createWrappedArray(mapOrphanSlstr);
         mapOrphanSlstr.clear();
-        dumpMemoryUsage(bandType);
         return s1Orphans;
     }
 
@@ -265,19 +262,7 @@ public class L1cSynOp extends Operator {
         Map<int[], int[]> mapOlciSlstr = new SlstrMisrTransform(olciProduct, slstrProduct, misrFile, bandType, -slstrOffset).getSlstrOlciMap();
         final Map<int[], int[]> pixelMap = MapToWrapedArrayFactory.createWrappedArray(mapOlciSlstr);
         mapOlciSlstr.clear();
-        dumpMemoryUsage(bandType);
-
         return pixelMap;
-    }
-
-    private void dumpMemoryUsage(String label) {
-        if (debug) {
-            long totalMem = Runtime.getRuntime().totalMemory();
-            long usedMem = totalMem - Runtime.getRuntime().freeMemory();
-            float mbFactor = 1.0F / (1024.0F * 1024.0F);
-            System.out.printf("%s: Memory usage %.1f/%.1f (%.1f)%n", label,
-                              usedMem * mbFactor, totalMem * mbFactor, Runtime.getRuntime().maxMemory() * mbFactor);
-        }
     }
 
     private HashMap<String, Object> getMisrParams(Map<int[], int[]> s3Pixels, Map<int[], int[]> aoPixels, Map<int[], int[]> s3Orphans, Map<int[], int[]> aoOrphans) {
@@ -463,6 +448,14 @@ public class L1cSynOp extends Operator {
     //********************
     //  Below is the code which is not used
     // ********************
+
+    private void dumpMemoryUsage(String label) {
+        long totalMem = Runtime.getRuntime().totalMemory();
+        long usedMem = totalMem - Runtime.getRuntime().freeMemory();
+        float mbFactor = 1.0F / (1024.0F * 1024.0F);
+        System.out.printf("%s: Memory usage %.1f/%.1f (%.1f)%n", label,
+                          usedMem * mbFactor, totalMem * mbFactor, Runtime.getRuntime().maxMemory() * mbFactor);
+    }
 
     // calculates offset between SLSTR and OLCI products
     @SuppressWarnings("unused")
