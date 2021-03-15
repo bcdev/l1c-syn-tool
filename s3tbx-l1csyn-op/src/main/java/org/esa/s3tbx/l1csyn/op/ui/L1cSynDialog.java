@@ -6,7 +6,7 @@ import com.bc.ceres.swing.binding.BindingContext;
 import com.bc.ceres.swing.binding.PropertyPane;
 import com.bc.ceres.swing.selection.SelectionChangeEvent;
 import com.bc.ceres.swing.selection.SelectionChangeListener;
-import org.esa.s3tbx.l1csyn.op.L1cSynOp;
+import org.esa.s3tbx.l1csyn.op.L1cSynUtils;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductFilter;
 import org.esa.snap.core.gpf.GPF;
@@ -218,7 +218,7 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         Product slstrProduct = (Product) sourceProductsMap.get("slstrProduct");
 
         if (olciProduct != null && slstrProduct != null) {
-            String synName = L1cSynOp.getSynName(slstrProduct, olciProduct);
+            String synName = L1cSynUtils.getSynName(slstrProduct, olciProduct);
             targetProductSelectorModel.setProductName(synName);
         }
     }
