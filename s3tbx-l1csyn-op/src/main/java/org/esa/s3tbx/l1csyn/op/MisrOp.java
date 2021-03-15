@@ -263,15 +263,14 @@ public class MisrOp extends Operator {
                     }
                 }
             }
-        } else if (targetBand.getName().equals("duplicate_flags")) {
+        } else if (targetBand.getName().equals("filled_flags")) {
             map = S3PixelMap;
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                    int numNeigbors = getNumberNeighbors(x, y, map);
                     int[] position = {x, y};
                     int[] slstrGridPosition = map.get(position);
                     if (slstrGridPosition == null && oa17_radiance.isPixelValid(x, y)) {
-                        targetTile.setSample(x, y, numNeigbors);
+                        targetTile.setSample(x, y, 1);
                     }
                 }
             }
@@ -279,7 +278,6 @@ public class MisrOp extends Operator {
     }
 
     private double getNeighborPixel(int x, int y, Band targetBand, Map<int[], int[]> map, Band sourceBand) {
-
         double neighborPixel = targetBand.getNoDataValue();
         int[] position = {x, y};
         int[] slstrGridPosition = map.get(position);
@@ -320,39 +318,6 @@ public class MisrOp extends Operator {
         return neighborPixel;
     }
 
-
-    private int getNumberNeighbors(int x, int y, Map<int[], int[]> map) {
-        int countFound = 0;
-        int[] position = {x, y};
-        int[] slstrGridPosition = map.get(position);
-        if (slstrGridPosition != null) {
-            return 0;
-        } else {
-            for (int i = 0; i < 3; i += 2) {
-                for (int j = 0; j < 3; j += 2) {
-                    int[] neighborPos = {x - 1 + i, y - 1 + j};
-                    int[] slstrNeighbor = map.get(neighborPos);
-                    if (slstrNeighbor != null) {
-                        countFound += 1;
-                    }
-                }
-            }
-        }
-        if (countFound > 0) {
-            return countFound;
-        } else {
-            for (int i = 0; i < 5; i++) {
-                for (int j = 0; j < 5; j++) {
-                    int[] neighborPos = {x - 2 + i, y - 2 + j};
-                    int[] slstrNeighbor = map.get(neighborPos);
-                    if (slstrNeighbor != null) {
-                        countFound += 1;
-                    }
-                }
-            }
-        }
-        return countFound;
-    }
 
     private void createTargetProduct() {
         targetProduct = new Product(olciSourceProduct.getName(), olciSourceProduct.getProductType(),
@@ -400,27 +365,19 @@ public class MisrOp extends Operator {
 
         if (fillEmptyPixels) {
             //TODO: as of 2021-03-05 this shows how many neighbors were found during filling-holes algorithm. This band may be removed before release.
-            /*final FlagCoding duplicateFlagCoding = new FlagCoding("Duplicated pixel after MISR");
-            duplicateFlagCoding.setDescription("Duplicate pixels");
-            targetProduct.getFlagCodingGroup().add(duplicateFlagCoding);
-            Band duplicateFlags = new Band("duplicate_flags", ProductData.TYPE_UINT32,
+            final FlagCoding filledFlagCoding = new FlagCoding("Filled pixel after MISR");
+            filledFlagCoding.setDescription("Filled pixels");
+            targetProduct.getFlagCodingGroup().add(filledFlagCoding);
+            Band filledFlags = new Band("filled_flags", ProductData.TYPE_UINT32,
                                            olciSourceProduct.getSceneRasterWidth(),
                                            olciSourceProduct.getSceneRasterHeight());
-            duplicateFlagCoding.addFlag("pixel not duplicated", 0, "pixel not duplicated");
-            duplicateFlagCoding.addFlag("pixel duplicated", 1, "pixel duplicated");
-            duplicateFlags.setSampleCoding(duplicateFlagCoding);
-            targetProduct.addBand(duplicateFlags);
+            filledFlagCoding.addFlag("pixel was not filled", 0, "pixel was not filled");
+            filledFlagCoding.addFlag("pixel was filled", 1, "pixel was filled");
+            filledFlags.setSampleCoding(filledFlagCoding);
+            targetProduct.addBand(filledFlags);
 
-            targetProduct.addMask("Duplicated pixel after MISR", "duplicate_flags != 0",
-                                  "After applying misregistration, this pixel is a duplicate of its neighbour", Color.BLUE, 0.5);*/
-
-            Band duplicateFlags = new Band("duplicate_flags", ProductData.TYPE_UINT32,
-                                           olciSourceProduct.getSceneRasterWidth(),
-                                           olciSourceProduct.getSceneRasterHeight());
-            targetProduct.addBand(duplicateFlags);
-
-            targetProduct.addMask("Duplicated pixel after MISR", "duplicate_flags != 0",
-                                  "After applying misregistration, this pixel is a duplicate of its neighbour", Color.BLUE, 0.5);
+            targetProduct.addMask("Filled pixel after MISR", "filled_flags != 0",
+                                  "After applying misregistration, this pixel was filled with the value of its neighbour", Color.BLUE, 0.5);
         }
     }
 
