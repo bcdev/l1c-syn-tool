@@ -237,7 +237,7 @@ public class L1cSynOp extends Operator {
         l1cTarget.setStartTime(startDate);
         l1cTarget.setEndTime(endDate);
         l1cTarget.setName(L1cSynUtils.getSynName(slstrProduct, olciProduct));
-
+        removeOrphanBands(l1cTarget);
         if (slstrRegexp == null || slstrRegexp.equals("")) {
             updateBands(slstrProduct, l1cTarget, bandsSlstr);
         } else {
@@ -248,6 +248,7 @@ public class L1cSynOp extends Operator {
         } else {
             updateBands(olciProduct, l1cTarget, readRegExp(olciRegexp));
         }
+        l1cTarget.setAutoGrouping(olciProduct.getAutoGrouping().toString()+slstrProduct.getAutoGrouping().toString());
         l1cTarget.setDescription("SENTINEL-3 SYN Level 1C Product");
     }
 
@@ -328,6 +329,14 @@ public class L1cSynOp extends Operator {
                         l1cTarget.getMaskGroup().remove(l1cTarget.getMaskGroup().get(maskName));
                     }
                 }
+            }
+        }
+    }
+
+    private void removeOrphanBands(Product l1cTarget){
+        for (Band band : l1cTarget.getBands()){
+            if (band.getName().contains("orphan")){
+                l1cTarget.removeBand(band);
             }
         }
     }
