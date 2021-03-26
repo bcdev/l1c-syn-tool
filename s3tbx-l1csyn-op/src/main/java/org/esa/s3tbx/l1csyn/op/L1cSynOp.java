@@ -114,8 +114,12 @@ public class L1cSynOp extends Operator {
                     "If not given, the entire scene is used.")
     private String geoRegion;
 
-    @Parameter(label = "MISR-File", description = "Optional MISR file which may be used for co-registration of OLCI and SLSTR products")
+    @Parameter(label = "MISR Product", description = "Optional MISR file which may be used for co-registration of OLCI and SLSTR products")
     private File misrFile;
+
+    @Parameter(label = "Use MISR Product", description = "if set to true MISR product will be used for co-registration",
+            defaultValue = "false")
+    private boolean useMISR;
 
     // This parameters are not used in production but are useful for fasten up the debugging and testing the code. As of Mar2021 they turned into variables
     //
@@ -152,6 +156,10 @@ public class L1cSynOp extends Operator {
         }
 
         Product collocatedTarget;
+
+        if (useMISR == true && misrFile == null){
+            throw new OperatorException("MISR product is not valid");
+        }
 
         if (misrFile != null) {
             String misrFormat = getMisrFormat(misrFile);

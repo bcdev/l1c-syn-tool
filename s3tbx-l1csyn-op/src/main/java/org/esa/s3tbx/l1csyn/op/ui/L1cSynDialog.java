@@ -182,6 +182,8 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         parametersPane.getBindingContext().bindEnabledState("orphan",false,"misrFile",null);
         parametersPane.getBindingContext().bindEnabledState("formatMisr",false,"misrFile",null);
         parametersPane.getBindingContext().bindEnabledState("numCam",false,"misrFile",null);
+        parametersPane.getBindingContext().bindEnabledState("misrFile",true,"useMISR",true);
+        parametersPane.getBindingContext().bindEnabledState("misrFile",false,"useMISR",false);
     }
 
     private void setSourceProductSelectorToolTipTexts() {
