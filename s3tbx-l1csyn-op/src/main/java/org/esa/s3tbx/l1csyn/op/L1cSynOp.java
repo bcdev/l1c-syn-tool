@@ -44,6 +44,9 @@ import java.util.regex.Pattern;
 public class L1cSynOp extends Operator {
 
     private static final long ALLOWED_TIME_DIFF = 200L;
+    private boolean fullMisr = true;
+    private boolean orphan = true;
+    private boolean fillEmptyPixels = true;
 
     @SourceProduct(label = "OLCI Product", description = "OLCI L1 ERR or EFR source product")
     private Product olciProduct;
@@ -114,17 +117,19 @@ public class L1cSynOp extends Operator {
     @Parameter(label = "MISR-File", description = "Optional MISR file which may be used for co-registration of OLCI and SLSTR products")
     private File misrFile;
 
-    @Parameter(label = "Fill empty pixels", description = "If set to true, empty pixels will be filled with neighbouring values.",
-            defaultValue = "true")
-    private boolean fillEmptyPixels;
-
-    @Parameter(alias = "orphan", label = "Orphan pixel using MISR", description = "If set to true, during MISR geocoding, orphan pixels will be used in addition.",
-            defaultValue = "true")
-    private boolean orphan;
-
-    @Parameter(label = "Use MISR for each band separately", description = "If set to true, mis-registration information for every SLSTR band will be calculated separately.",
-            defaultValue = "true")
-    private boolean fullMisr;
+    // This parameters are not used in production but are useful for fasten up the debugging and testing the code. As of Mar2021 they turned into variables
+    //
+    //@Parameter(label = "Fill empty pixels", description = "If set to true, empty pixels will be filled with neighbouring values.",
+    //        defaultValue = "true")
+    //private boolean fillEmptyPixels;
+    //
+    //@Parameter(alias = "orphan", label = "Orphan pixel using MISR", description = "If set to true, during MISR geocoding, orphan pixels will be used in addition.",
+    //        defaultValue = "true")
+    //private boolean orphan;
+    //
+    //@Parameter(label = "Use MISR for each band separately", description = "If set to true, mis-registration information for every SLSTR band will be calculated separately.",
+    //        defaultValue = "true")
+    //private boolean fullMisr;
 
     @Override
     public void initialize() throws OperatorException {
