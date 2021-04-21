@@ -1,0 +1,134 @@
+<!--
+ Copyright (C) 2020 Brockmann Consult GmbH (info@brockmann-consult.de)
+
+ This program is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the Free
+ Software Foundation; either version 3 of the License, or (at your option)
+ any later version.
+ This program is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ more details.
+
+ You should have received a copy of the GNU General Public License along
+ with this program; if not, see http://www.gnu.org/licenses/
+ -->
+
+<graph id="test-3-1">
+    <version>1.0</version>
+    <!--
+     Read a Sentinel-3 OLCI L1b product.
+     -->
+    <node id="ReadOlc">
+        <operator>Read</operator>
+        <sources/>
+        <parameters>
+            <file>${olcFile}/xfdumanifest.xml</file>
+            <formatName>Sen3</formatName>
+        </parameters>
+    </node>
+
+    <!--
+     Read a Sentinel-3 SLSTR L1b product.
+     -->
+    <node id="ReadSls">
+        <operator>Read</operator>
+        <sources/>
+        <parameters>
+            <file>${slsFile}/xfdumanifest.xml</file>
+            <formatName>Sen3</formatName>
+        </parameters>
+    </node>
+
+    <!--
+     Make the SYN product.
+     -->
+    <node id="MakeSyn">
+        <operator>L1CSYN</operator>
+        <sources>
+            <olciProduct refid="ReadOlc"/>
+            <slstrProduct refid="ReadSls"/>
+        </sources>
+        <parameters>
+            <stayOnOlciGrid>true</stayOnOlciGrid>
+            <reprojectionCRS>EPSG:4326</reprojectionCRS>
+            <upsampling>Nearest</upsampling>
+            <bandsOlci>All</bandsOlci>
+            <bandsSlstr>All</bandsSlstr>
+            <useMISR>true</useMISR>
+            <misrFile>${misFile}/xfdumanifest.xml</misrFile>
+        </parameters>
+    </node>
+
+    <node id="ComputeDifferences">
+        <operator>BandMaths</operator>
+        <sources>
+            <o refid="ReadOlc"/>
+            <s refid="MakeSyn"/>
+        </sources>
+        <parameters>
+            <targetBands>
+                <targetBand>
+                    <name>latitude_olc</name>
+                    <type>float64</type>
+                    <expression>$o.latitude</expression>
+                    <description>Ortho-geolocation latitude (OLC)</description>
+                    <unit/>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>latitude_syn</name>
+                    <type>float64</type>
+                    <expression>$s.latitude</expression>
+                    <description>Ortho-geolocation latitude (SYN)</description>
+                    <unit/>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>longitude_olc</name>
+                    <type>float64</type>
+                    <expression>$o.longitude</expression>
+                    <description>Ortho-geolocation longitude (OLC)</description>
+                    <unit/>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>longitude_syn</name>
+                    <type>float64</type>
+                    <expression>$s.longitude</expression>
+                    <description>Ortho-geolocation longitude (SYN)</description>
+                    <unit/>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>latitude_difference</name>
+                    <type>float64</type>
+                    <expression>$s.latitude - $o.latitude</expression>
+                    <description>Difference of ortho-geolocation latitudes (SYN - OLC)</description>
+                    <unit/>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>longitude_difference</name>
+                    <type>float64</type>
+                    <expression>$s.longitude - $o.longitude</expression>
+                    <description>Difference of ortho-geolocation longitudes (SYN - OLC)</description>
+                    <unit/>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+            </targetBands>
+            <variables/>
+        </parameters>
+    </node>
+
+    <node id="Write">
+        <operator>Write</operator>
+        <sources>
+            <sourceProduct refid="ComputeDifferences"/>
+        </sources>
+        <parameters>
+            <file>${targetFile}</file>
+            <formatName>NetCDF4-BEAM</formatName>
+        </parameters>
+    </node>
+</graph>
