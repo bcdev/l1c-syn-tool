@@ -22,7 +22,7 @@ public class BoundingBoxTest {
     public static void main(String[] args) throws IOException {
         final String path = args[0];
         final File root = new File(path);
-        final Map<String, String> report = new TreeMap<>();
+        final Map<String, Stamp> report = new TreeMap<>();
 
         if (root.isDirectory()) {
             for (final File sceneDir : Objects.requireNonNull(root.listFiles(File::isDirectory))) {
@@ -30,15 +30,15 @@ public class BoundingBoxTest {
                 for (final File file : files) {
                     final Product product = ProductIO.readProduct(file, "NetCDF4-BEAM");
                     try {
-                        report.put(sceneDir.getName(), new BoundingBox(product).toWKT());
+                        report.put(sceneDir.getName(), Stamp.create(product));
                     } finally {
                         product.closeIO();
                     }
                 }
             }
         }
-        for (final Map.Entry<String, String> entry : report.entrySet()) {
-            System.out.println(entry.getKey() + ": " + entry.getValue());
+        for (final Map.Entry<String, Stamp> entry : report.entrySet()) {
+            System.out.printf("%s: %s, %s%n", entry.getKey(), entry.getValue().getTime(), entry.getValue().getText());
         }
     }
 
@@ -47,7 +47,11 @@ public class BoundingBoxTest {
         private final int w;
         private final int h;
 
-        public BoundingBox(Product product) {
+        public static String toWKT(Product product) {
+            return new BoundingBox(product).toWKT();
+        }
+
+        private BoundingBox(Product product) {
             geoCoding = product.getSceneGeoCoding();
             w = product.getSceneRasterWidth();
             h = product.getSceneRasterHeight();
@@ -58,7 +62,7 @@ public class BoundingBoxTest {
             return new Coordinate(geoPos.getLon(), geoPos.getLat());
         }
 
-        public String toWKT() {  // inner bounding box as WKT
+        private String toWKT() {  // inner bounding box as WKT
             final List<Coordinate> coordinateList = new ArrayList<>(4);
             coordinateList.add(getCoordinate(0.5, 0.5));
             coordinateList.add(getCoordinate(0.5, h - 0.5));
@@ -66,6 +70,29 @@ public class BoundingBoxTest {
             coordinateList.add(getCoordinate(w - 0.5, 0.5));
             coordinateList.add(getCoordinate(0.5, 0.5));
             return new GeometryFactory().createPolygon(coordinateList.toArray(new Coordinate[5])).toText();
+        }
+    }
+
+    private static class Stamp {
+
+        public static Stamp create(Product product) {
+            return new Stamp(product.getStartTime().format(), BoundingBox.toWKT(product));
+        }
+
+        private final String time;
+        private final String text;
+
+        private Stamp(String time, String text) {
+            this.time = time;
+            this.text = text;
+        }
+
+        public String getTime() {
+            return time;
+        }
+
+        public String getText() {
+            return text;
         }
     }
 }
