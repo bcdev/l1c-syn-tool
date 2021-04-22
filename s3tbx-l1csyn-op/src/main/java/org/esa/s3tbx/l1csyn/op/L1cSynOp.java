@@ -183,6 +183,7 @@ public class L1cSynOp extends Operator {
                     misrSourceProductMap.put("slstrSource", slstrProduct);
                     collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);
                 } else if (misrFormat.equals("valid") && fullMisr) {
+                    // todo - load only maps which are necessary for the selected bands
                     final Map<int[], int[]> s1Pixels = getPixelMap(slstrOffset, "S1");
                     final Map<int[], int[]> s2Pixels = getPixelMap(slstrOffset, "S2");
                     final Map<int[], int[]> s3Pixels = getPixelMap(slstrOffset, "S3");
