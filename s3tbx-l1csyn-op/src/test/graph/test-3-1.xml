@@ -57,6 +57,7 @@
             <bandsSlstr>All</bandsSlstr>
             <useMISR>true</useMISR>
             <misrFile>${misFile}/xfdumanifest.xml</misrFile>
+            <geoRegion>${polygon}</geoRegion>
         </parameters>
     </node>
 
@@ -128,7 +129,7 @@
         </sources>
         <parameters>
             <file>${targetFile}</file>
-            <formatName>NetCDF4-BEAM</formatName>
+            <formatName>BEAM-DIMAP</formatName>
         </parameters>
     </node>
 </graph>

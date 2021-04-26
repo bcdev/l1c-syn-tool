@@ -1,0 +1,467 @@
+<!--
+ Copyright (C) 2020 Brockmann Consult GmbH (info@brockmann-consult.de)
+
+ This program is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the Free
+ Software Foundation; either version 3 of the License, or (at your option)
+ any later version.
+ This program is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ more details.
+
+ You should have received a copy of the GNU General Public License along
+ with this program; if not, see http://www.gnu.org/licenses/
+ -->
+
+<graph id="test-3-3">
+    <version>1.0</version>
+    <!--
+     Read a Sentinel-3 OLCI L1b product.
+     -->
+    <node id="ReadOlc">
+        <operator>Read</operator>
+        <sources/>
+        <parameters>
+            <file>${olcFile}/xfdumanifest.xml</file>
+            <formatName>Sen3</formatName>
+        </parameters>
+    </node>
+
+    <!--
+     Read a Sentinel-3 SLSTR L1b product.
+     -->
+    <node id="ReadSls">
+        <operator>Read</operator>
+        <sources/>
+        <parameters>
+            <file>${slsFile}/xfdumanifest.xml</file>
+            <formatName>Sen3</formatName>
+        </parameters>
+    </node>
+
+    <!--
+     Make the SYN product.
+     -->
+    <node id="MakeSyn">
+        <operator>L1CSYN</operator>
+        <sources>
+            <olciProduct refid="ReadOlc"/>
+            <slstrProduct refid="ReadSls"/>
+        </sources>
+        <parameters>
+            <stayOnOlciGrid>true</stayOnOlciGrid>
+            <reprojectionCRS>EPSG:4326</reprojectionCRS>
+            <upsampling>Nearest</upsampling>
+            <bandsOlci>All</bandsOlci>
+            <bandsSlstr>All</bandsSlstr>
+            <useMISR>true</useMISR>
+            <misrFile>${misFile}/xfdumanifest.xml</misrFile>
+            <geoRegion>${polygon}</geoRegion>
+        </parameters>
+    </node>
+
+    <node id="ComputeDifferences">
+        <operator>BandMaths</operator>
+        <sources>
+            <o refid="ReadOlc"/>
+            <s refid="MakeSyn"/>
+        </sources>
+        <parameters>
+            <targetBands>
+                <targetBand>
+                    <name>Oa01_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa01_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa02_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa02_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa03_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa03_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa04_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa04_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa05_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa05_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa06_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa06_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa07_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa07_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa08_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa08_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa09_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa09_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa10_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa10_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa11_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa11_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa12_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa12_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa13_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa13_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa14_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa14_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa15_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa15_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa16_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa16_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa17_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa17_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa18_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa18_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa19_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa19_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa20_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa20_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa21_radiance_olc</name>
+                    <type>float32</type>
+                    <expression>$o.Oa21_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+
+                <targetBand>
+                    <name>Oa01_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa01_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa02_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa02_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa03_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa03_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa04_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa04_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa05_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa05_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa06_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa06_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa07_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa07_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa08_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa08_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa09_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa09_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa10_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa10_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa11_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa11_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa12_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa12_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa13_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa13_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa14_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa14_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa15_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa15_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa16_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa16_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa17_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa17_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa18_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa18_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa19_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa19_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa20_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa20_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa21_radiance_syn</name>
+                    <type>float32</type>
+                    <expression>$s.Oa21_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+
+                <targetBand>
+                    <name>Oa01_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa01_radiance - $o.Oa01_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa02_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa02_radiance - $o.Oa02_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa03_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa03_radiance - $o.Oa03_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa04_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa04_radiance - $o.Oa04_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa05_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa05_radiance - $o.Oa05_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa06_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa06_radiance - $o.Oa06_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa07_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa07_radiance - $o.Oa07_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa08_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa08_radiance - $o.Oa08_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa09_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa09_radiance - $o.Oa09_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa10_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa10_radiance - $o.Oa10_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa11_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa11_radiance - $o.Oa11_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa12_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa12_radiance - $o.Oa12_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa13_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa13_radiance - $o.Oa13_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa14_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa14_radiance - $o.Oa14_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa15_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa15_radiance - $o.Oa15_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa16_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa16_radiance - $o.Oa16_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa17_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa17_radiance - $o.Oa17_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa18_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa18_radiance - $o.Oa18_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa19_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa19_radiance - $o.Oa19_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa20_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa20_radiance - $o.Oa20_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+                <targetBand>
+                    <name>Oa21_difference</name>
+                    <type>float32</type>
+                    <expression>$s.Oa21_radiance - $o.Oa21_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                </targetBand>
+            </targetBands>
+            <variables/>
+        </parameters>
+    </node>
+
+    <node id="Write">
+        <operator>Write</operator>
+        <sources>
+            <sourceProduct refid="ComputeDifferences"/>
+        </sources>
+        <parameters>
+            <file>${targetFile}</file>
+            <formatName>BEAM-DIMAP</formatName>
+        </parameters>
+    </node>
+</graph>
