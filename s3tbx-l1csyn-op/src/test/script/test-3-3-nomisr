@@ -28,6 +28,7 @@ echo "$(date -u "+%Y-%m-%dT%H:%M:%S") [INFO] Computing ${target} ..."
 ${HOME}/Applications/snap/bin/gpt ../graph/test-3-3-nomisr.xml -c 2G -e -q 4 \
         -Dsnap.dataio.netcdf.metadataElementLimit=300 \
         -Ds3tbx.reader.olci.pixelGeoCoding=true \
+        -Ds3tbx.reader.slstrl1b.pixelGeoCodings=true \
         -PolcFile="${olc}" \
         -PslsFile="${sls}" \
         -Ppolygon="${geo}" \
