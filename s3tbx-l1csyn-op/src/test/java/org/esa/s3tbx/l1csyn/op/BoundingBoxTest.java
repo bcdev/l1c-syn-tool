@@ -42,10 +42,14 @@ public class BoundingBoxTest {
         }
     }
 
-    private static class BoundingBox {
+    static class BoundingBox {
         private final GeoCoding geoCoding;
         private final int w;
         private final int h;
+
+        public static Coordinate[] create(Product product) {
+            return new BoundingBox(product).create();
+        }
 
         public static String toWKT(Product product) {
             return new BoundingBox(product).toWKT();
@@ -63,13 +67,17 @@ public class BoundingBoxTest {
         }
 
         private String toWKT() {  // inner bounding box as WKT
+            return new GeometryFactory().createPolygon(create()).toText();
+        }
+
+        private Coordinate[] create() {
             final List<Coordinate> coordinateList = new ArrayList<>(4);
             coordinateList.add(getCoordinate(0.5, 0.5));
             coordinateList.add(getCoordinate(0.5, h - 0.5));
             coordinateList.add(getCoordinate(w - 0.5, h - 0.5));
             coordinateList.add(getCoordinate(w - 0.5, 0.5));
             coordinateList.add(getCoordinate(0.5, 0.5));
-            return new GeometryFactory().createPolygon(coordinateList.toArray(new Coordinate[5])).toText();
+            return coordinateList.toArray(new Coordinate[5]);
         }
     }
 
