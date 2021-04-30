@@ -226,28 +226,68 @@ public class L1cSynOp extends Operator {
 
             misrParams = getMisrParams(s3Pixels, aoPixels, s3Orphans, aoOrphans);
         } else {
-            // todo - load only maps which are necessary for the selected bands
-            final Map<int[], int[]> s1Pixels = getPixelMap("S1");
-            final Map<int[], int[]> s2Pixels = getPixelMap("S2");
-            final Map<int[], int[]> s3Pixels = getPixelMap("S3");
-            final Map<int[], int[]> s4Pixels = getPixelMap("S4");
-            final Map<int[], int[]> s5Pixels = getPixelMap("S5");
-            final Map<int[], int[]> s6Pixels = getPixelMap("S6");
-            final Map<int[], int[]> aoPixels = getPixelMap("ao");
+            Map<int[], int[]> s1Pixels = null;
+            Map<int[], int[]> s1Orphans = null;
+            Map<int[], int[]> s2Pixels = null;
+            Map<int[], int[]> s2Orphans = null;
+            Map<int[], int[]> s3Pixels = null;
+            Map<int[], int[]> s3Orphans = null;
+            Map<int[], int[]> s4Pixels = null;
+            Map<int[], int[]> s4Orphans = null;
+            Map<int[], int[]> s5Pixels = null;
+            Map<int[], int[]> s5Orphans = null;
+            Map<int[], int[]> s6Pixels = null;
+            Map<int[], int[]> s6Orphans = null;
+            Map<int[], int[]> aoPixels = null;
+            Map<int[], int[]> aoOrphans = null;
+
+            String[] slstrTargetBands;
+            if (slstrRegexp == null || slstrRegexp.equals("")) {
+                slstrTargetBands =  getSlstrBands(slstrProduct,  bandsSlstr);
+            } else {
+                slstrTargetBands = getSlstrBands(slstrProduct,  readRegExp(slstrRegexp));
+            }
+
+            if (mapNeeded(slstrTargetBands, "S1") ) {
+                 s1Pixels = getPixelMap("S1");
+                 s1Orphans = getOrphanMap("S1");
+            }
+
+            if (mapNeeded(slstrTargetBands, "S2")) {
+                 s2Pixels = getPixelMap("S2");
+                 s2Orphans = getOrphanMap("S2");
+            }
+
+            if (mapNeeded(slstrTargetBands, "S3")) {
+                 s3Pixels = getPixelMap("S3");
+                 s3Orphans = getOrphanMap("S3");
+            }
+
+            if (mapNeeded(slstrTargetBands, "S4")) {
+                s4Pixels = getPixelMap("S4");
+                s4Orphans = getOrphanMap("S4");
+            }
+
+            if (mapNeeded(slstrTargetBands, "S5") ) {
+                s5Pixels = getPixelMap("S5");
+                s5Orphans = getOrphanMap("S5");
+            }
+
+            if (mapNeeded(slstrTargetBands, "S6") ) {
+                s6Pixels = getPixelMap("S6");
+                s6Orphans = getOrphanMap("S6");
+            }
+
+            if (mapNeeded(slstrTargetBands, "ao") ) {
+                aoPixels = getPixelMap("ao");
+                aoOrphans = getOrphanMap("ao");
+            }
             // currently we use the 'ao' data also for bo and co
             // if misr file changes in this respect han we need to adapt this here
             @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> boPixels = aoPixels;
             @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> coPixels = aoPixels;
-
-            final Map<int[], int[]> s1Orphans = getOrphanMap("S1");
-            final Map<int[], int[]> s2Orphans = getOrphanMap("S2");
-            final Map<int[], int[]> s3Orphans = getOrphanMap("S3");
-            final Map<int[], int[]> s4Orphans = getOrphanMap("S4");
-            final Map<int[], int[]> s5Orphans = getOrphanMap("S5");
-            final Map<int[], int[]> s6Orphans = getOrphanMap("S6");
             // currently we use the 'ao' data also for bo and co
             // if misr file changes in this respect han we need to adapt this here
-            final Map<int[], int[]> aoOrphans = getOrphanMap("ao");
             @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> boOrphans = aoOrphans;
             @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> coOrphans = aoOrphans;
 
@@ -310,6 +350,33 @@ public class L1cSynOp extends Operator {
         return regExp.split(",");
     }
 
+    private String[] getSlstrBands(Product inputProduct, String[] bandsList) {
+        String[] bandNames = inputProduct.getBandNames();
+        String[] tiePointGridNames = inputProduct.getTiePointGridNames();
+        Object[] tiePointBandNames = (String[]) ArrayUtils.addAll(bandNames, tiePointGridNames);
+        if (!Arrays.asList(bandsList).contains("All")) {
+            Pattern pattern = Pattern.compile("\\b(" + String.join("|", bandsList) + ")\\b");
+            for (String bandName : (String[]) tiePointBandNames) {
+                Matcher matcher = pattern.matcher(bandName);
+                if (!matcher.matches()) {
+                    tiePointBandNames = ArrayUtils.removeElement(tiePointBandNames, bandName);
+                }
+            }
+            return (String[]) tiePointBandNames;
+        }
+        else {
+            return (String[]) tiePointBandNames;
+        }
+    }
+
+    private boolean mapNeeded(String[] bandsList, String key) {
+        for (String bandName : bandsList) {
+            if (bandName.contains(key)){
+                return true;
+            }
+        }
+        return false;
+    }
     private void updateBands(Product inputProduct, Product l1cTarget, String[] bandsList) {
         if (!Arrays.asList(bandsList).contains("All")) {
             Pattern pattern = Pattern.compile("\\b(" + String.join("|", bandsList) + ")\\b");
