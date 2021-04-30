@@ -18,7 +18,6 @@ import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.ContentFeatureCollection;
 import org.geotools.data.store.ContentFeatureSource;
-import org.jetbrains.annotations.NotNull;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
@@ -45,9 +44,9 @@ import java.util.regex.Pattern;
 public class L1cSynOp extends Operator {
 
     private static final long ALLOWED_TIME_DIFF = 200L;
-    private boolean fullMisr = true;
-    private boolean orphan = true;
-    private boolean fillEmptyPixels = true;
+    private static final boolean USE_FULL_MISR = true;
+    private static final boolean USE_ORPHAN = true;
+    private static final boolean FILL_EMPTY_PIXELS = true;
 
     @SourceProduct(label = "OLCI Product", description = "OLCI L1 ERR or EFR source product")
     private Product olciProduct;
@@ -149,7 +148,7 @@ public class L1cSynOp extends Operator {
 
         checkDate(slstrProduct, olciProduct);
 
-        // todo: update according to SNAP8
+        // todo: update validation of PixelGeoCoding
         checkGeocoding(slstrProduct, olciProduct);
 
         if (shapeFile != null) {
@@ -158,15 +157,8 @@ public class L1cSynOp extends Operator {
 
         Product collocatedTarget;
 
-        if (useMISR == true && misrFile == null) {
-            throw new OperatorException("MISR product is not valid");
-        }
-
-        if (misrFile != null) {
-            String misrFormat = getMisrFormat(misrFile);
-            if (!misrFormat.equals("valid")) {
-                throw new OperatorException("MISR file information is not read correctly");
-            }
+        if (useMISR) {
+            ensureValidMISRFile(misrFile);
             try {
                 HashMap<String, Object> misrParams = createMisrPramasMap();
 
@@ -201,6 +193,7 @@ public class L1cSynOp extends Operator {
         if (geoRegion != null) {
             l1cTarget = GPF.createProduct("Subset", getSubsetParameters(geoRegion), l1cTarget);
         }
+
         MetadataElement slstrMetadata = slstrProduct.getMetadataRoot();
         slstrMetadata.setName("SLSTRmetadata");
         l1cTarget.getMetadataRoot().addElement(slstrMetadata);
@@ -222,10 +215,9 @@ public class L1cSynOp extends Operator {
         l1cTarget.setDescription("SENTINEL-3 SYN Level 1C Product");
     }
 
-    @NotNull
     private HashMap<String, Object> createMisrPramasMap() throws InvalidRangeException, IOException {
         HashMap<String, Object> misrParams;
-        if (!fullMisr) {
+        if (!USE_FULL_MISR) {
             final Map<int[], int[]> s3Pixels = getPixelMap("S3");
             final Map<int[], int[]> aoPixels = getPixelMap("ao");
 
@@ -288,8 +280,8 @@ public class L1cSynOp extends Operator {
 
     private HashMap<String, Object> getMisrParams(Map<int[], int[]> s1Pixels, Map<int[], int[]> s2Pixels, Map<int[], int[]> s3Pixels, Map<int[], int[]> s4Pixels, Map<int[], int[]> s5Pixels, Map<int[], int[]> s6Pixels, Map<int[], int[]> aoPixels, Map<int[], int[]> boPixels, Map<int[], int[]> coPixels, Map<int[], int[]> s1Orphans, Map<int[], int[]> s2Orphans, Map<int[], int[]> s3Orphans, Map<int[], int[]> s4Orphans, Map<int[], int[]> s5Orphans, Map<int[], int[]> s6Orphans, Map<int[], int[]> aoOrphans, Map<int[], int[]> boOrphans, Map<int[], int[]> coOrphans) {
         HashMap<String, Object> misrParams = new HashMap<>();
-        misrParams.put("fillEmptyPixels", fillEmptyPixels);
-        misrParams.put("orphan", orphan);
+        misrParams.put("fillEmptyPixels", FILL_EMPTY_PIXELS);
+        misrParams.put("orphan", USE_ORPHAN);
 
         misrParams.put("S1PixelMap", s1Pixels);
         misrParams.put("S2PixelMap", s2Pixels);
@@ -413,15 +405,13 @@ public class L1cSynOp extends Operator {
         }
     }
 
-    private String getMisrFormat(File misrFile) {
-        String format = null;
-        if (misrFile.getAbsolutePath().endsWith("xfdumanifest.xml")) {
-            format = "valid";
+    private void ensureValidMISRFile(File misrFile) {
+        if(misrFile == null) {
+            throw new OperatorException("MISR file was not specified.");
         }
-        if (format == null) {
+        if (!misrFile.getAbsolutePath().endsWith("xfdumanifest.xml")) {
             throw new OperatorException("Wrong MISR file format. Please specify path to xfdumanifest.xml of MISR product.");
         }
-        return format;
     }
 
     private String readShapeFile(File shapeFile) {
@@ -473,6 +463,7 @@ public class L1cSynOp extends Operator {
     //  Below is the code which is not used
     // ********************
 
+    @SuppressWarnings("unused")
     private void dumpMemoryUsage(String label) {
         long totalMem = Runtime.getRuntime().totalMemory();
         long usedMem = totalMem - Runtime.getRuntime().freeMemory();
