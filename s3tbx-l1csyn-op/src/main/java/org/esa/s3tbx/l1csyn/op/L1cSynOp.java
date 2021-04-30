@@ -18,6 +18,7 @@ import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.ContentFeatureCollection;
 import org.geotools.data.store.ContentFeatureSource;
+import org.jetbrains.annotations.NotNull;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
@@ -157,69 +158,23 @@ public class L1cSynOp extends Operator {
 
         Product collocatedTarget;
 
-        if (useMISR == true && misrFile == null){
+        if (useMISR == true && misrFile == null) {
             throw new OperatorException("MISR product is not valid");
         }
 
         if (misrFile != null) {
             String misrFormat = getMisrFormat(misrFile);
+            if (!misrFormat.equals("valid")) {
+                throw new OperatorException("MISR file information is not read correctly");
+            }
             try {
-                //SLSTR offset. As of 5th October 2020 its set to 0.
-                // The previous function is kept if we need to apply offset again.
-                //int slstrOffset = getSLSLTROffset();
-                //System.out.println(slstrOffset + " SLSTR offset found");
-                int slstrOffset = 0;
-                if (misrFormat.equals("valid") && !fullMisr) {
-                    final Map<int[], int[]> s3Pixels = getPixelMap(slstrOffset, "S3");
-                    final Map<int[], int[]> aoPixels = getPixelMap(slstrOffset, "ao");
+                HashMap<String, Object> misrParams = createMisrPramasMap();
 
-                    final Map<int[], int[]> s3Orphans = getOrphanMap(slstrOffset, "S3");
-                    final Map<int[], int[]> aoOrphans = getOrphanMap(slstrOffset, "ao");
+                HashMap<String, Product> misrSourceProductMap = new HashMap<>();
+                misrSourceProductMap.put("olciSource", olciProduct);
+                misrSourceProductMap.put("slstrSource", slstrProduct);
 
-                    HashMap<String, Object> misrParams = getMisrParams(s3Pixels, aoPixels, s3Orphans, aoOrphans);
-
-                    HashMap<String, Product> misrSourceProductMap = new HashMap<>();
-                    misrSourceProductMap.put("olciSource", olciProduct);
-                    misrSourceProductMap.put("slstrSource", slstrProduct);
-                    collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);
-                } else if (misrFormat.equals("valid") && fullMisr) {
-                    // todo - load only maps which are necessary for the selected bands
-                    final Map<int[], int[]> s1Pixels = getPixelMap(slstrOffset, "S1");
-                    final Map<int[], int[]> s2Pixels = getPixelMap(slstrOffset, "S2");
-                    final Map<int[], int[]> s3Pixels = getPixelMap(slstrOffset, "S3");
-                    final Map<int[], int[]> s4Pixels = getPixelMap(slstrOffset, "S4");
-                    final Map<int[], int[]> s5Pixels = getPixelMap(slstrOffset, "S5");
-                    final Map<int[], int[]> s6Pixels = getPixelMap(slstrOffset, "S6");
-                    final Map<int[], int[]> aoPixels = getPixelMap(slstrOffset, "ao");
-                    // currently we use the 'ao' data also for bo and co
-                    // if misr file changes in this respect han we need to adapt this here
-                    @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> boPixels = aoPixels;
-                    @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> coPixels = aoPixels;
-
-                    final Map<int[], int[]> s1Orphans = getOrphanMap(slstrOffset, "S1");
-                    final Map<int[], int[]> s2Orphans = getOrphanMap(slstrOffset, "S2");
-                    final Map<int[], int[]> s3Orphans = getOrphanMap(slstrOffset, "S3");
-                    final Map<int[], int[]> s4Orphans = getOrphanMap(slstrOffset, "S4");
-                    final Map<int[], int[]> s5Orphans = getOrphanMap(slstrOffset, "S5");
-                    final Map<int[], int[]> s6Orphans = getOrphanMap(slstrOffset, "S6");
-                    // currently we use the 'ao' data also for bo and co
-                    // if misr file changes in this respect han we need to adapt this here
-                    final Map<int[], int[]> aoOrphans = getOrphanMap(slstrOffset, "ao");
-                    @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> boOrphans = aoOrphans;
-                    @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> coOrphans = aoOrphans;
-
-                    HashMap<String, Object> misrParams = getMisrParams(
-                            s1Pixels, s2Pixels, s3Pixels, s4Pixels, s5Pixels, s6Pixels, aoPixels, boPixels, coPixels,
-                            s1Orphans, s2Orphans, s3Orphans, s4Orphans, s5Orphans, s6Orphans, aoOrphans, boOrphans, coOrphans);
-
-                    HashMap<String, Product> misrSourceProductMap = new HashMap<>();
-                    misrSourceProductMap.put("olciSource", olciProduct);
-                    misrSourceProductMap.put("slstrSource", slstrProduct);
-
-                    collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);
-                } else {
-                    throw new OperatorException("MISR file information is not read correctly");
-                }
+                collocatedTarget = GPF.createProduct("Misregister", misrParams, misrSourceProductMap);
             } catch (InvalidRangeException e1) {
                 throw new OperatorException("Misregistration failed. InvalidRangeException", e1);
             } catch (IOException e2) {
@@ -233,6 +188,7 @@ public class L1cSynOp extends Operator {
             sourceProductMap.put("slaveProduct", slstrInput);
             collocatedTarget = GPF.createProduct("Collocate", getCollocateParams(), sourceProductMap);
         }
+
         if (reprojectionCRS != null && !reprojectionCRS.equalsIgnoreCase("none") && !reprojectionCRS.equals("") && !stayOnOlciGrid && misrFile == null) {
             l1cTarget = GPF.createProduct("Reproject", getReprojectParams(), collocatedTarget);
         } else {
@@ -262,19 +218,64 @@ public class L1cSynOp extends Operator {
         } else {
             updateBands(olciProduct, l1cTarget, readRegExp(olciRegexp));
         }
-        l1cTarget.setAutoGrouping(olciProduct.getAutoGrouping().toString()+slstrProduct.getAutoGrouping().toString());
+        l1cTarget.setAutoGrouping(olciProduct.getAutoGrouping().toString() + slstrProduct.getAutoGrouping().toString());
         l1cTarget.setDescription("SENTINEL-3 SYN Level 1C Product");
     }
 
-    private Map<int[], int[]> getOrphanMap(int slstrOffset, String bandType) throws InvalidRangeException, IOException {
-        Map<int[], int[]> mapOrphanSlstr = new SlstrMisrTransform(olciProduct, slstrProduct, misrFile, bandType, -slstrOffset).getOrphanOlciMap();
+    @NotNull
+    private HashMap<String, Object> createMisrPramasMap() throws InvalidRangeException, IOException {
+        HashMap<String, Object> misrParams;
+        if (!fullMisr) {
+            final Map<int[], int[]> s3Pixels = getPixelMap("S3");
+            final Map<int[], int[]> aoPixels = getPixelMap("ao");
+
+            final Map<int[], int[]> s3Orphans = getOrphanMap("S3");
+            final Map<int[], int[]> aoOrphans = getOrphanMap("ao");
+
+            misrParams = getMisrParams(s3Pixels, aoPixels, s3Orphans, aoOrphans);
+        } else {
+            // todo - load only maps which are necessary for the selected bands
+            final Map<int[], int[]> s1Pixels = getPixelMap("S1");
+            final Map<int[], int[]> s2Pixels = getPixelMap("S2");
+            final Map<int[], int[]> s3Pixels = getPixelMap("S3");
+            final Map<int[], int[]> s4Pixels = getPixelMap("S4");
+            final Map<int[], int[]> s5Pixels = getPixelMap("S5");
+            final Map<int[], int[]> s6Pixels = getPixelMap("S6");
+            final Map<int[], int[]> aoPixels = getPixelMap("ao");
+            // currently we use the 'ao' data also for bo and co
+            // if misr file changes in this respect han we need to adapt this here
+            @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> boPixels = aoPixels;
+            @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> coPixels = aoPixels;
+
+            final Map<int[], int[]> s1Orphans = getOrphanMap("S1");
+            final Map<int[], int[]> s2Orphans = getOrphanMap("S2");
+            final Map<int[], int[]> s3Orphans = getOrphanMap("S3");
+            final Map<int[], int[]> s4Orphans = getOrphanMap("S4");
+            final Map<int[], int[]> s5Orphans = getOrphanMap("S5");
+            final Map<int[], int[]> s6Orphans = getOrphanMap("S6");
+            // currently we use the 'ao' data also for bo and co
+            // if misr file changes in this respect han we need to adapt this here
+            final Map<int[], int[]> aoOrphans = getOrphanMap("ao");
+            @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> boOrphans = aoOrphans;
+            @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> coOrphans = aoOrphans;
+
+            misrParams = getMisrParams(
+                    s1Pixels, s2Pixels, s3Pixels, s4Pixels, s5Pixels, s6Pixels, aoPixels, boPixels, coPixels,
+                    s1Orphans, s2Orphans, s3Orphans, s4Orphans, s5Orphans, s6Orphans, aoOrphans, boOrphans, coOrphans);
+
+        }
+        return misrParams;
+    }
+
+    private Map<int[], int[]> getOrphanMap(String bandType) throws InvalidRangeException, IOException {
+        Map<int[], int[]> mapOrphanSlstr = new SlstrMisrTransform(olciProduct, slstrProduct, misrFile, bandType).getOrphanOlciMap();
         final Map<int[], int[]> s1Orphans = MapToWrapedArrayFactory.createWrappedArray(mapOrphanSlstr);
         mapOrphanSlstr.clear();
         return s1Orphans;
     }
 
-    private Map<int[], int[]> getPixelMap(int slstrOffset, String bandType) throws InvalidRangeException, IOException {
-        Map<int[], int[]> mapOlciSlstr = new SlstrMisrTransform(olciProduct, slstrProduct, misrFile, bandType, -slstrOffset).getSlstrOlciMap();
+    private Map<int[], int[]> getPixelMap(String bandType) throws InvalidRangeException, IOException {
+        Map<int[], int[]> mapOlciSlstr = new SlstrMisrTransform(olciProduct, slstrProduct, misrFile, bandType).getSlstrOlciMap();
         final Map<int[], int[]> pixelMap = MapToWrapedArrayFactory.createWrappedArray(mapOlciSlstr);
         mapOlciSlstr.clear();
         return pixelMap;
@@ -347,9 +348,9 @@ public class L1cSynOp extends Operator {
         }
     }
 
-    private void removeOrphanBands(Product l1cTarget){
-        for (Band band : l1cTarget.getBands()){
-            if (band.getName().contains("orphan")){
+    private void removeOrphanBands(Product l1cTarget) {
+        for (Band band : l1cTarget.getBands()) {
+            if (band.getName().contains("orphan")) {
                 l1cTarget.removeBand(band);
             }
         }

@@ -20,17 +20,17 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class SlstrMisrTransform implements Serializable {
+    private static final int SLSTR_OFFSET = 0;
     private final Product slstrImageProduct;
     private final String misrPath;
     private final String bandType;
     private final String viewtype;
     private final int olciNumRows;
     private final int olciNumCols;
-    private final int SLSTRoffset;
     private int minScan = 9999999;
     private int minScanOrphan = 9999999;
 
-    SlstrMisrTransform(Product olciImageProduct, Product slstrImageProduct, File misrManifest, String bandType, int SLSTRoffset) {
+    SlstrMisrTransform(Product olciImageProduct, Product slstrImageProduct, File misrManifest, String bandType) {
         this.slstrImageProduct = slstrImageProduct;
         this.misrPath = misrManifest.getParent();
         this.bandType = bandType;
@@ -42,7 +42,6 @@ public class SlstrMisrTransform implements Serializable {
         } else {
             this.viewtype = "ao";
         }
-        this.SLSTRoffset = SLSTRoffset;
     }
 
     // package access for testing only tb 2020-07-17
@@ -109,7 +108,7 @@ public class SlstrMisrTransform implements Serializable {
                 short pixel = pixelArray.get(j, i);
                 byte detector = detectorArray.get(j, i);
                 if (scan != -1 && pixel != -1 && detector != -1) {
-                    int[] imagePosition = {i - SLSTRoffset, j};
+                    int[] imagePosition = {i - SLSTR_OFFSET, j};
                     int[] gridPosition = {scan, pixel, detector};
                     slstrMap.put(imagePosition, gridPosition);
                     if (scan < minScan) {
