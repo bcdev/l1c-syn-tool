@@ -17,7 +17,16 @@ import static org.junit.Assert.assertNotNull;
 
 public class L1cSynOpTest {
 
-    private static final String SLSTR_AUTO_GROUPING = "F*BT_*n:F*exception_*n:F*BT_*o:F*exception_*o:S*BT_in:S*exception_in:S*BT_io:S*exception_io:radiance_an:S*exception_an:radiance_ao:S*exception_ao:radiance_bn:S*exception_bn:radiance_bo:S*exception_bo:radiance_cn:S*exception_cn:radiance_co:S*exception_co:x_*:y_*:elevation:latitude:longitude:specific_humidity:temperature_profile:bayes_an_:bayes_ao_:bayes_bn_:bayes_bo_:bayes_cn_:bayes_co_:bayes_in_:bayes_io_:cloud_an_:cloud_ao_:cloud_bn_:cloud_bo_:cloud_cn_:cloud_co_:cloud_in_:cloud_io_:confidence_an_:confidence_ao_:confidence_bn_:confidence_bo_:confidence_cn_:confidence_co_:confidence_in_:confidence_io_:pointing_an_:pointing_ao_:pointing_bn_:pointing_bo_:pointing_cn_:pointing_co_:pointing_in_:pointing_io_:S*_exception_an_*:S*_exception_ao_*:S*_exception_bn_*:S*_exception_bo_*:S*_exception_cn_*:S*_exception_co_*:S*_exception_in_*:S*_exception_io_*:F*_exception_*n_*:F*_exception_*o_*:cartesian:cartesian:F1_quality:F2_quality:flags:geodetic:geometry:indices:S1_quality:S2_quality:S3_quality:S4_quality:S5_quality:S6_quality:S7_quality:S8_quality:S9_quality:time";
+    private static final String SLSTR_AUTO_GROUPING = "F*BT_*n:F*exception_*n:F*BT_*o:F*exception_*o:S*BT_in:S*exception_in:S*BT_io:S*exception_io:radiance_an:" +
+            "S*exception_an:radiance_ao:S*exception_ao:radiance_bn:S*exception_bn:radiance_bo:S*exception_bo:radiance_cn:S*exception_cn:radiance_co:S*exception_co:" +
+            "x_*:y_*:elevation:latitude:longitude:specific_humidity:temperature_profile:bayes_an_:bayes_ao_:bayes_bn_:bayes_bo_:bayes_cn_:bayes_co_:bayes_in_:bayes_io_:" +
+            "cloud_an_:cloud_ao_:cloud_bn_:cloud_bo_:cloud_cn_:cloud_co_:cloud_in_:cloud_io_:confidence_an_:confidence_ao_:confidence_bn_:confidence_bo_:confidence_cn_:" +
+            "confidence_co_:confidence_in_:confidence_io_:pointing_an_:pointing_ao_:pointing_bn_:pointing_bo_:pointing_cn_:pointing_co_:pointing_in_:pointing_io_:" +
+            "S*_exception_an_*:S*_exception_ao_*:S*_exception_bn_*:S*_exception_bo_*:S*_exception_cn_*:S*_exception_co_*:S*_exception_in_*:S*_exception_io_*:" +
+            "F*_exception_*n_*:F*_exception_*o_*:cartesian:cartesian:F1_quality:F2_quality:flags:geodetic:geometry:indices:" +
+            "S1_quality:S2_quality:S3_quality:S4_quality:S5_quality:S6_quality:S7_quality:S8_quality:S9_quality:time";
+    private static final String OLCI_AUTO_GROUPING = "Oa*_radiance:Oa*_radiance_err:atmospheric_temperature_profile:lambda0:FWHM:solar_flux";
+
     private static Product slstrProduct;
     private static Product olciProduct;
 
@@ -29,7 +38,7 @@ public class L1cSynOpTest {
 
         String olciFilePath = L1cSynOpTest.class.getResource("S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.nc").getFile();
         olciProduct = ProductIO.readProduct(olciFilePath);
-        olciProduct.setAutoGrouping("Oa*_radiance:Oa*_radiance_err:atmospheric_temperature_profile:lambda0:FWHM:solar_flux");
+        olciProduct.setAutoGrouping(OLCI_AUTO_GROUPING);
     }
 
     @Test
