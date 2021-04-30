@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
         copyright = "Brockmann Consult GmbH",
         description = "Sentinel-3 OLCI/SLSTR L1C SYN Tool",
         category = "Optical/Pre-Processing",
-        version = "2.5")
+        version = "2.6")
 public class L1cSynOp extends Operator {
 
     private static final long ALLOWED_TIME_DIFF = 200L;
@@ -117,8 +117,8 @@ public class L1cSynOp extends Operator {
     @Parameter(label = "MISR Product", description = "Optional MISR file which may be used for co-registration of OLCI and SLSTR products")
     private File misrFile;
 
-    @Parameter(label = "Use MISR Product", description = "if set to true MISR product will be used for co-registration",
-            defaultValue = "false")
+    @Parameter(label = "Use MISR Product", description = "If set to false MISR product will not be used, instead products will collocated",
+            defaultValue = "true")
     private boolean useMISR;
 
     // This parameters are not used in production but are useful for fasten up the debugging and testing the code. As of Mar2021 they turned into variables
