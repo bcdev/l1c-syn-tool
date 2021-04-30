@@ -4,6 +4,7 @@ import org.esa.snap.core.dataio.ProductIO;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.gpf.Operator;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -16,14 +17,23 @@ import static org.junit.Assert.assertNotNull;
 
 public class L1cSynOpTest {
 
+    private static final String SLSTR_AUTO_GROUPING = "F*BT_*n:F*exception_*n:F*BT_*o:F*exception_*o:S*BT_in:S*exception_in:S*BT_io:S*exception_io:radiance_an:S*exception_an:radiance_ao:S*exception_ao:radiance_bn:S*exception_bn:radiance_bo:S*exception_bo:radiance_cn:S*exception_cn:radiance_co:S*exception_co:x_*:y_*:elevation:latitude:longitude:specific_humidity:temperature_profile:bayes_an_:bayes_ao_:bayes_bn_:bayes_bo_:bayes_cn_:bayes_co_:bayes_in_:bayes_io_:cloud_an_:cloud_ao_:cloud_bn_:cloud_bo_:cloud_cn_:cloud_co_:cloud_in_:cloud_io_:confidence_an_:confidence_ao_:confidence_bn_:confidence_bo_:confidence_cn_:confidence_co_:confidence_in_:confidence_io_:pointing_an_:pointing_ao_:pointing_bn_:pointing_bo_:pointing_cn_:pointing_co_:pointing_in_:pointing_io_:S*_exception_an_*:S*_exception_ao_*:S*_exception_bn_*:S*_exception_bo_*:S*_exception_cn_*:S*_exception_co_*:S*_exception_in_*:S*_exception_io_*:F*_exception_*n_*:F*_exception_*o_*:cartesian:cartesian:F1_quality:F2_quality:flags:geodetic:geometry:indices:S1_quality:S2_quality:S3_quality:S4_quality:S5_quality:S6_quality:S7_quality:S8_quality:S9_quality:time";
+    private static Product slstrProduct;
+    private static Product olciProduct;
+
+    @BeforeClass
+    public static void initTestClass() throws IOException {
+        String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
+        slstrProduct = ProductIO.readProduct(slstrFilePath);
+        slstrProduct.setAutoGrouping(SLSTR_AUTO_GROUPING);
+
+        String olciFilePath = L1cSynOpTest.class.getResource("S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.nc").getFile();
+        olciProduct = ProductIO.readProduct(olciFilePath);
+        olciProduct.setAutoGrouping("Oa*_radiance:Oa*_radiance_err:atmospheric_temperature_profile:lambda0:FWHM:solar_flux");
+    }
 
     @Test
-    public void testL1cSynOpTest() throws IOException {
-        String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
-        String olciFilePath = L1cSynOpTest.class.getResource("S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.nc").getFile();
-
-        Product slstrProduct = ProductIO.readProduct(slstrFilePath);
-        Product olciProduct = ProductIO.readProduct(olciFilePath);
+    public void testL1cSynOpTest() {
         Operator l1cSynOp = new L1cSynOp();
         l1cSynOp.setParameterDefaultValues();
         l1cSynOp.setSourceProduct("olciProduct", olciProduct);
@@ -44,8 +54,8 @@ public class L1cSynOpTest {
 
     @Test
     public void testGetCollocateParams() {
-        Operator l1cSynOp = new L1cSynOp();
-        Map<String, Object> map = ((L1cSynOp) l1cSynOp).getCollocateParams();
+        L1cSynOp l1cSynOp = new L1cSynOp();
+        Map<String, Object> map = l1cSynOp.getCollocateParams();
         boolean renameMasterComponents = (boolean) map.get("renameMasterComponents");
         boolean renameSlaveComponents = (boolean) map.get("renameSlaveComponents");
         String resamplingType = (String) map.get("resamplingType");
@@ -58,9 +68,9 @@ public class L1cSynOpTest {
 
     @Test
     public void testGetReprojectParams() {
-        Operator l1cSynOp = new L1cSynOp();
+        L1cSynOp l1cSynOp = new L1cSynOp();
         l1cSynOp.setParameterDefaultValues();
-        Map<String, Object> map = ((L1cSynOp) l1cSynOp).getReprojectParams();
+        Map<String, Object> map = l1cSynOp.getReprojectParams();
         String resampling = (String) map.get("resampling");
         boolean orthorectify = (boolean) map.get("orthorectify");
         String crs = (String) map.get("crs");
@@ -71,12 +81,10 @@ public class L1cSynOpTest {
     }
 
     @Test
-    public void testGetResampleParameters() throws IOException {
-        String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
-        Product slstrProduct = ProductIO.readProduct(slstrFilePath);
-        Operator l1cSynOp = new L1cSynOp();
+    public void testGetResampleParameters() {
+        L1cSynOp l1cSynOp = new L1cSynOp();
         l1cSynOp.setParameterDefaultValues();
-        Map<String, Object> map = ((L1cSynOp) l1cSynOp).getSlstrResampleParams(slstrProduct,"Nearest");
+        Map<String, Object> map = l1cSynOp.getSlstrResampleParams(slstrProduct, "Nearest");
         int width = (int) map.get("targetWidth");
         int height = (int) map.get("targetHeight");
         String upsampling = (String) map.get("upsampling");
@@ -93,12 +101,7 @@ public class L1cSynOpTest {
     }
 
     @Test
-    public  void testBandSelection() throws IOException {
-        String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
-        String olciFilePath = L1cSynOpTest.class.getResource("S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.nc").getFile();
-
-        Product slstrProduct = ProductIO.readProduct(slstrFilePath);
-        Product olciProduct = ProductIO.readProduct(olciFilePath);
+    public  void testBandSelection() {
         Operator l1cSynOp = new L1cSynOp();
         l1cSynOp.setParameterDefaultValues();
         String[] bandsOlci = {"Oa.._radiance", "FWHM_band_.*", "solar_flux_band_.*", "quality_flags.*",
@@ -119,12 +122,7 @@ public class L1cSynOpTest {
     }
 
     @Test
-    public void testDefaultNameCreation() throws IOException {
-        String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
-        String olciFilePath = L1cSynOpTest.class.getResource("S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.nc").getFile();
-
-        Product slstrProduct = ProductIO.readProduct(slstrFilePath);
-        Product olciProduct = ProductIO.readProduct(olciFilePath);
+    public void testDefaultNameCreation() {
         Operator l1cSynOp = new L1cSynOp();
         l1cSynOp.setParameterDefaultValues();
         l1cSynOp.setSourceProduct("olciProduct", olciProduct);
@@ -135,11 +133,7 @@ public class L1cSynOpTest {
     }
 
     @Test
-    public void testBandsRegExps() throws IOException {
-        String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
-        String olciFilePath = L1cSynOpTest.class.getResource("S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.nc").getFile();
-        Product slstrProduct = ProductIO.readProduct(slstrFilePath);
-        Product olciProduct = ProductIO.readProduct(olciFilePath);
+    public void testBandsRegExps() {
         Operator l1cSynOp = new L1cSynOp();
         l1cSynOp.setParameterDefaultValues();
         l1cSynOp.setSourceProduct("olciProduct", olciProduct);
@@ -158,11 +152,7 @@ public class L1cSynOpTest {
     }
 
     @Test
-    public void testWKTRegion() throws  IOException {
-        String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
-        String olciFilePath = L1cSynOpTest.class.getResource("S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.nc").getFile();
-        Product slstrProduct = ProductIO.readProduct(slstrFilePath);
-        Product olciProduct = ProductIO.readProduct(olciFilePath);
+    public void testWKTRegion() {
         Operator l1cSynOp = new L1cSynOp();
         l1cSynOp.setSourceProduct("olciProduct", olciProduct);
         l1cSynOp.setSourceProduct("slstrProduct", slstrProduct);
@@ -174,11 +164,7 @@ public class L1cSynOpTest {
     }
 
     @Test
-    public void testNoReprojection() throws IOException {
-        String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
-        String olciFilePath = L1cSynOpTest.class.getResource("S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.nc").getFile();
-        Product slstrProduct = ProductIO.readProduct(slstrFilePath);
-        Product olciProduct = ProductIO.readProduct(olciFilePath);
+    public void testNoReprojection() {
         Operator l1cSynOp = new L1cSynOp();
         l1cSynOp.setSourceProduct("olciProduct", olciProduct);
         l1cSynOp.setSourceProduct("slstrProduct", slstrProduct);
@@ -192,11 +178,7 @@ public class L1cSynOpTest {
     }
 
     @Test
-    public void testMetadata() throws  IOException{
-        String slstrFilePath = L1cSynOpTest.class.getResource("S3A_SL_1_RBT____20170313T110343_20170313T110643_20170314T172757_0179_015_208_2520_LN2_O_NT_002.SEN3.nc").getFile();
-        String olciFilePath = L1cSynOpTest.class.getResource("S3A_OL_1_EFR____20170313T110342_20170313T110642_20170314T162839_0179_015_208_2520_LN1_O_NT_002.nc").getFile();
-        Product slstrProduct = ProductIO.readProduct(slstrFilePath);
-        Product olciProduct = ProductIO.readProduct(olciFilePath);
+    public void testMetadata() {
         Operator l1cSynOp = new L1cSynOp();
         l1cSynOp.setSourceProduct("olciProduct", olciProduct);
         l1cSynOp.setSourceProduct("slstrProduct", slstrProduct);
