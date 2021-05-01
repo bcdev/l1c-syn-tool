@@ -59,7 +59,7 @@ public class L1cSynOp extends Operator {
 
     @Parameter(label = "Keep final project on OLCI image grid",
             description = "If this parameter is set to true, the final product will be kept in OLCI image grid.",
-            defaultValue = "false"
+            defaultValue = "true"
     )
     private boolean stayOnOlciGrid;
 
