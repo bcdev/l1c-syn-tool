@@ -57,7 +57,7 @@ public class L1cSynOp extends Operator {
     @TargetProduct(label = "L1C SYN Product", description = "L1C SYNERGY output product")
     private Product l1cTarget;
 
-    @Parameter(label = "Keep final project on OLCI image grid",
+    @Parameter(label = "Keep final product on OLCI image grid",
             description = "If this parameter is set to true, the final product will be kept in OLCI image grid.",
             defaultValue = "true"
     )
