@@ -55,8 +55,8 @@ public class L1cSynOpTest {
         int height = result.getSceneRasterHeight();
         int width = result.getSceneRasterWidth();
 
-        assertEquals(42, height);
-        assertEquals(50, width);
+        assertEquals(41, height);
+        assertEquals(49, width);
         assertEquals(414, numBands);
         assertEquals("S3_L1C_SYN", productType);
         assertNotNull(oa03band);
@@ -173,8 +173,8 @@ public class L1cSynOpTest {
         l1cSynOp.setParameter("useMISR","false");
         l1cSynOp.setParameter("geoRegion","POLYGON((-16.936 26.715, -15.507  26.715 , -15.507 21.844 , -16.936     21.844 ,-16.936 26.715))");
         Product result = l1cSynOp.getTargetProduct();
-        assertEquals(5,result.getSceneRasterWidth());
-        assertEquals(17,result.getSceneRasterHeight());
+        assertEquals(10,result.getSceneRasterWidth());
+        assertEquals(21,result.getSceneRasterHeight());
     }
 
     @Test

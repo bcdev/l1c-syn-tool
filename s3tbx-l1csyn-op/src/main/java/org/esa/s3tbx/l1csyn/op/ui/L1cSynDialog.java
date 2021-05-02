@@ -23,14 +23,15 @@ import java.util.*;
 
 public class L1cSynDialog extends SingleTargetProductDialog {
 
+    private final String operatorName;
+    private final org.esa.snap.ui.AppContext appContext;
+    private final String helpID;
+
     private List<SourceProductSelector> sourceProductSelectorList;
     private Map<Field, SourceProductSelector> sourceProductSelectorMap;
-    private String operatorName;
     private Map<String, Object> parameterMap;
     private JTabbedPane form;
-    private org.esa.snap.ui.AppContext appContext;
     private OperatorSpi operatorSpi;
-    private String helpID;
 
     /*
      * DefaultDialog constructor
@@ -40,7 +41,6 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         this.helpID = helpID;
         this.operatorName = operatorName;
         this.appContext = appContext;
-        System.setProperty("gpfMode", "GUI");
         initialize(operatorName);
     }
 
@@ -158,30 +158,25 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         if (operatorSpi == null) {
             throw new IllegalArgumentException("operatorName");
         }
-        parameterMap = new LinkedHashMap<>(10);
+        parameterMap = new HashMap<>(10);
         form = new JTabbedPane();
         initComponents();
         final PropertyContainer propertyContainer =
                 PropertyContainer.createMapBacked(parameterMap, operatorSpi.getOperatorClass(),
                         new ParameterDescriptorFactory());
-        addFormParameterPane(propertyContainer, "Processing Parameters", form);
+        addFormParameterPane(propertyContainer, form);
     }
 
-    private void addFormParameterPane(PropertyContainer propertyContainer, String title, JTabbedPane form) {
+    private void addFormParameterPane(PropertyContainer propertyContainer, JTabbedPane form) {
         BindingContext context = new BindingContext(propertyContainer);
         PropertyPane parametersPane = new PropertyPane(context);
         JPanel parametersPanel = parametersPane.createPanel();
         parametersPanel.setBorder(new EmptyBorder(2, 2, 2, 2));
         parametersPanel.setSize(3, 3);
         JScrollPane scrollPane = new JScrollPane(parametersPanel);
-        form.add(title, scrollPane);
+        form.add("Processing Parameters", scrollPane);
         parametersPane.getBindingContext().bindEnabledState("reprojectionCRS",false,"stayOnOlciGrid",true);
         parametersPane.getBindingContext().bindEnabledState("upsamplingMethod",false,"stayOnOlciGrid",true);
-        parametersPane.getBindingContext().bindEnabledState("duplicate",false,"misrFile",null);
-        parametersPane.getBindingContext().bindEnabledState("fullMisr",false,"misrFile",null);
-        parametersPane.getBindingContext().bindEnabledState("orphan",false,"misrFile",null);
-        parametersPane.getBindingContext().bindEnabledState("formatMisr",false,"misrFile",null);
-        parametersPane.getBindingContext().bindEnabledState("numCam",false,"misrFile",null);
         parametersPane.getBindingContext().bindEnabledState("misrFile",true,"useMISR",true);
         parametersPane.getBindingContext().bindEnabledState("misrFile",false,"useMISR",false);
     }
@@ -215,9 +210,9 @@ public class L1cSynDialog extends SingleTargetProductDialog {
 
     private void setTargetProductName() {
         final TargetProductSelectorModel targetProductSelectorModel = targetProductSelector.getModel();
-        HashMap sourceProductsMap = createSourceProductsMap();
-        Product olciProduct = (Product) sourceProductsMap.get("olciProduct");
-        Product slstrProduct = (Product) sourceProductsMap.get("slstrProduct");
+        HashMap<String, Product> sourceProductsMap = createSourceProductsMap();
+        Product olciProduct = sourceProductsMap.get("olciProduct");
+        Product slstrProduct = sourceProductsMap.get("slstrProduct");
 
         if (olciProduct != null && slstrProduct != null) {
             String synName = L1cSynUtils.getSynName(slstrProduct, olciProduct);

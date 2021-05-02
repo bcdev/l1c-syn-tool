@@ -63,6 +63,13 @@ public class L1cSynOp extends Operator {
     )
     private boolean stayOnOlciGrid;
 
+    @Parameter(label = "Use MISR Product", description = "If set to false MISR product will not be used, instead products will collocated",
+            defaultValue = "true")
+    private boolean useMISR;
+
+    @Parameter(label = "MISR Product", description = "Optional MISR file which may be used for co-registration of OLCI and SLSTR products")
+    private File misrFile;
+
     @Parameter(label = "Reprojection CRS",
             description = "The CRS used for the reprojection. If set to None or left empty, no reprojection will be performed. If MISR file is specified this setting will be neglected.",
             defaultValue = "EPSG:4326"
@@ -113,13 +120,6 @@ public class L1cSynOp extends Operator {
                     "(make sure to quote the option due to spaces in <geometry>).\n" +
                     "If not given, the entire scene is used.")
     private String geoRegion;
-
-    @Parameter(label = "MISR Product", description = "Optional MISR file which may be used for co-registration of OLCI and SLSTR products")
-    private File misrFile;
-
-    @Parameter(label = "Use MISR Product", description = "If set to false MISR product will not be used, instead products will collocated",
-            defaultValue = "true")
-    private boolean useMISR;
 
     // This parameters are not used in production but are useful for fasten up the debugging and testing the code. As of Mar2021 they turned into variables
     //
@@ -284,12 +284,12 @@ public class L1cSynOp extends Operator {
             }
             // currently we use the 'ao' data also for bo and co
             // if misr file changes in this respect han we need to adapt this here
-            @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> boPixels = aoPixels;
-            @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> coPixels = aoPixels;
+            final Map<int[], int[]> boPixels = aoPixels;
+            final Map<int[], int[]> coPixels = aoPixels;
             // currently we use the 'ao' data also for bo and co
             // if misr file changes in this respect han we need to adapt this here
-            @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> boOrphans = aoOrphans;
-            @SuppressWarnings("UnnecessaryLocalVariable") final Map<int[], int[]> coOrphans = aoOrphans;
+            final Map<int[], int[]> boOrphans = aoOrphans;
+            final Map<int[], int[]> coOrphans = aoOrphans;
 
             misrParams = getMisrParams(
                     s1Pixels, s2Pixels, s3Pixels, s4Pixels, s5Pixels, s6Pixels, aoPixels, boPixels, coPixels,
@@ -353,7 +353,7 @@ public class L1cSynOp extends Operator {
     private String[] getSlstrBands(Product inputProduct, String[] bandsList) {
         String[] bandNames = inputProduct.getBandNames();
         String[] tiePointGridNames = inputProduct.getTiePointGridNames();
-        Object[] tiePointBandNames = (String[]) ArrayUtils.addAll(bandNames, tiePointGridNames);
+        Object[] tiePointBandNames = ArrayUtils.addAll(bandNames, tiePointGridNames);
         if (!Arrays.asList(bandsList).contains("All")) {
             Pattern pattern = Pattern.compile("\\b(" + String.join("|", bandsList) + ")\\b");
             for (String bandName : (String[]) tiePointBandNames) {
