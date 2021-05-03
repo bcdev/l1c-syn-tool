@@ -190,6 +190,9 @@ public class MisrOp extends Operator {
                     try {
                         NetcdfFile netcdf = NetcdfFiles.open(netcdfDataPath);
                         Variable orphanVariable = netcdf.findVariable(targetBand.getName().replace("radiance_", "radiance_orphan_"));
+                        if (orphanVariable == null) {
+                            throw new OperatorException(String.format("No information about orphans found in file '%s'", netcdfDataPath));
+                        }
                         final Attribute scale_factorAttribute = orphanVariable.findAttribute("scale_factor");
                         double scaleFactor = 1.0;
                         if (scale_factorAttribute != null) {
