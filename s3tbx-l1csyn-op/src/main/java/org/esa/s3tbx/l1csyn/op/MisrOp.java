@@ -31,10 +31,8 @@ import ucar.nc2.Variable;
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -175,14 +173,11 @@ public class MisrOp extends Operator {
                     int[] slstrGridPosition = map.get(position);
                     if (slstrGridPosition != null) {
                         if (slstrGridPosition[0] < sourceRasterWidth && slstrGridPosition[1] < sourceRasterHeight) {
-                            try {
-                                double reflecValue = sourceBand.getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
-                                if (reflecValue < 0) {
-                                    reflecValue = targetBand.getNoDataValue();
-                                }
-                                targetTile.setSample(x, y, reflecValue);
-                            } catch (Exception e) {
+                            double reflecValue = sourceBand.getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
+                            if (reflecValue < 0) {
+                                reflecValue = targetBand.getNoDataValue();
                             }
+                            targetTile.setSample(x, y, reflecValue);
                         }
                     }
                 }
@@ -219,6 +214,7 @@ public class MisrOp extends Operator {
                                         try {
                                             rawIndex.set(orphanPosY, orphanPosX); // Dimension is Y, X  --> so 'wrong' order of Y and X here
                                         } catch (ArrayIndexOutOfBoundsException aioobe) {
+                                            // todo - This should actually not be ignored. I think the aioobe must not be handled anymore.
                                             // ignore for now; stop processing this line
                                             break;
                                         }
