@@ -1,0 +1,160 @@
+<!--
+ Copyright (C) 2020 Brockmann Consult GmbH (info@brockmann-consult.de)
+
+ This program is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the Free
+ Software Foundation; either version 3 of the License, or (at your option)
+ any later version.
+ This program is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ more details.
+
+ You should have received a copy of the GNU General Public License along
+ with this program; if not, see http://www.gnu.org/licenses/
+ -->
+
+<graph id="test-3-2">
+    <version>1.0</version>
+    <!--
+     Read a Sentinel-3 OLCI L1b product.
+     -->
+    <node id="ReadOlc">
+        <operator>Read</operator>
+        <sources/>
+        <parameters>
+            <file>${olcFile}/xfdumanifest.xml</file>
+            <formatName>Sen3</formatName>
+        </parameters>
+    </node>
+
+    <!--
+     Read a Sentinel-3 SLSTR L1b product.
+     -->
+    <node id="ReadSls">
+        <operator>Read</operator>
+        <sources/>
+        <parameters>
+            <file>${slsFile}/xfdumanifest.xml</file>
+            <formatName>Sen3</formatName>
+        </parameters>
+    </node>
+
+    <!--
+     Make the SYN product.
+     -->
+    <node id="MakeSyn">
+        <operator>L1CSYN</operator>
+        <sources>
+            <olciProduct refid="ReadOlc"/>
+            <slstrProduct refid="ReadSls"/>
+        </sources>
+        <parameters>
+            <stayOnOlciGrid>true</stayOnOlciGrid>
+            <reprojectionCRS>EPSG:4326</reprojectionCRS>
+            <upsampling>Nearest</upsampling>
+            <bandsOlci>All</bandsOlci>
+            <bandsSlstr>All</bandsSlstr>
+            <useMISR>true</useMISR>
+            <misrFile>${misFile}/xfdumanifest.xml</misrFile>
+            <geoRegion>${polygon}</geoRegion>
+        </parameters>
+    </node>
+
+    <node id="ComputeDifferences">
+        <operator>BandMaths</operator>
+        <sources>
+            <sourceProduct refid="MakeSyn"/>
+        </sources>
+        <parameters>
+            <targetBands>
+                <targetBand>
+                    <name>S3_Oa17_difference_an</name>
+                    <type>float64</type>
+                    <expression>S3_radiance_an - Oa17_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0</validExpression>
+                </targetBand>
+                <targetBand>
+                    <name>S3_Oa17_relative_difference_an</name>
+                    <type>float64</type>
+                    <expression>2.0 * (S3_radiance_an - Oa17_radiance) / (S3_radiance_an + Oa17_radiance)</expression>
+                    <noDataValue>NaN</noDataValue>
+                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0</validExpression>
+                </targetBand>
+                <targetBand>
+                    <name>S3_Oa17_abs_difference_an</name>
+                    <type>float64</type>
+                    <expression>abs(S3_Oa17_difference_an)</expression>
+                    <noDataValue>NaN</noDataValue>
+                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0</validExpression>
+                </targetBand>
+                <targetBand>
+                    <name>S3_Oa17_abs_relative_difference_an</name>
+                    <type>float64</type>
+                    <expression>abs(S3_Oa17_relative_difference_an)</expression>
+                    <noDataValue>NaN</noDataValue>
+                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0</validExpression>
+                </targetBand>
+                <targetBand>
+                    <name>S3_Oa17_difference_ao</name>
+                    <type>float64</type>
+                    <expression>S3_radiance_ao - Oa17_radiance</expression>
+                    <noDataValue>NaN</noDataValue>
+                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0</validExpression>
+                </targetBand>
+                <targetBand>
+                    <name>S3_Oa17_relative_difference_ao</name>
+                    <type>float64</type>
+                    <expression>2.0 * (S3_radiance_ao - Oa17_radiance) / (S3_radiance_ao + Oa17_radiance)</expression>
+                    <noDataValue>NaN</noDataValue>
+                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0</validExpression>
+                </targetBand>
+                <targetBand>
+                    <name>S3_Oa17_abs_difference_ao</name>
+                    <type>float64</type>
+                    <expression>abs(S3_Oa17_difference_ao)</expression>
+                    <noDataValue>NaN</noDataValue>
+                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0</validExpression>
+                </targetBand>
+                <targetBand>
+                    <name>S3_Oa17_abs_relative_difference_ao</name>
+                    <type>float64</type>
+                    <expression>abs(S3_Oa17_relative_difference_ao)</expression>
+                    <noDataValue>NaN</noDataValue>
+                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0</validExpression>
+                </targetBand>
+                <targetBand>
+                    <name>S3_Oa17_pixel_distance_an</name>
+                    <type>float64</type>
+                    <expression>acos(sin(latitude * PI / 180.0) * sin(latitude_an * PI / 180.0) + cos(latitude * PI / 180.0) * cos(latitude_an * PI / 180.0) * cos((longitude - longitude_an) * PI / 180.0)) * 6378.0</expression>
+                    <description>Approximate distance between OLCI and SLSTR AN pixels (km)</description>
+                    <unit>km</unit>
+                    <noDataValue>NaN</noDataValue>
+                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0</validExpression>
+                </targetBand>
+                <targetBand>
+                    <name>S3_Oa17_pixel_distance_ao</name>
+                    <type>float64</type>
+                    <expression>acos(sin(latitude * PI / 180.0) * sin(latitude_ao * PI / 180.0) + cos(latitude * PI / 180.0) * cos(latitude_ao * PI / 180.0) * cos((longitude - longitude_ao) * PI / 180.0)) * 6378.0</expression>
+                    <description>Approximate distance between OLCI and SLSTR AN pixels (km)</description>
+                    <unit>km</unit>
+                    <noDataValue>NaN</noDataValue>
+                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0</validExpression>
+                </targetBand>
+            </targetBands>
+            <variables/>
+        </parameters>
+    </node>
+
+    <node id="Write">
+        <operator>Write</operator>
+        <sources>
+            <sourceProduct refid="ComputeDifferences"/>
+        </sources>
+        <parameters>
+            <file>${targetFile}</file>
+            <formatName>BEAM-DIMAP</formatName>
+        </parameters>
+    </node>
+</graph>

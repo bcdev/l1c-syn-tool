@@ -26,9 +26,9 @@ public class BoundingBoxTest {
 
         if (root.isDirectory()) {
             for (final File sceneDir : Objects.requireNonNull(root.listFiles(File::isDirectory))) {
-                final File[] files = Objects.requireNonNull(sceneDir.listFiles(file -> file.getName().endsWith(".nc")));
+                final File[] files = Objects.requireNonNull(sceneDir.listFiles(file -> file.getName().endsWith(".xml")));
                 for (final File file : files) {
-                    final Product product = ProductIO.readProduct(file, "NetCDF4-BEAM");
+                    final Product product = ProductIO.readProduct(file);
                     try {
                         report.put(sceneDir.getName(), Stamp.create(product));
                     } finally {

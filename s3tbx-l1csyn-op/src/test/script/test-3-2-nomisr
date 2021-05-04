@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# usage: test-3-2-nomisr <olc> <sls> <target>
+#
+# Copyright (C) 2020 Brockmann Consult GmbH (info@brockmann-consult.de)
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option)
+# any later version.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, see http://www.gnu.org/licenses/
+set -e
+
+olc="${1}"
+sls="${2}"
+target="${3}"
+geo="${4}"
+
+start=$SECONDS
+echo "$(date -u "+%Y-%m-%dT%H:%M:%S") [INFO] Computing ${target} ..."
+
+# Be sure to adapt call of GPT to the processing environment
+${HOME}/Applications/snap/bin/gpt ../graph/test-3-2-nomisr.xml -c 2G -e -q 4 \
+        -Dsnap.dataio.netcdf.metadataElementLimit=300 \
+        -Ds3tbx.reader.olci.pixelGeoCoding=true \
+        -Ds3tbx.reader.slstrl1b.pixelGeoCodings=true \
+        -PolcFile="${olc}" \
+        -PslsFile="${sls}" \
+        -Ppolygon="${geo}" \
+        -PtargetFile="${target}"
+
+echo "$(date -u "+%Y-%m-%dT%H:%M:%S") [INFO] Finished computing ${target} after $((SECONDS - start)) seconds"
