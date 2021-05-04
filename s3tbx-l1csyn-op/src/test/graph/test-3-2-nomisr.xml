@@ -69,56 +69,56 @@
             <targetBands>
                 <targetBand>
                     <name>S3_Oa17_difference_an</name>
-                    <type>float64</type>
+                    <type>float32</type>
                     <expression>S3_radiance_an - Oa17_radiance</expression>
                     <noDataValue>NaN</noDataValue>
                     <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_relative_difference_an</name>
-                    <type>float64</type>
+                    <type>float32</type>
                     <expression>2.0 * (S3_radiance_an - Oa17_radiance) / (S3_radiance_an + Oa17_radiance)</expression>
                     <noDataValue>NaN</noDataValue>
                     <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_abs_difference_an</name>
-                    <type>float64</type>
+                    <type>float32</type>
                     <expression>abs(S3_Oa17_difference_an)</expression>
                     <noDataValue>NaN</noDataValue>
                     <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_abs_relative_difference_an</name>
-                    <type>float64</type>
+                    <type>float32</type>
                     <expression>abs(S3_Oa17_relative_difference_an)</expression>
                     <noDataValue>NaN</noDataValue>
                     <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_difference_ao</name>
-                    <type>float64</type>
+                    <type>float32</type>
                     <expression>S3_radiance_ao - Oa17_radiance</expression>
                     <noDataValue>NaN</noDataValue>
                     <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_relative_difference_ao</name>
-                    <type>float64</type>
+                    <type>float32</type>
                     <expression>2.0 * (S3_radiance_ao - Oa17_radiance) / (S3_radiance_ao + Oa17_radiance)</expression>
                     <noDataValue>NaN</noDataValue>
                     <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_abs_difference_ao</name>
-                    <type>float64</type>
+                    <type>float32</type>
                     <expression>abs(S3_Oa17_difference_ao)</expression>
                     <noDataValue>NaN</noDataValue>
                     <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_abs_relative_difference_ao</name>
-                    <type>float64</type>
+                    <type>float32</type>
                     <expression>abs(S3_Oa17_relative_difference_ao)</expression>
                     <noDataValue>NaN</noDataValue>
                     <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0</validExpression>
