@@ -134,7 +134,7 @@
         </sources>
         <parameters>
             <file>${targetFile}</file>
-            <formatName>NetCDF4-CF</formatName>
+            <formatName>BEAM-DIMAP</formatName>
         </parameters>
     </node>
 </graph>

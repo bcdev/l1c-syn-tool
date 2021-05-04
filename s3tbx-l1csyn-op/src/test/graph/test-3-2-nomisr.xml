@@ -72,56 +72,56 @@
                     <type>float32</type>
                     <expression>S3_radiance_an - Oa17_radiance</expression>
                     <noDataValue>NaN</noDataValue>
-                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0</validExpression>
+                    <validExpression>roi_an</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_relative_difference_an</name>
                     <type>float32</type>
                     <expression>2.0 * (S3_radiance_an - Oa17_radiance) / (S3_radiance_an + Oa17_radiance)</expression>
                     <noDataValue>NaN</noDataValue>
-                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0</validExpression>
+                    <validExpression>roi_an</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_abs_difference_an</name>
                     <type>float32</type>
                     <expression>abs(S3_radiance_an - Oa17_radiance)</expression>
                     <noDataValue>NaN</noDataValue>
-                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0</validExpression>
+                    <validExpression>roi_an</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_abs_relative_difference_an</name>
                     <type>float32</type>
                     <expression>abs(2.0 * (S3_radiance_an - Oa17_radiance) / (S3_radiance_an + Oa17_radiance))</expression>
                     <noDataValue>NaN</noDataValue>
-                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0</validExpression>
+                    <validExpression>roi_an</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_difference_ao</name>
                     <type>float32</type>
                     <expression>S3_radiance_ao - Oa17_radiance</expression>
                     <noDataValue>NaN</noDataValue>
-                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0</validExpression>
+                    <validExpression>roi_ao</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_relative_difference_ao</name>
                     <type>float32</type>
                     <expression>2.0 * (S3_radiance_ao - Oa17_radiance) / (S3_radiance_ao + Oa17_radiance)</expression>
                     <noDataValue>NaN</noDataValue>
-                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0</validExpression>
+                    <validExpression>roi_ao</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_abs_difference_ao</name>
                     <type>float32</type>
                     <expression>abs(S3_radiance_ao - Oa17_radiance)</expression>
                     <noDataValue>NaN</noDataValue>
-                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0</validExpression>
+                    <validExpression>roi_ao</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_abs_relative_difference_ao</name>
                     <type>float32</type>
                     <expression>abs(2.0 * (S3_radiance_ao - Oa17_radiance) / (S3_radiance_ao + Oa17_radiance))</expression>
                     <noDataValue>NaN</noDataValue>
-                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0</validExpression>
+                    <validExpression>roi_ao</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_pixel_distance_an</name>
@@ -130,7 +130,7 @@
                     <description>Approximate distance between OLCI and SLSTR AN pixels (km)</description>
                     <unit>km</unit>
                     <noDataValue>NaN</noDataValue>
-                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0</validExpression>
+                    <validExpression>roi_an</validExpression>
                 </targetBand>
                 <targetBand>
                     <name>S3_Oa17_pixel_distance_ao</name>
@@ -139,7 +139,17 @@
                     <description>Approximate distance between OLCI and SLSTR AN pixels (km)</description>
                     <unit>km</unit>
                     <noDataValue>NaN</noDataValue>
-                    <validExpression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0</validExpression>
+                    <validExpression>roi_ao</validExpression>
+                </targetBand>
+                <targetBand>
+                    <name>roi_an</name>
+                    <type>int8</type>
+                    <expression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_an == 0 and detector_an.raw != 255</expression>
+                </targetBand>
+                <targetBand>
+                    <name>roi_ao</name>
+                    <type>int8</type>
+                    <expression>!quality_flags.invalid and !quality_flags.duplicated and !quality_flags.cosmetic and !quality_flags.saturated_Oa17 and !quality_flags.dubious and !quality_flags.straylight_risk and !quality_flags.coastline and S3_exception_ao == 0 and detector_ao.raw != 255</expression>
                 </targetBand>
             </targetBands>
             <variables/>
@@ -153,7 +163,7 @@
         </sources>
         <parameters>
             <file>${targetFile}</file>
-            <formatName>NetCDF4-CF</formatName>
+            <formatName>BEAM-DIMAP</formatName>
         </parameters>
     </node>
 </graph>
