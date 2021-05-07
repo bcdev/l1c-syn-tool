@@ -28,8 +28,11 @@ import ucar.nc2.NetcdfFile;
 import ucar.nc2.NetcdfFiles;
 import ucar.nc2.Variable;
 
+import javax.media.jai.PlanarImage;
+import javax.media.jai.operator.ConstantDescriptor;
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.awt.image.Raster;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -117,9 +120,19 @@ public class MisrOp extends Operator {
     @TargetProduct
     private Product targetProduct;
 
+    private PlanarImage olciValidMaskImage;
+
     @Override
     public void initialize() throws OperatorException {
-        createTargetProduct();
+        targetProduct = createTargetProduct(olciSourceProduct, slstrSourceProduct, fillEmptyPixels);
+
+        // Band.isPixelValid() is known to be slow. Better use the mask image.
+        RasterDataNode oa17_radiance = olciSourceProduct.getRasterDataNode("Oa17_radiance");
+        if (oa17_radiance.isValidMaskUsed()) {
+            olciValidMaskImage = oa17_radiance.getValidMaskImage();
+        } else {
+            olciValidMaskImage = ConstantDescriptor.create((float) oa17_radiance.getRasterWidth(), (float) oa17_radiance.getRasterHeight(), new Byte[]{1}, null);
+        }
     }
 
     @Override
@@ -161,21 +174,23 @@ public class MisrOp extends Operator {
             mapOrphan = S3OrphanMap;
         }
 
-        RasterDataNode oa17_radiance = olciSourceProduct.getRasterDataNode("Oa17_radiance");
+        final double targetNoDataValue = targetBand.getNoDataValue();
         if (slstrSourceProduct.containsBand(targetBand.getName())) {
             Band sourceBand = slstrSourceProduct.getBand(targetBand.getName());
             int sourceRasterWidth = sourceBand.getRasterWidth();
             int sourceRasterHeight = sourceBand.getRasterHeight();
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                    targetTile.setSample(x, y, targetBand.getNoDataValue());
+                    targetTile.setSample(x, y, targetNoDataValue);
                     int[] position = {x, y};
                     int[] slstrGridPosition = map.get(position);
                     if (slstrGridPosition != null) {
-                        if (slstrGridPosition[0] < sourceRasterWidth && slstrGridPosition[1] < sourceRasterHeight) {
-                            double reflecValue = sourceBand.getSampleFloat(slstrGridPosition[0], slstrGridPosition[1]);
+                        final int slstrGridPosX = slstrGridPosition[0];
+                        final int slstrGridPosY = slstrGridPosition[1];
+                        if (slstrGridPosX < sourceRasterWidth && slstrGridPosY < sourceRasterHeight) {
+                            double reflecValue = sourceBand.getSampleFloat(slstrGridPosX, slstrGridPosY);
                             if (reflecValue < 0) {
-                                reflecValue = targetBand.getNoDataValue();
+                                reflecValue = targetNoDataValue;
                             }
                             targetTile.setSample(x, y, reflecValue);
                         }
@@ -187,8 +202,7 @@ public class MisrOp extends Operator {
                 String parentPath = slstrSourceProduct.getFileLocation().getParent();
                 String netcdfDataPath = parentPath + "/" + targetBand.getName() + ".nc";
                 if (Files.exists(Paths.get(netcdfDataPath))) {
-                    try {
-                        NetcdfFile netcdf = NetcdfFiles.open(netcdfDataPath);
+                    try (NetcdfFile netcdf = NetcdfFiles.open(netcdfDataPath)){
                         Variable orphanVariable = netcdf.findVariable(targetBand.getName().replace("radiance_", "radiance_orphan_"));
                         if (orphanVariable == null) {
                             throw new OperatorException(String.format("No information about orphans found in file '%s'", netcdfDataPath));
@@ -214,13 +228,7 @@ public class MisrOp extends Operator {
                                     final int orphanPosX = slstrOrphanPosition[0];
                                     final int orphanPosY = slstrOrphanPosition[1];
                                     if (orphanPosX < dataShape[0] && orphanPosY < dataShape[1]) {
-                                        try {
-                                            rawIndex.set(orphanPosY, orphanPosX); // Dimension is Y, X  --> so 'wrong' order of Y and X here
-                                        } catch (ArrayIndexOutOfBoundsException aioobe) {
-                                            // todo - This should actually not be ignored. I think the aioobe must not be handled anymore.
-                                            // ignore for now; stop processing this line
-                                            break;
-                                        }
+                                        rawIndex.set(orphanPosY, orphanPosX); // Dimension is Y, X  --> so 'wrong' order of Y and X here
                                         double dataValue = orphanData.getDouble(rawIndex);
                                         if (dataValue > 0) {
                                             targetTile.setSample(x, y, dataValue * scaleFactor);
@@ -229,7 +237,6 @@ public class MisrOp extends Operator {
                                 }
                             }
                         }
-                        netcdf.close();
                     } catch (IOException ioe) {
                         SystemUtils.LOG.log(Level.WARNING, String.format("Could not process file %s: %s", netcdfDataPath, ioe.getMessage()));
                     }
@@ -241,7 +248,7 @@ public class MisrOp extends Operator {
             if (fillEmptyPixels) {
                 for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                     for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                        if (targetTile.getSampleDouble(x, y) == targetBand.getNoDataValue()) {
+                        if (targetTile.getSampleDouble(x, y) == targetNoDataValue) {
                             double neighborPixel = getNeighborPixel(x, y, targetBand, map, sourceBand);
                             targetTile.setSample(x, y, neighborPixel);
                         }
@@ -264,11 +271,12 @@ public class MisrOp extends Operator {
             }
         } else if (targetBand.getName().equals("filled_flags")) {
             map = S3PixelMap;
+            final Raster validMaskData = olciValidMaskImage.getData(targetRectangle);
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     int[] position = {x, y};
                     int[] slstrGridPosition = map.get(position);
-                    if (slstrGridPosition == null && oa17_radiance.isPixelValid(x, y)) {
+                    if (slstrGridPosition == null && validMaskData.getSample(x, y, 0) != 0) {
                         targetTile.setSample(x, y, 1);
                     }
                 }
@@ -318,8 +326,8 @@ public class MisrOp extends Operator {
     }
 
 
-    private void createTargetProduct() {
-        targetProduct = new Product(olciSourceProduct.getName(), olciSourceProduct.getProductType(),
+    static Product createTargetProduct(Product olciSourceProduct, Product slstrSourceProduct, boolean fillEmptyPixels) {
+        Product targetProduct = new Product(olciSourceProduct.getName(), olciSourceProduct.getProductType(),
                                     olciSourceProduct.getSceneRasterWidth(),
                                     olciSourceProduct.getSceneRasterHeight());
 
@@ -378,6 +386,7 @@ public class MisrOp extends Operator {
             targetProduct.addMask("Filled pixel after MISR", "filled_flags != 0",
                                   "After applying misregistration, this pixel was filled with the value of its neighbour", Color.BLUE, 0.5);
         }
+        return targetProduct;
     }
 
     public static class Spi extends OperatorSpi {

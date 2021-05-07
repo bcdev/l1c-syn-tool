@@ -31,6 +31,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -137,7 +140,7 @@ public class L1cSynOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
-
+        System.out.println("Smaller updates");
         if (!isValidOlciProduct(olciProduct)) {
             throw new OperatorException("OLCI product is not valid");
         }
@@ -160,7 +163,7 @@ public class L1cSynOp extends Operator {
         if (useMISR) {
             ensureValidMISRFile(misrFile);
             try {
-                HashMap<String, Object> misrParams = createMisrPramasMap();
+                HashMap<String, Object> misrParams = createMisrParamsMap();
 
                 HashMap<String, Product> misrSourceProductMap = new HashMap<>();
                 misrSourceProductMap.put("olciSource", olciProduct);
@@ -215,88 +218,99 @@ public class L1cSynOp extends Operator {
         l1cTarget.setDescription("SENTINEL-3 SYN Level 1C Product");
     }
 
-    private HashMap<String, Object> createMisrPramasMap() throws InvalidRangeException, IOException {
-        HashMap<String, Object> misrParams;
+    private HashMap<String, Object> createMisrParamsMap() throws InvalidRangeException, IOException {
+
+        // Better not using more then 2 threads. More caused issues
+        int parallelThreads = 2;
+        final ExecutorService executorService = Executors.newFixedThreadPool(parallelThreads);
+
+        final HashMap<String, Map<int[], int[]>> misrMap = new HashMap<>();
         if (!USE_FULL_MISR) {
-            final Map<int[], int[]> s3Pixels = getPixelMap("S3");
-            final Map<int[], int[]> aoPixels = getPixelMap("ao");
-
-            final Map<int[], int[]> s3Orphans = getOrphanMap("S3");
-            final Map<int[], int[]> aoOrphans = getOrphanMap("ao");
-
-            misrParams = getMisrParams(s3Pixels, aoPixels, s3Orphans, aoOrphans);
+            executorService.submit(createMapGenerationRunnable(misrMap, "S3"));
+            executorService.submit(createMapGenerationRunnable(misrMap, "ao"));
         } else {
-            Map<int[], int[]> s1Pixels = null;
-            Map<int[], int[]> s1Orphans = null;
-            Map<int[], int[]> s2Pixels = null;
-            Map<int[], int[]> s2Orphans = null;
-            Map<int[], int[]> s3Pixels = null;
-            Map<int[], int[]> s3Orphans = null;
-            Map<int[], int[]> s4Pixels = null;
-            Map<int[], int[]> s4Orphans = null;
-            Map<int[], int[]> s5Pixels = null;
-            Map<int[], int[]> s5Orphans = null;
-            Map<int[], int[]> s6Pixels = null;
-            Map<int[], int[]> s6Orphans = null;
-            Map<int[], int[]> aoPixels = null;
-            Map<int[], int[]> aoOrphans = null;
 
             String[] slstrTargetBands;
             if (slstrRegexp == null || slstrRegexp.equals("")) {
-                slstrTargetBands =  getSlstrBands(slstrProduct,  bandsSlstr);
+                slstrTargetBands = getSlstrBands(slstrProduct, bandsSlstr);
             } else {
-                slstrTargetBands = getSlstrBands(slstrProduct,  readRegExp(slstrRegexp));
+                slstrTargetBands = getSlstrBands(slstrProduct, readRegExp(slstrRegexp));
             }
 
-            if (mapNeeded(slstrTargetBands, "S1") ) {
-                 s1Pixels = getPixelMap("S1");
-                 s1Orphans = getOrphanMap("S1");
+            if (mapNeeded(slstrTargetBands, "S1")) {
+                executorService.submit(createMapGenerationRunnable(misrMap, "S1"));
             }
 
             if (mapNeeded(slstrTargetBands, "S2")) {
-                 s2Pixels = getPixelMap("S2");
-                 s2Orphans = getOrphanMap("S2");
+                executorService.submit(createMapGenerationRunnable(misrMap, "S2"));
             }
 
             if (mapNeeded(slstrTargetBands, "S3")) {
-                 s3Pixels = getPixelMap("S3");
-                 s3Orphans = getOrphanMap("S3");
+                executorService.submit(createMapGenerationRunnable(misrMap, "S3"));
             }
 
             if (mapNeeded(slstrTargetBands, "S4")) {
-                s4Pixels = getPixelMap("S4");
-                s4Orphans = getOrphanMap("S4");
+                executorService.submit(createMapGenerationRunnable(misrMap, "S4"));
             }
 
-            if (mapNeeded(slstrTargetBands, "S5") ) {
-                s5Pixels = getPixelMap("S5");
-                s5Orphans = getOrphanMap("S5");
+            if (mapNeeded(slstrTargetBands, "S5")) {
+                executorService.submit(createMapGenerationRunnable(misrMap, "S5"));
             }
 
-            if (mapNeeded(slstrTargetBands, "S6") ) {
-                s6Pixels = getPixelMap("S6");
-                s6Orphans = getOrphanMap("S6");
+            if (mapNeeded(slstrTargetBands, "S6")) {
+                executorService.submit(createMapGenerationRunnable(misrMap, "S6"));
             }
 
-            if (mapNeeded(slstrTargetBands, "ao") ) {
-                aoPixels = getPixelMap("ao");
-                aoOrphans = getOrphanMap("ao");
+            if (mapNeeded(slstrTargetBands, "ao")) {
+                executorService.submit(createMapGenerationRunnable(misrMap, "ao"));
             }
-            // currently we use the 'ao' data also for bo and co
-            // if misr file changes in this respect han we need to adapt this here
-            final Map<int[], int[]> boPixels = aoPixels;
-            final Map<int[], int[]> coPixels = aoPixels;
-            // currently we use the 'ao' data also for bo and co
-            // if misr file changes in this respect han we need to adapt this here
-            final Map<int[], int[]> boOrphans = aoOrphans;
-            final Map<int[], int[]> coOrphans = aoOrphans;
-
-            misrParams = getMisrParams(
-                    s1Pixels, s2Pixels, s3Pixels, s4Pixels, s5Pixels, s6Pixels, aoPixels, boPixels, coPixels,
-                    s1Orphans, s2Orphans, s3Orphans, s4Orphans, s5Orphans, s6Orphans, aoOrphans, boOrphans, coOrphans);
 
         }
+        executorService.shutdown();
+        while (true) {
+            try {
+                if (executorService.awaitTermination(2, TimeUnit.SECONDS)) {
+                    break;
+                }
+            } catch (InterruptedException e) {
+                throw new OperatorException("Misregistration failed.", e);
+            }
+        }
+
+        // currently we use the 'ao' data also for bo and co
+        // if misr file changes in this respect han we need to adapt this here
+        misrMap.put("boPixelMap", misrMap.get("aoPixelMap"));
+        misrMap.put("coPixelMap", misrMap.get("aoPixelMap"));
+
+        // currently we use the 'ao' data also for bo and co
+        // if misr file changes in this respect han we need to adapt this here
+        misrMap.put("boOrphanMap", misrMap.get("aoOrphanMap"));
+        misrMap.put("coOrphanMap", misrMap.get("aoOrphanMap"));
+
+
+        HashMap<String, Object> misrParams = new HashMap<>(misrMap);
+        misrParams.put("fillEmptyPixels", FILL_EMPTY_PIXELS);
+        misrParams.put("orphan", USE_ORPHAN);
+
         return misrParams;
+    }
+
+
+    private Runnable createMapGenerationRunnable(HashMap<String, Map<int[], int[]>> misrMap, final String bandType) {
+        return () -> {
+            try {
+                setMapsAsParameter(misrMap, bandType);
+            } catch (InvalidRangeException e1) {
+                throw new OperatorException("Misregistration failed. InvalidRangeException", e1);
+            } catch (IOException e2) {
+                throw new OperatorException("Misregistration failed. I/O Exception ", e2);
+            }
+        };
+    }
+
+    private void setMapsAsParameter(HashMap<String, Map<int[], int[]>> misrMap, String bandType) throws InvalidRangeException, IOException {
+        misrMap.put(bandType + "PixelMap", getPixelMap(bandType));
+        misrMap.put(bandType + "OrphanMap", getOrphanMap(bandType));
     }
 
     private Map<int[], int[]> getOrphanMap(String bandType) throws InvalidRangeException, IOException {
@@ -311,38 +325,6 @@ public class L1cSynOp extends Operator {
         final Map<int[], int[]> pixelMap = MapToWrapedArrayFactory.createWrappedArray(mapOlciSlstr);
         mapOlciSlstr.clear();
         return pixelMap;
-    }
-
-    private HashMap<String, Object> getMisrParams(Map<int[], int[]> s3Pixels, Map<int[], int[]> aoPixels, Map<int[], int[]> s3Orphans, Map<int[], int[]> aoOrphans) {
-        return getMisrParams(s3Pixels, s3Pixels, s3Pixels, s3Pixels, s3Pixels, s3Pixels, aoPixels, aoPixels, aoPixels,
-                             s3Orphans, s3Orphans, s3Orphans, s3Orphans, s3Orphans, s3Orphans, aoOrphans, aoOrphans, aoOrphans);
-    }
-
-    private HashMap<String, Object> getMisrParams(Map<int[], int[]> s1Pixels, Map<int[], int[]> s2Pixels, Map<int[], int[]> s3Pixels, Map<int[], int[]> s4Pixels, Map<int[], int[]> s5Pixels, Map<int[], int[]> s6Pixels, Map<int[], int[]> aoPixels, Map<int[], int[]> boPixels, Map<int[], int[]> coPixels, Map<int[], int[]> s1Orphans, Map<int[], int[]> s2Orphans, Map<int[], int[]> s3Orphans, Map<int[], int[]> s4Orphans, Map<int[], int[]> s5Orphans, Map<int[], int[]> s6Orphans, Map<int[], int[]> aoOrphans, Map<int[], int[]> boOrphans, Map<int[], int[]> coOrphans) {
-        HashMap<String, Object> misrParams = new HashMap<>();
-        misrParams.put("fillEmptyPixels", FILL_EMPTY_PIXELS);
-        misrParams.put("orphan", USE_ORPHAN);
-
-        misrParams.put("S1PixelMap", s1Pixels);
-        misrParams.put("S2PixelMap", s2Pixels);
-        misrParams.put("S3PixelMap", s3Pixels);
-        misrParams.put("S4PixelMap", s4Pixels);
-        misrParams.put("S5PixelMap", s5Pixels);
-        misrParams.put("S6PixelMap", s6Pixels);
-        misrParams.put("aoPixelMap", aoPixels);
-        misrParams.put("boPixelMap", boPixels);
-        misrParams.put("coPixelMap", coPixels);
-        misrParams.put("S1OrphanMap", s1Orphans);
-        misrParams.put("S2OrphanMap", s2Orphans);
-        misrParams.put("S3OrphanMap", s3Orphans);
-        misrParams.put("S4OrphanMap", s4Orphans);
-        misrParams.put("S5OrphanMap", s5Orphans);
-        misrParams.put("S6OrphanMap", s6Orphans);
-        misrParams.put("aoOrphanMap", aoOrphans);
-        misrParams.put("boOrphanMap", boOrphans);
-        misrParams.put("coOrphanMap", coOrphans);
-
-        return misrParams;
     }
 
     private String[] readRegExp(String regExp) {
@@ -363,20 +345,20 @@ public class L1cSynOp extends Operator {
                 }
             }
             return (String[]) tiePointBandNames;
-        }
-        else {
+        } else {
             return (String[]) tiePointBandNames;
         }
     }
 
     private boolean mapNeeded(String[] bandsList, String key) {
         for (String bandName : bandsList) {
-            if (bandName.contains(key)){
+            if (bandName.contains(key)) {
                 return true;
             }
         }
         return false;
     }
+
     private void updateBands(Product inputProduct, Product l1cTarget, String[] bandsList) {
         if (!Arrays.asList(bandsList).contains("All")) {
             Pattern pattern = Pattern.compile("\\b(" + String.join("|", bandsList) + ")\\b");
@@ -473,7 +455,7 @@ public class L1cSynOp extends Operator {
     }
 
     private void ensureValidMISRFile(File misrFile) {
-        if(misrFile == null) {
+        if (misrFile == null) {
             throw new OperatorException("MISR file was not specified.");
         }
         if (!misrFile.getAbsolutePath().endsWith("xfdumanifest.xml")) {
