@@ -140,7 +140,6 @@ public class L1cSynOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
-        System.out.println("Smaller updates");
         if (!isValidOlciProduct(olciProduct)) {
             throw new OperatorException("OLCI product is not valid");
         }
