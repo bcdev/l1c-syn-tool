@@ -60,7 +60,7 @@ public class MisrOp extends Operator {
     @Parameter(description = "If set to true empty pixels after MISR will be filled with neighbouring values")
     private boolean fillEmptyPixels;
 
-    @Parameter( description = "If set to true orphan pixels will be used",
+    @Parameter(description = "If set to true orphan pixels will be used",
             defaultValue = "false")
     private boolean orphan;
 
@@ -179,21 +179,19 @@ public class MisrOp extends Operator {
             Band sourceBand = slstrSourceProduct.getBand(targetBand.getName());
             int sourceRasterWidth = sourceBand.getRasterWidth();
             int sourceRasterHeight = sourceBand.getRasterHeight();
-            for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                    targetTile.setSample(x, y, targetNoDataValue);
-                    int[] position = {x, y};
-                    int[] slstrGridPosition = map.get(position);
-                    if (slstrGridPosition != null) {
-                        final int slstrGridPosX = slstrGridPosition[0];
-                        final int slstrGridPosY = slstrGridPosition[1];
-                        if (slstrGridPosX < sourceRasterWidth && slstrGridPosY < sourceRasterHeight) {
-                            double reflecValue = sourceBand.getSampleFloat(slstrGridPosX, slstrGridPosY);
-                            if (reflecValue < 0) {
-                                reflecValue = targetNoDataValue;
-                            }
-                            targetTile.setSample(x, y, reflecValue);
+            for (Tile.Pos pos : targetTile) {
+                targetTile.setSample(pos.x, pos.y, targetNoDataValue);
+                int[] position = {pos.x, pos.y};
+                int[] slstrGridPosition = map.get(position);
+                if (slstrGridPosition != null) {
+                    final int slstrGridPosX = slstrGridPosition[0];
+                    final int slstrGridPosY = slstrGridPosition[1];
+                    if (slstrGridPosX < sourceRasterWidth && slstrGridPosY < sourceRasterHeight) {
+                        double reflecValue = sourceBand.getSampleFloat(slstrGridPosX, slstrGridPosY);
+                        if (reflecValue < 0) {
+                            reflecValue = targetNoDataValue;
                         }
+                        targetTile.setSample(pos.x, pos.y, reflecValue);
                     }
                 }
             }
@@ -202,7 +200,7 @@ public class MisrOp extends Operator {
                 String parentPath = slstrSourceProduct.getFileLocation().getParent();
                 String netcdfDataPath = parentPath + "/" + targetBand.getName() + ".nc";
                 if (Files.exists(Paths.get(netcdfDataPath))) {
-                    try (NetcdfFile netcdf = NetcdfFiles.open(netcdfDataPath)){
+                    try (NetcdfFile netcdf = NetcdfFiles.open(netcdfDataPath)) {
                         Variable orphanVariable = netcdf.findVariable(targetBand.getName().replace("radiance_", "radiance_orphan_"));
                         if (orphanVariable == null) {
                             throw new OperatorException(String.format("No information about orphans found in file '%s'", netcdfDataPath));
@@ -220,19 +218,17 @@ public class MisrOp extends Operator {
                         final Array orphanData = orphanVariable.read();
                         final int[] dataShape = orphanData.getShape(); // shape is [2400, 374] for S3_radiance_orphan_an
                         final Index rawIndex = orphanData.getIndex();
-                        for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                            for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                                int[] position = {x, y};
-                                int[] slstrOrphanPosition = mapOrphan.get(position);
-                                if (slstrOrphanPosition != null) {
-                                    final int orphanPosX = slstrOrphanPosition[0];
-                                    final int orphanPosY = slstrOrphanPosition[1];
-                                    if (orphanPosX < dataShape[0] && orphanPosY < dataShape[1]) {
-                                        rawIndex.set(orphanPosY, orphanPosX); // Dimension is Y, X  --> so 'wrong' order of Y and X here
-                                        double dataValue = orphanData.getDouble(rawIndex);
-                                        if (dataValue > 0) {
-                                            targetTile.setSample(x, y, dataValue * scaleFactor);
-                                        }
+                        for (Tile.Pos pos : targetTile) {
+                            int[] position = {pos.x, pos.y};
+                            int[] slstrOrphanPosition = mapOrphan.get(position);
+                            if (slstrOrphanPosition != null) {
+                                final int orphanPosX = slstrOrphanPosition[0];
+                                final int orphanPosY = slstrOrphanPosition[1];
+                                if (orphanPosX < dataShape[0] && orphanPosY < dataShape[1]) {
+                                    rawIndex.set(orphanPosY, orphanPosX); // Dimension is Y, X  --> so 'wrong' order of Y and X here
+                                    double dataValue = orphanData.getDouble(rawIndex);
+                                    if (dataValue > 0) {
+                                        targetTile.setSample(pos.x, pos.y, dataValue * scaleFactor);
                                     }
                                 }
                             }
@@ -246,39 +242,33 @@ public class MisrOp extends Operator {
             }
 
             if (fillEmptyPixels) {
-                for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                    for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                        if (targetTile.getSampleDouble(x, y) == targetNoDataValue) {
-                            double neighborPixel = getNeighborPixel(x, y, targetBand, map, sourceBand);
-                            targetTile.setSample(x, y, neighborPixel);
-                        }
+                for (Tile.Pos pos : targetTile) {
+                    if (targetTile.getSampleDouble(pos.x, pos.y) == targetNoDataValue) {
+                        double neighborPixel = getNeighborPixel(pos.x, pos.y, targetBand, map, sourceBand);
+                        targetTile.setSample(pos.x, pos.y, neighborPixel);
                     }
                 }
             }
 
         } else if (targetBand.getName().equals("misr_flags")) {
             map = S3PixelMap;
-            for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                    int[] position = {x, y};
-                    int[] slstrGridPosition = map.get(position);
-                    if (slstrGridPosition != null) {
-                        targetTile.setSample(x, y, 1);
-                    } else {
-                        targetTile.setSample(x, y, 0);
-                    }
+            for (Tile.Pos pos : targetTile) {
+                int[] position = {pos.x, pos.y};
+                int[] slstrGridPosition = map.get(position);
+                if (slstrGridPosition != null) {
+                    targetTile.setSample(pos.x, pos.y, 1);
+                } else {
+                    targetTile.setSample(pos.x, pos.y, 0);
                 }
             }
         } else if (targetBand.getName().equals("filled_flags")) {
             map = S3PixelMap;
             final Raster validMaskData = olciValidMaskImage.getData(targetRectangle);
-            for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                    int[] position = {x, y};
-                    int[] slstrGridPosition = map.get(position);
-                    if (slstrGridPosition == null && validMaskData.getSample(x, y, 0) != 0) {
-                        targetTile.setSample(x, y, 1);
-                    }
+            for (Tile.Pos pos : targetTile) {
+                int[] position = {pos.x, pos.y};
+                int[] slstrGridPosition = map.get(position);
+                if (slstrGridPosition == null && validMaskData.getSample(pos.x, pos.y, 0) != 0) {
+                    targetTile.setSample(pos.x, pos.y, 1);
                 }
             }
         }
@@ -328,8 +318,8 @@ public class MisrOp extends Operator {
 
     static Product createTargetProduct(Product olciSourceProduct, Product slstrSourceProduct, boolean fillEmptyPixels) {
         Product targetProduct = new Product(olciSourceProduct.getName(), olciSourceProduct.getProductType(),
-                                    olciSourceProduct.getSceneRasterWidth(),
-                                    olciSourceProduct.getSceneRasterHeight());
+                                            olciSourceProduct.getSceneRasterWidth(),
+                                            olciSourceProduct.getSceneRasterHeight());
 
 
         for (Band olciBand : olciSourceProduct.getBands()) {
@@ -376,8 +366,8 @@ public class MisrOp extends Operator {
             filledFlagCoding.setDescription("Filled pixels");
             targetProduct.getFlagCodingGroup().add(filledFlagCoding);
             Band filledFlags = new Band("filled_flags", ProductData.TYPE_UINT32,
-                                           olciSourceProduct.getSceneRasterWidth(),
-                                           olciSourceProduct.getSceneRasterHeight());
+                                        olciSourceProduct.getSceneRasterWidth(),
+                                        olciSourceProduct.getSceneRasterHeight());
             filledFlagCoding.addFlag("pixel was not filled", 0, "pixel was not filled");
             filledFlagCoding.addFlag("pixel was filled", 1, "pixel was filled");
             filledFlags.setSampleCoding(filledFlagCoding);
