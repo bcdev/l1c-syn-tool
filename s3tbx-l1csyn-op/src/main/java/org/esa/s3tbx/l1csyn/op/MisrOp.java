@@ -28,11 +28,7 @@ import ucar.nc2.NetcdfFile;
 import ucar.nc2.NetcdfFiles;
 import ucar.nc2.Variable;
 
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.ConstantDescriptor;
 import java.awt.Color;
-import java.awt.Rectangle;
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -120,27 +116,15 @@ public class MisrOp extends Operator {
     @TargetProduct
     private Product targetProduct;
 
-    private PlanarImage olciValidMaskImage;
-
     @Override
     public void initialize() throws OperatorException {
         targetProduct = createTargetProduct(olciSourceProduct, slstrSourceProduct, fillEmptyPixels);
-
-        // Band.isPixelValid() is known to be slow. Better use the mask image.
-        RasterDataNode oa17_radiance = olciSourceProduct.getRasterDataNode("Oa17_radiance");
-        if (oa17_radiance.isValidMaskUsed()) {
-            olciValidMaskImage = oa17_radiance.getValidMaskImage();
-        } else {
-            olciValidMaskImage = ConstantDescriptor.create((float) oa17_radiance.getRasterWidth(), (float) oa17_radiance.getRasterHeight(), new Byte[]{1}, null);
-        }
     }
 
     @Override
     public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm) {
         Map<int[], int[]> map = new HashMap<>();
         Map<int[], int[]> mapOrphan = new HashMap<>();
-        Rectangle targetRectangle = targetTile.getRectangle();
-
 
         if (targetBand.getName().contains("_ao")) {
             map = aoPixelMap;
@@ -263,11 +247,12 @@ public class MisrOp extends Operator {
             }
         } else if (targetBand.getName().equals("filled_flags")) {
             map = S3PixelMap;
-            final Raster validMaskData = olciValidMaskImage.getData(targetRectangle);
+            RasterDataNode oa17_radiance = olciSourceProduct.getRasterDataNode("Oa17_radiance");
+
             for (Tile.Pos pos : targetTile) {
                 int[] position = {pos.x, pos.y};
                 int[] slstrGridPosition = map.get(position);
-                if (slstrGridPosition == null && validMaskData.getSample(pos.x, pos.y, 0) != 0) {
+                if (slstrGridPosition == null && oa17_radiance.isPixelValid(pos.x, pos.y)) {
                     targetTile.setSample(pos.x, pos.y, 1);
                 }
             }
@@ -364,7 +349,6 @@ public class MisrOp extends Operator {
                               "MISR information was used to get value of this pixel", Color.RED, 0.5);
 
         if (fillEmptyPixels) {
-            //TODO: as of 2021-03-05 this shows how many neighbors were found during filling-holes algorithm. This band may be removed before release.
             final FlagCoding filledFlagCoding = new FlagCoding("Filled pixel after MISR");
             filledFlagCoding.setDescription("Filled pixels");
             targetProduct.getFlagCodingGroup().add(filledFlagCoding);
