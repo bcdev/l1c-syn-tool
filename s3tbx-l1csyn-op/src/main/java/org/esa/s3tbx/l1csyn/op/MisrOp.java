@@ -327,15 +327,18 @@ public class MisrOp extends Operator {
         }
 
         for (Band slstrBand : slstrSourceProduct.getBands()) {
-            if (slstrBand.getName().contains("_an") || slstrBand.getName().contains("_bn") || slstrBand.getName().contains("_cn")
-                    || slstrBand.getName().contains("_ao") || slstrBand.getName().contains("_bo") || slstrBand.getName().contains("_co")) {
-                Band copiedBand = targetProduct.addBand(slstrBand.getName(), ProductData.TYPE_FLOAT32);
-                copiedBand.setNoDataValue(slstrSourceProduct.getBand(slstrBand.getName()).getNoDataValue());
+            final String slstrBandName = slstrBand.getName();
+            if (slstrBandName.contains("_an") || slstrBandName.contains("_bn") || slstrBandName.contains("_cn")
+                    || slstrBandName.contains("_ao") || slstrBandName.contains("_bo") || slstrBandName.contains("_co")) {
+                Band copiedBand = targetProduct.addBand(slstrBandName, ProductData.TYPE_FLOAT32);
+                copiedBand.setDescription(slstrBand.getDescription());
+                copiedBand.setUnit(slstrBand.getUnit());
+                copiedBand.setNoDataValue(slstrSourceProduct.getBand(slstrBandName).getNoDataValue());
                 copiedBand.setNoDataValueUsed(true);
             } else {
-                if (!slstrBand.getName().contains("_in") && !slstrBand.getName().contains("_io") &&
-                        !slstrBand.getName().contains("_fn") && !slstrBand.getName().contains("_fo")) {
-                    ProductUtils.copyBand(slstrBand.getName(), slstrSourceProduct, targetProduct, true);
+                if (!slstrBandName.contains("_in") && !slstrBandName.contains("_io") &&
+                        !slstrBandName.contains("_fn") && !slstrBandName.contains("_fo")) {
+                    ProductUtils.copyBand(slstrBandName, slstrSourceProduct, targetProduct, true);
                 }
             }
         }
