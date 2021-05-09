@@ -286,6 +286,24 @@ public class L1cSynOp extends Operator {
         misrMap.put("boOrphanMap", misrMap.get("aoOrphanMap"));
         misrMap.put("coOrphanMap", misrMap.get("aoOrphanMap"));
 
+        if (!USE_FULL_MISR) {
+            misrMap.put("S1PixelMap", misrMap.get("S3PixelMap"));
+            misrMap.put("S2PixelMap", misrMap.get("S3PixelMap"));
+            misrMap.put("S4PixelMap", misrMap.get("S3PixelMap"));
+            misrMap.put("S5PixelMap", misrMap.get("S3PixelMap"));
+            misrMap.put("S6PixelMap", misrMap.get("S3PixelMap"));
+            misrMap.put("aoPixelMap", misrMap.get("aoPixelMap"));
+            misrMap.put("boPixelMap", misrMap.get("aoPixelMap"));
+            misrMap.put("coPixelMap", misrMap.get("aoPixelMap"));
+            misrMap.put("S1OrphanMap", misrMap.get("S3OrphanMap"));
+            misrMap.put("S2OrphanMap", misrMap.get("S3OrphanMap"));
+            misrMap.put("S4OrphanMap", misrMap.get("S3OrphanMap"));
+            misrMap.put("S5OrphanMap", misrMap.get("S3OrphanMap"));
+            misrMap.put("S6OrphanMap", misrMap.get("S3OrphanMap"));
+            misrMap.put("aoOrphanMap", misrMap.get("aoOrphanMap"));
+            misrMap.put("boOrphanMap", misrMap.get("aoOrphanMap"));
+            misrMap.put("coOrphanMap", misrMap.get("aoOrphanMap"));
+        }
 
         HashMap<String, Object> misrParams = new HashMap<>(misrMap);
         misrParams.put("fillEmptyPixels", FILL_EMPTY_PIXELS);
