@@ -23,16 +23,11 @@ import org.esa.snap.core.util.math.DistanceMeasure;
 import org.esa.snap.core.util.math.EuclideanDistance;
 import ucar.ma2.Array;
 import ucar.ma2.Index;
-import ucar.nc2.Attribute;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.NetcdfFiles;
 import ucar.nc2.Variable;
 
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.ConstantDescriptor;
 import java.awt.Color;
-import java.awt.Rectangle;
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -120,157 +115,156 @@ public class MisrOp extends Operator {
     @TargetProduct
     private Product targetProduct;
 
-    private PlanarImage olciValidMaskImage;
-
     @Override
     public void initialize() throws OperatorException {
         targetProduct = createTargetProduct(olciSourceProduct, slstrSourceProduct, fillEmptyPixels);
-
-        // Band.isPixelValid() is known to be slow. Better use the mask image.
-        RasterDataNode oa17_radiance = olciSourceProduct.getRasterDataNode("Oa17_radiance");
-        if (oa17_radiance.isValidMaskUsed()) {
-            olciValidMaskImage = oa17_radiance.getValidMaskImage();
-        } else {
-            olciValidMaskImage = ConstantDescriptor.create((float) oa17_radiance.getRasterWidth(), (float) oa17_radiance.getRasterHeight(), new Byte[]{1}, null);
-        }
     }
 
     @Override
     public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm) {
-        Map<int[], int[]> map = new HashMap<>();
-        Map<int[], int[]> mapOrphan = new HashMap<>();
-        Rectangle targetRectangle = targetTile.getRectangle();
+        try {
+            Map<int[], int[]> map = new HashMap<>();
+            Map<int[], int[]> mapOrphan = new HashMap<>();
 
 
-        if (targetBand.getName().contains("_ao")) {
-            map = aoPixelMap;
-            mapOrphan = aoOrphanMap;
-        } else if (targetBand.getName().contains("_bo")) {
-            map = boPixelMap;
-            mapOrphan = boOrphanMap;
-        } else if (targetBand.getName().contains("_co")) {
-            map = coPixelMap;
-            mapOrphan = coOrphanMap;
-        } else if ((targetBand.getName().contains("S1") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S1") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S1") && targetBand.getName().contains("_cn"))) {
-            map = S1PixelMap;
-            mapOrphan = S1OrphanMap;
-        } else if ((targetBand.getName().contains("S2") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S2") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S2") && targetBand.getName().contains("_cn"))) {
-            map = S2PixelMap;
-            mapOrphan = S2OrphanMap;
-        } else if ((targetBand.getName().contains("S3") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S3") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S3") && targetBand.getName().contains("_cn"))) {
-            map = S3PixelMap;
-            mapOrphan = S3OrphanMap;
-        } else if ((targetBand.getName().contains("S4") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S4") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S4") && targetBand.getName().contains("_cn"))) {
-            map = S4PixelMap;
-            mapOrphan = S4OrphanMap;
-        } else if ((targetBand.getName().contains("S5") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S5") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S5") && targetBand.getName().contains("_cn"))) {
-            map = S5PixelMap;
-            mapOrphan = S5OrphanMap;
-        } else if ((targetBand.getName().contains("S6") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S6") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S6") && targetBand.getName().contains("_cn"))) {
-            map = S6PixelMap;
-            mapOrphan = S6OrphanMap;
-        } else if ((targetBand.getName().contains("_an") || targetBand.getName().contains("_bn") || targetBand.getName().contains("_cn"))) {
-            map = S3PixelMap;
-            mapOrphan = S3OrphanMap;
-        }
-
-        final double targetNoDataValue = targetBand.getNoDataValue();
-        if (slstrSourceProduct.containsBand(targetBand.getName())) {
-            Band sourceBand = slstrSourceProduct.getBand(targetBand.getName());
-            int sourceRasterWidth = sourceBand.getRasterWidth();
-            int sourceRasterHeight = sourceBand.getRasterHeight();
-            for (Tile.Pos pos : targetTile) {
-                targetTile.setSample(pos.x, pos.y, targetNoDataValue);
-                int[] position = {pos.x, pos.y};
-                int[] slstrGridPosition = map.get(position);
-                if (slstrGridPosition != null) {
-                    final int slstrGridPosX = slstrGridPosition[0];
-                    final int slstrGridPosY = slstrGridPosition[1];
-                    if (slstrGridPosX < sourceRasterWidth && slstrGridPosY < sourceRasterHeight) {
-                        double reflecValue = sourceBand.getSampleFloat(slstrGridPosX, slstrGridPosY);
-                        if (reflecValue < 0) {
-                            reflecValue = targetNoDataValue;
-                        }
-                        targetTile.setSample(pos.x, pos.y, reflecValue);
-                    }
-                }
+            if (targetBand.getName().contains("_ao")) {
+                map = aoPixelMap;
+                mapOrphan = aoOrphanMap;
+            } else if (targetBand.getName().contains("_bo")) {
+                map = boPixelMap;
+                mapOrphan = boOrphanMap;
+            } else if (targetBand.getName().contains("_co")) {
+                map = coPixelMap;
+                mapOrphan = coOrphanMap;
+            } else if ((targetBand.getName().contains("S1") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S1") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S1") && targetBand.getName().contains("_cn"))) {
+                map = S1PixelMap;
+                mapOrphan = S1OrphanMap;
+            } else if ((targetBand.getName().contains("S2") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S2") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S2") && targetBand.getName().contains("_cn"))) {
+                map = S2PixelMap;
+                mapOrphan = S2OrphanMap;
+            } else if ((targetBand.getName().contains("S3") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S3") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S3") && targetBand.getName().contains("_cn"))) {
+                map = S3PixelMap;
+                mapOrphan = S3OrphanMap;
+            } else if ((targetBand.getName().contains("S4") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S4") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S4") && targetBand.getName().contains("_cn"))) {
+                map = S4PixelMap;
+                mapOrphan = S4OrphanMap;
+            } else if ((targetBand.getName().contains("S5") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S5") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S5") && targetBand.getName().contains("_cn"))) {
+                map = S5PixelMap;
+                mapOrphan = S5OrphanMap;
+            } else if ((targetBand.getName().contains("S6") && targetBand.getName().contains("_an")) || (targetBand.getName().contains("S6") && targetBand.getName().contains("_bn")) || (targetBand.getName().contains("S6") && targetBand.getName().contains("_cn"))) {
+                map = S6PixelMap;
+                mapOrphan = S6OrphanMap;
+            } else if ((targetBand.getName().contains("_an") || targetBand.getName().contains("_bn") || targetBand.getName().contains("_cn"))) {
+                map = S3PixelMap;
+                mapOrphan = S3OrphanMap;
             }
-            //Orphan pixels
-            if (orphan) {
-                String parentPath = slstrSourceProduct.getFileLocation().getParent();
-                String netcdfDataPath = parentPath + "/" + targetBand.getName() + ".nc";
-                if (Files.exists(Paths.get(netcdfDataPath))) {
-                    try (NetcdfFile netcdf = NetcdfFiles.open(netcdfDataPath)) {
-                        Variable orphanVariable = netcdf.findVariable(targetBand.getName().replace("radiance_", "radiance_orphan_"));
-                        if (orphanVariable == null) {
-                            throw new OperatorException(String.format("No information about orphans found in file '%s'", netcdfDataPath));
-                        }
-                        final Attribute scale_factorAttribute = orphanVariable.findAttribute("scale_factor");
-                        double scaleFactor = 1.0;
-                        if (scale_factorAttribute != null) {
-                            final Number scale_factor = scale_factorAttribute.getNumericValue();
-                            if (scale_factor != null) {
-                                scaleFactor = (double) scale_factor;
-                            }
-                        }
+            final double targetNoDataValue = targetBand.getNoDataValue();
+            // check out data
+            final ProductData rawTarget = targetTile.getRawSamples();
 
-
-                        final Array orphanData = orphanVariable.read();
-                        final int[] dataShape = orphanData.getShape(); // shape is [2400, 374] for S3_radiance_orphan_an
-                        final Index rawIndex = orphanData.getIndex();
-                        for (Tile.Pos pos : targetTile) {
-                            int[] position = {pos.x, pos.y};
-                            int[] slstrOrphanPosition = mapOrphan.get(position);
-                            if (slstrOrphanPosition != null) {
-                                final int orphanPosX = slstrOrphanPosition[0];
-                                final int orphanPosY = slstrOrphanPosition[1];
-                                if (orphanPosX < dataShape[0] && orphanPosY < dataShape[1]) {
-                                    rawIndex.set(orphanPosY, orphanPosX); // Dimension is Y, X  --> so 'wrong' order of Y and X here
-                                    double dataValue = orphanData.getDouble(rawIndex);
-                                    if (dataValue > 0) {
-                                        targetTile.setSample(pos.x, pos.y, dataValue * scaleFactor);
-                                    }
+            if (slstrSourceProduct.containsBand(targetBand.getName())) {
+                Band sourceBand = slstrSourceProduct.getBand(targetBand.getName());
+                int sourceRasterWidth = sourceBand.getRasterWidth();
+                int sourceRasterHeight = sourceBand.getRasterHeight();
+                for (int y = targetTile.getMinY(); y <= targetTile.getMaxY(); y++) {
+                    int lineIndex = (y - targetTile.getMinY()) * targetTile.getWidth();
+                    for (int x = targetTile.getMinX(); x <= targetTile.getMaxX(); x++) {
+                        int[] slstrGridPosition = map.get(new int[]{x, y});
+                        double reflecValue = targetNoDataValue;
+                        if (slstrGridPosition != null) {
+                            final int slstrGridPosX = slstrGridPosition[0];
+                            final int slstrGridPosY = slstrGridPosition[1];
+                            if (slstrGridPosX < sourceRasterWidth && slstrGridPosY < sourceRasterHeight) {
+                                reflecValue = sourceBand.getSampleFloat(slstrGridPosX, slstrGridPosY);
+                                if (reflecValue < 0) {
+                                    reflecValue = targetNoDataValue;
                                 }
                             }
                         }
-                    } catch (IOException ioe) {
-                        SystemUtils.LOG.log(Level.WARNING, String.format("Could not process file %s: %s", netcdfDataPath, ioe.getMessage()));
-                    }
-                } else {
-                    SystemUtils.LOG.log(Level.FINE, String.format("File %s does not exist", netcdfDataPath));
-                }
-            }
-
-            if (fillEmptyPixels) {
-                for (Tile.Pos pos : targetTile) {
-                    if (targetTile.getSampleDouble(pos.x, pos.y) == targetNoDataValue) {
-                        double neighborPixel = getNeighborPixel(pos.x, pos.y, targetBand, map, sourceBand);
-                        targetTile.setSample(pos.x, pos.y, neighborPixel);
+                        rawTarget.setElemDoubleAt(lineIndex + x - targetTile.getMinX(), reflecValue);
                     }
                 }
-            }
+                //Orphan pixels
+                if (orphan) {
+                    String parentPath = slstrSourceProduct.getFileLocation().getParent();
+                    String netcdfDataPath = parentPath + "/" + targetBand.getName() + ".nc";
+                    if (Files.exists(Paths.get(netcdfDataPath))) {
+                        try (NetcdfFile netcdf = NetcdfFiles.open(netcdfDataPath)) {
+                            Variable orphanVariable = netcdf.findVariable(targetBand.getName().replace("radiance_", "radiance_orphan_"));
+                            if (orphanVariable == null) {
+                                throw new OperatorException(String.format("No information about orphans found in file '%s'", netcdfDataPath));
+                            }
 
-        } else if (targetBand.getName().equals("misr_flags")) {
-            map = S3PixelMap;
-            for (Tile.Pos pos : targetTile) {
-                int[] position = {pos.x, pos.y};
-                int[] slstrGridPosition = map.get(position);
-                if (slstrGridPosition != null) {
-                    targetTile.setSample(pos.x, pos.y, 1);
-                } else {
-                    targetTile.setSample(pos.x, pos.y, 0);
+                            final Array orphanData = orphanVariable.read();
+                            final int[] dataShape = orphanData.getShape(); // shape is [2400, 374] for S3_radiance_orphan_an
+                            final Index rawIndex = orphanData.getIndex();
+                            for (int y = targetTile.getMinY(); y <= targetTile.getMaxY(); y++) {
+                                int lineIndex = (y - targetTile.getMinY()) * targetTile.getWidth();
+                                for (int x = targetTile.getMinX(); x <= targetTile.getMaxX(); x++) {
+                                    int[] slstrOrphanPosition = mapOrphan.get(new int[]{x, y});
+                                    if (slstrOrphanPosition != null) {
+                                        final int orphanPosX = slstrOrphanPosition[0];
+                                        final int orphanPosY = slstrOrphanPosition[1];
+                                        if (orphanPosX < dataShape[0] && orphanPosY < dataShape[1]) {
+                                            rawIndex.set(orphanPosY, orphanPosX); // Dimension is Y, X  --> so 'wrong' order of Y and X here
+                                            double dataValue = orphanData.getDouble(rawIndex);
+                                            if (dataValue > 0) {
+                                                rawTarget.setElemDoubleAt(lineIndex + x - targetTile.getMinX(), dataValue);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (IOException ioe) {
+                            SystemUtils.LOG.log(Level.WARNING, String.format("Could not process file %s: %s", netcdfDataPath, ioe.getMessage()));
+                        }
+                    } else {
+                        SystemUtils.LOG.log(Level.FINE, String.format("File %s does not exist", netcdfDataPath));
+                    }
+                }
+
+                if (fillEmptyPixels) {
+                    for (int y = targetTile.getMinY(); y <= targetTile.getMaxY(); y++) {
+                        int lineIndex = (y - targetTile.getMinY()) * targetTile.getWidth();
+                        for (int x = targetTile.getMinX(); x <= targetTile.getMaxX(); x++) {
+                            int elemIndex = lineIndex + x - targetTile.getMinX();
+                            if (rawTarget.getElemDoubleAt(elemIndex) == targetNoDataValue) {
+                                rawTarget.setElemDoubleAt(elemIndex, getNeighborPixel(x, y, targetBand, map, sourceBand));
+                            }
+                        }
+                    }
+                }
+
+            } else if (targetBand.getName().equals("misr_flags")) {
+                map = S3PixelMap;
+                for (int y = targetTile.getMinY(); y <= targetTile.getMaxY(); y++) {
+                    int lineIndex = (y - targetTile.getMinY()) * targetTile.getWidth();
+                    for (int x = targetTile.getMinX(); x <= targetTile.getMaxX(); x++) {
+                        final int elemIndex = lineIndex + x - targetTile.getMinX();
+                        if (elemIndex == 262144) {
+                            System.out.println("elemIndex = " + elemIndex);
+                        }
+                        rawTarget.setElemIntAt(elemIndex, map.get(new int[]{x, y}) != null ? 1 : 0);
+                    }
+                }
+            } else if (targetBand.getName().equals("filled_flags")) {
+                map = S3PixelMap;
+                RasterDataNode oa17_radiance = olciSourceProduct.getRasterDataNode("Oa17_radiance");
+
+                for (int y = targetTile.getMinY(); y <= targetTile.getMaxY(); y++) {
+                    int lineIndex = (y - targetTile.getMinY()) * targetTile.getWidth();
+                    for (int x = targetTile.getMinX(); x <= targetTile.getMaxX(); x++) {
+                        int[] slstrGridPosition = map.get(new int[]{x, y});
+                        if (slstrGridPosition == null && oa17_radiance.isPixelValid(x, y)) {
+                            rawTarget.setElemIntAt(lineIndex + x - targetTile.getMinX(), 1);
+                        }
+                    }
                 }
             }
-        } else if (targetBand.getName().equals("filled_flags")) {
-            map = S3PixelMap;
-            final Raster validMaskData = olciValidMaskImage.getData(targetRectangle);
-            for (Tile.Pos pos : targetTile) {
-                int[] position = {pos.x, pos.y};
-                int[] slstrGridPosition = map.get(position);
-                if (slstrGridPosition == null && validMaskData.getSample(pos.x, pos.y, 0) != 0) {
-                    targetTile.setSample(pos.x, pos.y, 1);
-                }
-            }
+            // commit data
+            targetTile.setRawSamples(rawTarget);
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
     }
 
@@ -327,15 +321,18 @@ public class MisrOp extends Operator {
         }
 
         for (Band slstrBand : slstrSourceProduct.getBands()) {
-            if (slstrBand.getName().contains("_an") || slstrBand.getName().contains("_bn") || slstrBand.getName().contains("_cn")
-                    || slstrBand.getName().contains("_ao") || slstrBand.getName().contains("_bo") || slstrBand.getName().contains("_co")) {
-                Band copiedBand = targetProduct.addBand(slstrBand.getName(), ProductData.TYPE_FLOAT32);
-                copiedBand.setNoDataValue(slstrSourceProduct.getBand(slstrBand.getName()).getNoDataValue());
-                copiedBand.setNoDataValueUsed(true);
+            final String slstrBandName = slstrBand.getName();
+            if (slstrBandName.contains("_an") || slstrBandName.contains("_bn") || slstrBandName.contains("_cn")
+                    || slstrBandName.contains("_ao") || slstrBandName.contains("_bo") || slstrBandName.contains("_co")) {
+                final Band sourceBand = slstrSourceProduct.getBand(slstrBandName);
+                Band targetBand = new Band(slstrBandName, sourceBand.getDataType(),
+                                           targetProduct.getSceneRasterWidth(), targetProduct.getSceneRasterHeight());
+                targetProduct.addBand(targetBand);
+                ProductUtils.copyRasterDataNodeProperties(sourceBand, targetBand);
             } else {
-                if (!slstrBand.getName().contains("_in") && !slstrBand.getName().contains("_io") &&
-                        !slstrBand.getName().contains("_fn") && !slstrBand.getName().contains("_fo")) {
-                    ProductUtils.copyBand(slstrBand.getName(), slstrSourceProduct, targetProduct, true);
+                if (!slstrBandName.contains("_in") && !slstrBandName.contains("_io") &&
+                        !slstrBandName.contains("_fn") && !slstrBandName.contains("_fo")) {
+                    ProductUtils.copyBand(slstrBandName, slstrSourceProduct, targetProduct, true);
                 }
             }
         }
