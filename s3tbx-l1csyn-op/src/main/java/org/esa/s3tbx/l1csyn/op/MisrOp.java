@@ -320,6 +320,9 @@ public class MisrOp extends Operator {
                 copiedBand.setUnit(slstrBand.getUnit());
                 copiedBand.setNoDataValue(slstrSourceProduct.getBand(slstrBandName).getNoDataValue());
                 copiedBand.setNoDataValueUsed(true);
+                copiedBand.setSpectralBandIndex(slstrBand.getSpectralBandIndex());
+                copiedBand.setSpectralWavelength(slstrBand.getSpectralWavelength());
+                copiedBand.setSpectralBandwidth(slstrBand.getSpectralBandwidth());
             } else {
                 if (!slstrBandName.contains("_in") && !slstrBandName.contains("_io") &&
                         !slstrBandName.contains("_fn") && !slstrBandName.contains("_fo")) {
