@@ -5,6 +5,10 @@
 
 <map version="2.0">
 
-    <mapID target="l1cSynTool" url="tool/L1CSynToolDescription.html"/>
+    <mapID target="l1cSynTool" url="tool/Intro.html"/>
+    <mapID target="l1cSynTool_Tool" url="tool/ToolDescription.html"/>
+    <mapID target="l1cSynTool_MisrAlgo" url="tool/MisrAlgo.html"/>
+    <mapID target="l1cSynTool_MisrFile" url="tool/MisrFile.html"/>
+    <mapID target="l1cSynTool_Cmd" url="tool/CommandLine.html"/>
 
 </map>
