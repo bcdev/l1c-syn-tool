@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
         copyright = "Brockmann Consult GmbH",
         description = "Sentinel-3 OLCI/SLSTR L1C SYN Tool",
         category = "Optical/Pre-Processing",
-        version = "2.6")
+        version = "3.0")
 public class L1cSynOp extends Operator {
 
     private static final long ALLOWED_TIME_DIFF = 200L;
@@ -62,8 +62,7 @@ public class L1cSynOp extends Operator {
 
     @Parameter(label = "Keep final product on OLCI image grid",
             description = "If this parameter is set to true, the final product will be kept in OLCI image grid.",
-            defaultValue = "true"
-    )
+            defaultValue = "true")
     private boolean stayOnOlciGrid;
 
     @Parameter(label = "Use MISR Product", description = "If set to false MISR product will not be used, instead products will collocated",
@@ -75,43 +74,37 @@ public class L1cSynOp extends Operator {
 
     @Parameter(label = "Reprojection CRS",
             description = "The CRS used for the reprojection. If set to None or left empty, no reprojection will be performed. If MISR file is specified this setting will be neglected.",
-            defaultValue = "EPSG:4326"
-    )
+            defaultValue = "EPSG:4326")
     private String reprojectionCRS;
 
     @Parameter(label = "Resampling upsampling method",
             description = "The method used for interpolation (upsampling to a finer resolution).",
             valueSet = {"Nearest", "Bilinear", "Bicubic",},
-            defaultValue = "Nearest"
-    )
+            defaultValue = "Nearest")
     private String upsampling;
 
     @Parameter(label = "OLCI raster data",
             description = "Predefined regular expressions for selection of OLCI bands in the output product. Multiple selection is possible.",
             valueSet = {"All", "Oa.._radiance", "FWHM_band_.*", "lambda0_band_.*", "solar_flux_band_.*", "quality_flags.*",
                     "atmospheric_temperature_profile_.*", "TP_.*", "horizontal_wind.*", "total_.*", "humidity", "sea_level_pressure", "O.*A", "S.*A"},
-            defaultValue = "All"
-    )
+            defaultValue = "All")
     private String[] bandsOlci;
 
     @Parameter(label = "SLSTR raster data",
             description = "Predefined regular expressions for selection of OLCI bands in the output product. Multiple selection is possible.",
-            valueSet = {"All", "F._BT_.*", "S._BT_.*", "S*._radiance_an", ".*_an.*", ".*_ao.*", ".*_bn.*", ".*_bo.*", ".*_bn.*", ".*_co.*", ".*_cn.*", ".*_fn.*", ".*_fo.*",
+            valueSet = {"All", "F._BT_.*", "S._BT_.*", "S*._radiance_an", ".*_an.*", ".*_ao.*", ".*_bn.*", ".*_bo.*", ".*_co.*", ".*_cn.*", ".*_fn.*", ".*_fo.*",
                     ".*_tn.*", ".*_tx.*"},
-            defaultValue = "All"
-    )
+            defaultValue = "All")
     private String[] bandsSlstr;
 
     @Parameter(label = "Regular expressions for OLCI",
             description = "Regular expressions (comma-separated) to set up selection of OLCI bands. " +
-                    "It has priority over OLCI raster data selection. Will not be considered if empty"
-    )
+                    "It has priority over OLCI raster data selection. Will not be considered if empty")
     private String olciRegexp;
 
     @Parameter(label = "Regular expressions for SLSTR",
             description = "Regular expressions (comma-separated) to set up selection of SLSTR bands. " +
-                    "It has priority over SLSTR raster data selection. Will not be considered if empty"
-    )
+                    "It has priority over SLSTR raster data selection. Will not be considered if empty")
     private String slstrRegexp;
 
     @Parameter(label = "Shapefile", description = "Optional file which may be used for selecting subset. This has priority over WKT GeoRegion.")

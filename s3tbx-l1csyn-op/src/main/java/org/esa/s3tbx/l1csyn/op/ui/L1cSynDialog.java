@@ -75,9 +75,18 @@ public class L1cSynDialog extends SingleTargetProductDialog {
         tableLayout.setTableFill(TableLayout.Fill.HORIZONTAL);
         tableLayout.setTablePadding(3, 3);
         JPanel ioParametersPanel = new JPanel(tableLayout);
+        
+        final TableLayout tableLayoutSPG = new TableLayout(1);
+        tableLayoutSPG.setTableAnchor(TableLayout.Anchor.WEST);
+        tableLayoutSPG.setTableWeightX(1.0);
+        tableLayoutSPG.setTableFill(TableLayout.Fill.HORIZONTAL);
+        JPanel sourcesPanel = new JPanel(tableLayoutSPG);
+        sourcesPanel.setBorder(BorderFactory.createTitledBorder("Source Products"));
         for (SourceProductSelector selector : sourceProductSelectorList) {
-            ioParametersPanel.add(selector.createDefaultPanel());
+            sourcesPanel.add(selector.createDefaultPanel(""));
         }
+        ioParametersPanel.add(sourcesPanel);
+        
         TargetProductSelectorModel targetProductSelectorModel = getTargetProductSelector().getModel();
         targetProductSelectorModel.setFormatName("NetCDF4-CF");
         //targetProductSelectorModel.setProductName("default_SYN_NAME");
@@ -105,12 +114,8 @@ public class L1cSynDialog extends SingleTargetProductDialog {
             final SourceProduct annot = field.getAnnotation(SourceProduct.class);
             if (annot != null) {
                 final ProductFilter productFilter = new AnnotatedSourceProductFilter(annot);
-                SourceProductSelector sourceProductSelector = new SourceProductSelector(appContext);
-                if (field.getName().equals("olciSource")) {
-                    sourceProductSelector = new SourceProductSelector(appContext, "OLCI Product", false);
-                } else if (field.getName().equals("slstrSource")) {
-                    sourceProductSelector = new SourceProductSelector(appContext, "SLSTR Product", false);
-                }
+                String label = String.format("%s:", annot.label().isEmpty() ? "Name" : annot.label());
+                SourceProductSelector sourceProductSelector = new SourceProductSelector(appContext, label);
                 sourceProductSelector.setProductFilter(productFilter);
                 sourceProductSelectorList.add(sourceProductSelector);
                 sourceProductSelectorMap.put(field, sourceProductSelector);
