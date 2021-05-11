@@ -20,14 +20,14 @@
     <parent>
         <artifactId>s3tbx-l1csyn-tool</artifactId>
         <groupId>org.esa.s3tbx</groupId>
-        <version>2.6-SNAPSHOT</version>
+        <version>3.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>s3tbx-l1csyn-op</artifactId>
     <name>S3 L1C SYN Tool Operator</name>
-    <description>Creates L1C SYN data products from OLCI/SLSTR data.
-    </description>
+    <version>3.0</version>
+    <description>Creates L1C SYN data products from OLCI/SLSTR data.</description>
 
     <packaging>nbm</packaging>
 

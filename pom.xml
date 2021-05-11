@@ -7,7 +7,7 @@
     <groupId>org.esa.s3tbx</groupId>
     <artifactId>s3tbx-l1csyn-tool</artifactId>
     <packaging>pom</packaging>
-    <version>2.6-SNAPSHOT</version>
+    <version>3.0</version>
 
     <description>Sentinel-3 OLCI/SLSTR L1C Synergy Tool for S3TBX in SNAP</description>
 
