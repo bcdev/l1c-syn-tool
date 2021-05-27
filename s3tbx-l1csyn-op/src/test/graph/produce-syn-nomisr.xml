@@ -68,7 +68,7 @@
         </sources>
         <parameters>
             <file>${targetFile}</file>
-            <formatName>NetCDF4-BEAM</formatName>
+            <formatName>NetCDF4-CF</formatName>
         </parameters>
     </node>
 </graph>
